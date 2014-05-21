@@ -1,0 +1,28 @@
+/*
+ * CodePress color styles for Mazinger syntax highlighting
+ * By Alejandro Usero Ruiz
+ */
+ 
+
+b {color:#000080;} /* tags en general*/
+ins, ins b, ins s, ins em {color:gray !important;} /* comments */
+s, s b {color:#0054E3} /* attribute values */
+b.mazinger {
+	color:#610B0B;
+	font-style: oblique;
+}
+
+b.webapplication,
+b.domainpassword, 
+b.application
+{	font-style: oblique;
+	color: #8A0808;
+}
+b.component,
+b.input,
+b.form,
+b.action
+{	font-style: oblique;
+	color: #B40404;
+}
+b.cdata, b.cdata s, b.cdata s b {color:#0000FF;}

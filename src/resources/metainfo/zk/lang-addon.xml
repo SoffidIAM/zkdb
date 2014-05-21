@@ -1,0 +1,259 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<language-addon>
+  <addon-name>ZKDB</addon-name>
+  <version>
+  	<version-class>es.caib.zkib.component.Version</version-class>
+  	<version-uid>1.1</version-uid>
+  </version>
+
+  <language-name>xul/html</language-name>
+
+	 <zscript>
+		 import es.caib.zkib.component.*;
+		 import es.caib.zkib.datamodel.xml.XmlDataNode;
+	 </zscript>
+
+	<component>
+		<component-name>datamodel</component-name>
+		<component-class>es.caib.zkib.component.DataModel</component-class>
+		<mold>
+			<mold-name>default</mold-name>
+			<mold-uri>~./zul/html/datasource.dsp</mold-uri>
+		</mold>
+	</component>
+
+	<component>
+		<component-name>beandatasource</component-name>
+		<component-class>es.caib.zkib.component.BeanDataSource</component-class>
+		<mold>
+			<mold-name>default</mold-name>
+			<mold-uri>~./zul/html/datasource.dsp</mold-uri>
+		</mold>
+	</component>
+
+	<component>
+		<component-name>xmldatasource</component-name>
+		<component-class>es.caib.zkib.component.XMLDataSource</component-class>
+		<mold>
+			<mold-name>default</mold-name>
+			<mold-uri>~./zul/html/datasource.dsp</mold-uri>
+		</mold>
+	</component>
+
+	<component>
+		<extends>label</extends>
+		<component-name>label</component-name>
+		<component-class>es.caib.zkib.component.DataLabel</component-class>
+	</component>
+
+	<component>
+		<extends>textbox</extends>
+		<component-name>textbox</component-name>
+		<component-class>es.caib.zkib.component.DataTextbox</component-class>
+	</component>
+
+	<component>
+		<extends>datebox</extends>
+		<component-name>datebox</component-name>
+		<component-class>es.caib.zkib.component.DataDatebox</component-class>
+	</component>
+
+	<component>
+		<extends>decimalbox</extends>
+		<component-name>decimalbox</component-name>
+		<component-class>es.caib.zkib.component.DataDecimalbox</component-class>
+	</component>
+
+	<component>
+		<extends>intbox</extends>
+		<component-name>intbox</component-name>
+		<component-class>es.caib.zkib.component.DataIntbox</component-class>
+	</component>
+
+	<component>
+		<extends>datebox</extends>
+		<component-name>datebox</component-name>
+		<component-class>es.caib.zkib.component.DataDatebox</component-class>
+	</component>
+
+	<component>
+		<extends>checkbox</extends>
+		<component-name>checkbox</component-name>
+		<component-class>es.caib.zkib.component.DataCheckbox</component-class>
+		<mold>
+			<mold-name>checkbox_border</mold-name>
+			<mold-uri>~./zul/html/checkbox_border.dsp</mold-uri>
+		</mold>
+	</component>
+
+	<component>
+		<extends>radiogroup</extends>
+		<component-name>radiogroup</component-name>
+		<component-class>es.caib.zkib.component.DataRadiogroup</component-class>
+	</component>
+
+	<component>
+		<extends>radio</extends>
+		<component-name>radio</component-name>
+		<component-class>es.caib.zkib.component.DataRadio</component-class>
+	</component>
+
+	<component>
+		<extends>listbox</extends>
+		<component-name>listbox</component-name>
+		<component-class>es.caib.zkib.component.DataListbox</component-class>
+	</component>
+
+	<component>
+		<extends>listcell</extends>
+		<component-name>listcell</component-name>
+		<component-class>es.caib.zkib.component.DataListcell</component-class>
+	</component>
+	
+	<component>
+		<extends>listcell</extends>
+		<component-name>listcellnolabel</component-name>
+		<component-class>es.caib.zkib.component.DataListcell</component-class>	
+		<mold>
+			<mold-name>default</mold-name>
+			<mold-uri>~./zul/html/listcellNoLabel.dsp</mold-uri>
+		</mold>
+	</component>
+	
+	<component>
+		<extends>listcell</extends>
+		<component-name>listcelllabel</component-name>
+		<component-class>es.caib.zkib.component.DataListcellLabelBind</component-class>
+	</component>
+
+	<component>
+		<extends>combobox</extends>
+		<component-name>combobox</component-name>
+		<component-class>es.caib.zkib.component.DataCombobox</component-class>
+	</component>
+
+	<component>
+		<extends>grid</extends>
+		<component-name>grid</component-name>
+		<component-class>es.caib.zkib.component.DataGrid</component-class>
+		<style-class>grid</style-class>
+		<mold>
+			<mold-name>default</mold-name>
+			<mold-uri>~./zul/html/grid.dsp</mold-uri>
+		</mold>
+	</component>
+
+	<component>
+		<component-name>datarow</component-name>
+		<component-class>es.caib.zkib.component.MasterRow</component-class>
+		<mold>
+			<mold-name>default</mold-name>
+			<mold-uri>~./zul/html/row.dsp</mold-uri>
+		</mold>
+		<mold>
+			<mold-name>horizontal</mold-name>
+			<mold-uri>~./zul/html/row.dsp</mold-uri>
+		</mold>
+		<mold>
+			<mold-name>vertical</mold-name>
+			<mold-uri>~./zul/html/row.dsp</mold-uri>
+		</mold>
+	</component>
+
+	<component>
+		<component-name>dataitem</component-name>
+		<component-class>es.caib.zkib.component.MasterListItem</component-class>
+		<mold>
+			<mold-name>default</mold-name>
+			<mold-uri>${self.listbox.mold == 'select' ? '~./zul/html/listitem-select.dsp': '~./zul/html/listitem.dsp'}</mold-uri>
+		</mold>
+	</component>
+	
+	<component>
+		<component-name>datacomboitem</component-name>
+		<component-class>es.caib.zkib.component.MasterComboItem</component-class>
+		<mold>
+			<mold-name>default</mold-name>
+			<mold-uri>~./zul/html/comboitem.dsp</mold-uri>
+		</mold>
+	</component>
+
+	<component>
+		<extends>tree</extends>
+		<component-name>tree</component-name>
+		<component-class>es.caib.zkib.component.DataTree</component-class>
+	</component>
+
+	<component>
+		<extends>treecell</extends>
+		<component-name>treecell</component-name>
+		<component-class>es.caib.zkib.component.DataTreecell</component-class>
+	</component>
+	
+	<component>
+		<extends>treecell</extends>
+		<component-name>treecelldestacat</component-name>
+		<component-class>es.caib.zkib.component.DataTreecellDestacat</component-class>
+	</component>
+	
+	<component>
+		<extends>treecell</extends>
+		<component-name>treecellimage</component-name>
+		<component-class>es.caib.zkib.component.DataTreecellImage</component-class>
+	</component>	
+	
+
+	<component>
+		<extends>image</extends>
+		<component-name>imagebinding</component-name>
+		<component-class>es.caib.zkib.component.DataImageBinding</component-class>
+	</component>
+	
+	<component>
+		<extends>div</extends>
+		<component-name>divVisible</component-name>
+		<component-class>es.caib.zkib.component.DataDivVisible</component-class>
+	</component>
+	
+	
+
+	<component>
+		<component-name>treeitemfinder</component-name>
+		<component-class>es.caib.zkib.component.MasterTreeitem</component-class>
+	</component>
+	
+	<component>
+		<component-name>form</component-name>
+		<component-class>es.caib.zkib.component.Form</component-class>
+		<mold>
+			<mold-name>vertical</mold-name>
+			<mold-uri>~./zul/html/vbox.dsp</mold-uri>
+		</mold>
+		<mold>
+			<mold-name>horizontal</mold-name>
+			<mold-uri>~./zul/html/hbox.dsp</mold-uri>
+		</mold>
+	</component>
+
+	<component>
+	    <component-name>debugwindow</component-name>    
+	    <macro-uri>~./es/caib/zkib/debug.zul</macro-uri>    
+	</component>
+	
+	<javascript src="~./js/ext/Codepress/codepress.js" charset="UTF-8"/>
+	<javascript-module name="ext.Codepress.codepress" version="1.0"/>
+	<javascript-module name="codepressz.codepressz" version="1.0"/>
+	<zscript>
+	import org.zkforge.codepress.*;
+	</zscript>
+	<component>
+		<component-name>codepress</component-name>
+		<component-class>org.zkforge.codepress.Codepress</component-class>
+		<mold>
+			<mold-name>default</mold-name>
+			<mold-uri>~./codepressz/codepress.dsp</mold-uri>
+		</mold>
+	</component>
+
+</language-addon>

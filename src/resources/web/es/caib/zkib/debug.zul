@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?page id="debugpage" title="Debugger"?>
+
+<zk>
+   <window id="debugwindow" border="overlapped" title="Debugger" closable="true" mode="overlapped">
+   		<caption>
+   			<toolbarbutton label="Refrescar" onClick="tree.setModel (new es.caib.zkib.debug.DebugModel(desktop))" />
+   		</caption>
+		<zscript>
+			zkibdebugmyrenderer = new es.caib.zkib.debug.DebugRenderer ();
+			zkibdebugmodel = new es.caib.zkib.debug.DebugModel();
+		</zscript>
+		<vbox>
+		<tree id="tree" height="400px" width="800px" treeitemRenderer="${zkibdebugmyrenderer}" model="${zkibdebugmodel}" fixedLayout="true">
+			<treecols>
+				<treecol label="Object"/>
+			</treecols>
+		</tree>
+		</vbox>
+	</window>
+</zk>
+			

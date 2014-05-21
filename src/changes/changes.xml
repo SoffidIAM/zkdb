@@ -1,0 +1,73 @@
+<document>
+  <properties>
+    <title>ZKIB DB Module Changes</title>
+    <author email="bbuades@dgtic.caib.es">Gabriel Buades</author>
+  </properties>
+  <body>
+    <release version="1.11" date="2009-03-31" description="Revisión de BUGS">
+      <action dev="u07286" type="fix" due-to="Cristina Miranzo">
+        Corregido BUG al hacer un listbox sobre una collection
+      </action>
+    </release>
+
+    <release version="1.9" date="2008-12-11" description="Revisión de BUGS">
+      <action dev="u07286" type="fix" due-to="Cristina Miranzo">
+        Corregido BUG en la sincronizació de componentes que están asociados al
+        elemento activo de un treebox
+      </action>
+    </release>
+
+
+    <release version="1.8" date="2008-11-18" description="Revisión de BUGS">
+      <action dev="u07286" type="fix" due-to="Cristina Miranzo">
+        Corregido BUG en el uso del bind del listbox con mold=select
+      </action>
+    </release>
+
+    <release version="1.6" date="2008-11-18" description="Revisión de BUGS">
+      <action dev="u07286" type="fix" due-to="u86957">
+        Corregido BUG en el método newInstance de DataNodecollection
+      </action>
+    </release>
+
+    <release version="1.5" date="2008-11-13" description="Revisión de BUGS">
+      <action dev="u07286" type="update">
+        Permetre l'ús d'objectes Calendar al datebox
+      </action>
+      <action dev="u07286" type="update">
+      	Millorada la gestió de dependències
+      </action>
+      <action dev="u07286" type="add">
+      	Permetre ordenar als listbox
+      </action>
+      <action dev="u07286" type="fix">
+      	Llevat updates innecessaris de l'xpath
+      </action>
+    </release>
+
+    <release version="1.4" date="2008-07-03" description="Actualización de ZK">
+      <action dev="u07286" type="update">
+        Migració a ZK 3.0.5
+      </action>
+      <action dev="u07286" type="update">
+      	Millorada la gestió de dependències
+      </action>
+      <action dev="u07286" type="add">
+      	Afegit resultProperty i resultBean als descriptors d'insert
+      </action>
+      <action dev="u07286" type="add">
+      	Afegit combobox
+      </action>
+      <action dev="u07286" type="add">
+      	Afegit treebox
+      </action>
+      <action dev="u07286" type="fix">
+      	Corregit clonat de l'atribut disabled
+      </action>
+      <action dev="u07286" type="add">
+      	Permetre atributs booleans als descriptors XML
+      </action>
+    </release>
+
+  </body>
+</document>
