@@ -4,7 +4,7 @@
   <groupId>com.soffid.zkib</groupId>
   <artifactId>zkdb</artifactId>
   <name>ZK data binding module</name>
-  <version>1.11</version>
+  <version>1.12-SNAPSHOT</version>
   <description>Versiones de componentes ZK que permiten su asociacion a objetos JAVA via XPath</description>
   <licenses>
     <license>
