@@ -116,16 +116,22 @@ public class XPathUtils {
 		else if (parent instanceof Collection)
 		{
 			int i = 0;
+			boolean removed = false;
 			for (@SuppressWarnings("rawtypes")
 			Iterator it = ((Collection) parent).iterator(); it.hasNext(); i++)
 			{
+				if (removed)
+					ds.sendEvent ( new XPathCollectionEvent (ds, parentXPath, XPathCollectionEvent.RECREATED,  i - 1));
 				Object next = it.next();
 				if (next == objectToRemove)
 				{
 					it.remove();
-					ds.sendEvent ( new XPathCollectionEvent (ds, parentXPath, XPathCollectionEvent.DELETED,i ));
-					break;
+					removed = true;
 				}
+			}
+			if (removed)
+			{
+				ds.sendEvent ( new XPathCollectionEvent (ds, parentXPath, XPathCollectionEvent.DELETED, ((Collection)parent).size() ));
 			}
 		}
 		else
@@ -179,23 +185,14 @@ public class XPathUtils {
 			boolean changed = coll.add(value);
 				
 			int pos = -1;
-			if (coll instanceof List)
+			int i = 0;
+			for (Iterator it = coll.iterator(); it.hasNext(); i++)
 			{
-				pos = ((List) coll).indexOf(value); 
-				if (pos < 0)
-					return null;
-			}
-			else
-			{
-				int i = 0;
-				for (Iterator it = coll.iterator(); it.hasNext(); i++)
+				Object next = it.next();
+				if (next == value)
 				{
-					Object next = it.next();
-					if (next == value)
-					{
-						pos = i;
-						break;
-					}
+					pos = i;
+					break;
 				}
 			}
 			if (pos >= 0)

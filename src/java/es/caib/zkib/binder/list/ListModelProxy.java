@@ -7,7 +7,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Vector;
 
-
 import org.zkoss.zk.ui.Component;
 import org.zkoss.zk.ui.Path;
 import org.zkoss.zul.ListModelExt;
@@ -23,10 +22,12 @@ import es.caib.zkib.component.DataListbox;
 import es.caib.zkib.component.DataListcell;
 import es.caib.zkib.datamodel.DataModelCollection;
 import es.caib.zkib.datasource.DataSource;
+import es.caib.zkib.datasource.XPathUtils;
 import es.caib.zkib.events.XPathCollectionEvent;
 import es.caib.zkib.events.XPathEvent;
 import es.caib.zkib.events.XPathRerunEvent;
 import es.caib.zkib.events.XPathSubscriber;
+import es.caib.zkib.events.XPathValueEvent;
 import es.caib.zkib.jxpath.Pointer;
 
 public class ListModelProxy implements XPathSubscriber, ModelProxy, ListModelExt {
@@ -99,10 +100,13 @@ public class ListModelProxy implements XPathSubscriber, ModelProxy, ListModelExt
 	}
 
 	public void onListChange(XPathCollectionEvent event) {
-		String path = event.getXPath()+"["+event.getIndex()+"]";
+		String path = event.getXPath()+"["+(event.getIndex()+1)+"]";
 		String prefix = binder.getDataSource().getRootPath();
 		if (path.startsWith(prefix))
+		{
 			path = path.substring(prefix.length());
+			binder.getDataSource().sendEvent(new XPathValueEvent(binder.getDataSource(), binder.getDataPath()));
+		}
 		if (event.getType() == XPathCollectionEvent.ADDED)
 		{
 			v.add(path);
