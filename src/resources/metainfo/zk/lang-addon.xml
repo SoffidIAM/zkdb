@@ -15,6 +15,15 @@
 	 </zscript>
 
 	<component>
+		<component-name>embed</component-name>
+		<component-class>es.caib.zkib.component.Embed</component-class>
+		<mold>
+			<mold-name>default</mold-name>
+			<mold-uri>~./zul/html/div.dsp</mold-uri>
+		</mold>
+	</component>
+
+	<component>
 		<component-name>datamodel</component-name>
 		<component-class>es.caib.zkib.component.DataModel</component-class>
 		<mold>
