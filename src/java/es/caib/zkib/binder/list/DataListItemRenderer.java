@@ -1,8 +1,11 @@
 package es.caib.zkib.binder.list;
 
 import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.Set;
 
 import org.zkoss.zk.ui.Component;
+import org.zkoss.zk.ui.IdSpace;
 import org.zkoss.zk.ui.event.Events;
 import org.zkoss.zul.ListModel;
 import org.zkoss.zul.Listitem;
@@ -56,6 +59,13 @@ public class DataListItemRenderer implements ListitemRenderer {
 //				duplicateComponent(c1, item);
 				Component clone = (Component) c1.clone();
 				clone.setParent(item);
+				if (clone instanceof IdSpace)
+				{
+					for (String v: new LinkedList<String>((Set<String>)clone.getNamespace().getVariableNames()))
+					{
+						clone.getNamespace().unsetVariable(v, true);
+					}
+				}
 			}
 			Events.postEvent("onNewRow", _listbox, item);
 		} catch (Exception e) {

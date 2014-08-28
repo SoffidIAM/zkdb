@@ -1,9 +1,12 @@
 package es.caib.zkib.binder.tree;
 
 import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.Set;
 import java.util.Vector;
 
 import org.zkoss.zk.ui.Component;
+import org.zkoss.zk.ui.IdSpace;
 import org.zkoss.zk.ui.event.Events;
 import org.zkoss.zk.ui.metainfo.EventHandler;
 import org.zkoss.zk.ui.metainfo.ZScript;
@@ -98,6 +101,13 @@ public class DataTreeitemRenderer implements TreeitemRenderer {
 				Component c1 = (Component) it1.next();
 				Component clone = (Component) c1.clone();
 				clone.setParent(item);
+				if (clone instanceof IdSpace)
+				{
+					for (String v: new LinkedList<String>((Set<String>)clone.getNamespace().getVariableNames()))
+					{
+						clone.getNamespace().unsetVariable(v, true);
+					}
+				}
 			}
 			if (master.isOpen())
 			{
