@@ -1,8 +1,10 @@
 package es.caib.zkib.datamodel.xml;
 
+import java.lang.reflect.Method;
 import java.util.Map;
 
 import javax.servlet.jsp.el.ELException;
+import javax.servlet.jsp.el.FunctionMapper;
 
 import org.apache.commons.el.ExpressionEvaluatorImpl;
 
@@ -13,6 +15,7 @@ import es.caib.zkib.datamodel.DataContext;
 public class Interpreter {
 	static ThreadLocal interpreter = new ThreadLocal();
 	static ExpressionEvaluatorImpl evaluator = null;
+	private static FunctionMapper functionMapper = new FunctionMapperChain();
 
 	public Interpreter() {
 		super();
@@ -56,8 +59,10 @@ public class Interpreter {
 	public static Object evaluate(DataContext ctx, String expression,
 			Class clazz) throws ELException {
 		if (evaluator == null)
+		{
 			evaluator = new ExpressionEvaluatorImpl();
+		}
 		return evaluator.evaluate(expression, clazz, new VariableResolver(ctx),
-				null);
+				functionMapper);
 	}
 }
