@@ -1,6 +1,12 @@
 package es.caib.zkib.component;
 
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
+
 import org.zkoss.zk.ui.Component;
+import org.zkoss.zk.ui.IdSpace;
 import org.zkoss.zk.ui.Page;
 import org.zkoss.zul.Row;
 
@@ -62,6 +68,16 @@ public class DataRow extends Row implements BindContext, XPathSubscriber {
 
 	public Object clone() {
 		DataRow clone = (DataRow) super.clone();
+		for (Component c: (List<Component>) clone.getChildren())
+		{
+			if (c instanceof IdSpace)
+			{
+				for (String v: new LinkedList<String>((Set<String>)c.getNamespace().getVariableNames()))
+				{
+					c.getNamespace().unsetVariable(v, true);
+				}
+			}
+		}
 		clone.binder = new SingletonBinder (clone);
 		clone.binder.setDataPath(binder.getDataPath());
 		return clone;
