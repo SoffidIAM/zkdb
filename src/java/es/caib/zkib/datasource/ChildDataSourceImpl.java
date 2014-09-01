@@ -135,7 +135,7 @@ public class ChildDataSourceImpl implements DataSource {
 	 * @see es.caib.seycon.net.web.zul.DataSource#subscribeToExpression(es.caib.zkib.jxpath.Pointer, org.zkoss.zk.ui.Component)
 	 */
 	public synchronized void subscribeToExpression(String path, XPathSubscriber subscriber) {
-		log.debug("SUBSCRIBE: "+toString()+" on "+path+" Component="+subscriber.toString());
+//		log.debug("SUBSCRIBE: "+toString()+" on "+path+" Component="+subscriber.toString());
 		parent.subscribeToExpression(getParentPointer(path), subscriber);
 		if (registry.containsKey(path)) {
 			Set subscriberSet = (Set) registry.get(path);
@@ -168,7 +168,7 @@ public class ChildDataSourceImpl implements DataSource {
 	}
 
 	public synchronized void unsubscribeToExpression(String xpath, XPathSubscriber subscriber) {
-		log.debug("UNSUBSCRIBE: "+toString()+" on "+xpath+" Component="+subscriber.toString());
+//		log.debug("UNSUBSCRIBE: "+toString()+" on "+xpath+" Component="+subscriber.toString());
 		Set subscriberSet = (Set) registry.get(xpath);
 		if (subscriberSet != null)
 			subscriberSet.remove(subscriber);

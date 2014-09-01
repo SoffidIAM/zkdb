@@ -105,7 +105,7 @@ public class RootDataSourceImpl {
 	 * @see es.caib.seycon.net.web.zul.DataSource#subscribeToExpression(es.caib.zkib.jxpath.Pointer, org.zkoss.zk.ui.Component)
 	 */
 	public void subscribeToExpression(String path, XPathSubscriber subscriber) {
-		log.debug("SUBSCRIBE: "+toString()+" on "+path+" Component="+subscriber.toString());
+//		log.debug("SUBSCRIBE: "+toString()+" on "+path+" Component="+subscriber.toString());
 
 		SubscriberInfo info = getSubscriberInfo(path, true);
 		info.subscribers.add(subscriber);
@@ -115,7 +115,7 @@ public class RootDataSourceImpl {
 	}
 	
 	public void unsubscribeToExpression(String xpath, XPathSubscriber subscriber) {
-		log.debug ("UNSUBSCRIBE: "+toString()+" on "+xpath+" Component="+subscriber.toString());
+//		log.debug ("UNSUBSCRIBE: "+toString()+" on "+xpath+" Component="+subscriber.toString());
 
 		SubscriberInfo info = getSubscriberInfo(xpath, false);
 		if ( info != null)
@@ -140,7 +140,6 @@ public class RootDataSourceImpl {
 			XPathSubscriber subscribers[] = (XPathSubscriber[]) info.subscribers.toArray(new XPathSubscriber[0]);
 			for ( int j = 0; j < subscribers.length; j++)
 			{
-				log.debug ("SENDEVENT "+event.toString()+" to "+subscribers[j]);
 				subscribers[j].onUpdate(event);
 			}
 		}

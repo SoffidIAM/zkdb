@@ -1,6 +1,8 @@
 package es.caib.zkib.component;
 
 
+import java.util.List;
+
 import org.zkoss.zk.ui.Component;
 import org.zkoss.zk.ui.Page;
 import org.zkoss.zul.Vbox;
@@ -9,6 +11,7 @@ import es.caib.zkib.binder.BindContext;
 import es.caib.zkib.binder.SingletonBinder;
 import es.caib.zkib.datasource.DataSource;
 import es.caib.zkib.events.XPathRerunEvent;
+import es.caib.zkib.events.XPathSubscriber;
 import es.caib.zkib.jxpath.JXPathContext;
 import es.caib.zkib.jxpath.Pointer;
 
@@ -41,10 +44,21 @@ public class Form extends Vbox implements BindContext {
 		return binder.getXPath();
 	}
 
-	public void setDataPath(String bind) {		
+	public void setDataPath(String bind) {
+		DataSource ds = binder.getDataSource();
+		String path = binder.getXPath();
+		
 		binder.setDataPath(bind);
+		
+		if (ds != null)
+		{
+			binder.getDataSource().sendEvent(new XPathRerunEvent(ds, path));
+		}
+		
 		if (binder.getDataSource() != null)
+		{
 			binder.getDataSource().sendEvent(new XPathRerunEvent(getDataSource(), getXPath()));
+		}
 	}
 	
 	public Object getValue ()
