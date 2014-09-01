@@ -32,6 +32,7 @@ public abstract class AbstractBinder implements BindContext, XPathSubscriber {
 		private String _xPath;
 		List _subscribers = new Vector();
 		private boolean _pendingParse = false;
+		private boolean _processingXPathRerunEvent = false;
 		
 		protected void smartParse ()
 		{
@@ -39,7 +40,7 @@ public abstract class AbstractBinder implements BindContext, XPathSubscriber {
 			{
 				_pendingParse = false;
 				doParse ();
-				if (!_pendingParse)
+				if (!_pendingParse && ! _processingXPathRerunEvent)
 					onUpdate ( new XPathRerunEvent (_ds, _xPath));
 			}
 		}
@@ -280,11 +281,16 @@ public abstract class AbstractBinder implements BindContext, XPathSubscriber {
 		}
 
 		public void onUpdate (XPathEvent event) {
-			if ( event instanceof XPathRerunEvent)
+			if ( event instanceof XPathRerunEvent && ! _processingXPathRerunEvent)
 			{
 				unsubscribe();
-				parsePath();
-				subscribe();
+				_pendingParse = true;
+				_processingXPathRerunEvent = true;
+				try {
+					smartParse();
+				} finally {
+					_processingXPathRerunEvent = false;
+				}
 			}
 			XPathSubscriber subscribers [] = (XPathSubscriber[]) _subscribers.toArray(new XPathSubscriber[0]);
 			for (int i = 0; i < subscribers.length; i ++)
