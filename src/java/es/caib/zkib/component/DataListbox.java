@@ -97,7 +97,7 @@ public class DataListbox extends Listbox implements XPathSubscriber,
         if (lm == null) {
             if (dsImpl != null)
                 dsImpl.setRootXPath(null);
-        } else {
+        } else if (getPage () != null) {
             if (dsImpl == null)
                 dsImpl = new ChildDataSourceImpl();
 

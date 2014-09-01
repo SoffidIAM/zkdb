@@ -37,7 +37,6 @@ public class TreeModelProxyNode implements XPathSubscriber {
 		pointer = proxy.getBinder().getPointer();
 		parent = null;
 		this.modelProxy = proxy;
-		System.out.println ("TMPN:"+hashCode()+": CREATED ROOT "+pointer.asPath());
 		subscribe ();
 	}
 
@@ -47,12 +46,10 @@ public class TreeModelProxyNode implements XPathSubscriber {
 		this.pointer = (Pointer) pointer.clone();
 		this.hint = hint;
 		this.modelProxy = parent.modelProxy;
-		System.out.println ("TMPN:"+hashCode()+": CREATED CHILD "+pointer.asPath()+ " PARENT "+parent.hashCode());
 		subscribe ();
 	}
 
 	private void subscribe() {
-		System.out.println ("TMPN:"+hashCode()+": Subscribed to "+getXPath());
 		modelProxy.getBinder().getDataSource().subscribeToExpression(getXPath(),this);
 
 		ChildXPathQuery querys[] = modelProxy.getChildXPathQuerys();
@@ -61,7 +58,6 @@ public class TreeModelProxyNode implements XPathSubscriber {
 		{
 			modelProxy.getBinder().getDataSource().subscribeToExpression(
 					XPathUtils.concat(getXPathPrefix(),querys[i].getXPath()),this);
-			System.out.println ("TMPN:"+hashCode()+": Subscribed to "+XPathUtils.concat(getXPathPrefix(),querys[i].getXPath()));
 		}
 	}
 
@@ -74,7 +70,6 @@ public class TreeModelProxyNode implements XPathSubscriber {
 			children[j].detach();
 		}
 		children = null;
-		System.out.println ("TMPN:"+hashCode()+": DETACHED "+pointer.asPath());
 		detached = true;
 	}
 
@@ -83,13 +78,11 @@ public class TreeModelProxyNode implements XPathSubscriber {
 	 */
 	private void unsubscribe() {
 		modelProxy.getBinder().getDataSource().unsubscribeToExpression(getXPath(),this);
-		System.out.println ("TMPN:"+hashCode()+": Unsubscribed to "+getXPath());
 
 		ChildXPathQuery querys[] = modelProxy.getChildXPathQuerys();
 		for (int i = 0; i < querys.length; i++)
 		{
 			modelProxy.getBinder().getDataSource().unsubscribeToExpression(XPathUtils.concat(getXPathPrefix(),querys[i].getXPath()),this);
-			System.out.println ("TMPN:"+hashCode()+": Unsubscribed to "+XPathUtils.concat(getXPathPrefix(),querys[i].getXPath()));
 		}
 	}
 
