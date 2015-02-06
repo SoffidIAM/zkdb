@@ -3,8 +3,11 @@ package es.caib.zkib.binder.list;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Vector;
 
+import org.zkoss.zk.ui.AbstractComponent;
+import org.zkoss.zk.ui.Component;
 import org.zkoss.zul.ListModelExt;
 import org.zkoss.zul.Listhead;
 import org.zkoss.zul.ListitemComparator;
@@ -12,8 +15,12 @@ import org.zkoss.zul.event.ListDataEvent;
 import org.zkoss.zul.event.ListDataListener;
 
 import es.caib.zkib.binder.CollectionBinder;
+import es.caib.zkib.component.DataDatebox;
+import es.caib.zkib.component.DataIntbox;
+import es.caib.zkib.component.DataLabel;
 import es.caib.zkib.component.DataListbox;
 import es.caib.zkib.component.DataListcell;
+import es.caib.zkib.component.DataTextbox;
 import es.caib.zkib.datamodel.DataModelNode;
 import es.caib.zkib.datamodel.DataModelCollection;
 import es.caib.zkib.events.XPathCollectionEvent;
@@ -174,6 +181,25 @@ public class FullModelProxy implements ModelProxy, XPathSubscriber, ListModelExt
 		binder.removeSubscriber(this);
 	}
 
+	private String searchBindOnChildren (Component parent)
+	{
+		for (Component child: (List<Component>)parent.getChildren())
+		{
+			if (child instanceof DataLabel && ((DataLabel) child).getBind() != null)
+				return ((DataLabel) child).getBind();
+			if (child instanceof DataTextbox && ((DataTextbox) child).getBind() != null)
+				return ((DataTextbox) child).getBind();
+			if (child instanceof DataDatebox && ((DataDatebox) child).getBind() != null)
+				return ((DataDatebox) child).getBind();
+			if (child instanceof DataIntbox && ((DataIntbox) child).getBind() != null)
+				return ((DataIntbox) child).getBind();
+			String b = searchBindOnChildren(child);
+			if (b != null)
+				return b;
+		}
+		return null;
+	}
+	
 	public void sort(Comparator cmpr, boolean ascending) {
 		if (cmpr instanceof ListitemComparator)
 		{
@@ -186,6 +212,11 @@ public class FullModelProxy implements ModelProxy, XPathSubscriber, ListModelExt
 			DataListcell cell = (DataListcell) box.getMasterListItem().getChildren().get(i);
 			
 			String bind = cell.getBind();
+			if (bind == null)
+				bind = searchBindOnChildren (cell);
+			
+			if (bind == null)
+				return;
 			
 			Vector newVector = v;
 			Collections.sort(newVector, new DataNodeComparator(binder.getUpdateableListModel(), bind, ascending));
