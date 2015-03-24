@@ -84,6 +84,12 @@ public class XPathUtils {
 		return ctx.getDataSource().getJXPathContext().getValue( concat(ctx.getXPath(), xpath));
 	}
 	
+	public static Object getValue (Component ctxComponent, String xpath) 
+	{
+		BindContext ctx = getComponentContext(ctxComponent);
+		return ctx.getDataSource().getJXPathContext().getValue( concat(ctx.getXPath(), xpath));
+	}
+
 	public static void setValue (BindContext ctx, String xpath, Object obj) 
 	{
 		ctx.getDataSource().getJXPathContext().setValue( concat(ctx.getXPath(), xpath), obj);
