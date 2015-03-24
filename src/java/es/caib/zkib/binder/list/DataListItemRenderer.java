@@ -1,13 +1,18 @@
 package es.caib.zkib.binder.list;
 
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Set;
 
 import org.zkoss.zk.ui.Component;
 import org.zkoss.zk.ui.IdSpace;
 import org.zkoss.zk.ui.event.Events;
 import org.zkoss.zul.ListModel;
+import org.zkoss.zul.Listcell;
+import org.zkoss.zul.Listhead;
+import org.zkoss.zul.Listheader;
 import org.zkoss.zul.Listitem;
 import org.zkoss.zul.ListitemRenderer;
 
@@ -53,17 +58,27 @@ public class DataListItemRenderer implements ListitemRenderer {
 				c.setParent(null);
 			}
 			Iterator it1 = master.getChildren().iterator();
+			Listhead listhead = item.getListbox().getListhead();
+			Iterator headersIterator = listhead == null? Collections.emptyIterator():
+										listhead.getChildren().iterator();
 			while ( it1.hasNext() )
 			{
 				Component c1 = (Component) it1.next();
-//				duplicateComponent(c1, item);
-				Component clone = (Component) c1.clone();
-				clone.setParent(item);
-				if (clone instanceof IdSpace)
+				Component head = (Component) (headersIterator.hasNext() ? headersIterator.next(): null);
+				if (head != null && !head.isVisible())
 				{
-					for (String v: new LinkedList<String>((Set<String>)clone.getNamespace().getVariableNames()))
+					new Listcell().setParent(item);
+				}
+				else
+				{
+					Component clone = (Component) c1.clone();
+					clone.setParent(item);
+					if (clone instanceof IdSpace)
 					{
-						clone.getNamespace().unsetVariable(v, true);
+						for (String v: new LinkedList<String>((Set<String>)clone.getNamespace().getVariableNames()))
+						{
+							clone.getNamespace().unsetVariable(v, true);
+						}
 					}
 				}
 			}
