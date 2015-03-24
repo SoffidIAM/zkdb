@@ -139,25 +139,29 @@ public abstract class DataNode implements DataModelNode, DynaBean, Map {
 	{
 		if (!_transient)
 		{
+			boolean wasDeleted = _deleted;
 			_new = false;
 			_deleted = false;
 			_updated = false;
-			if ( _childrenUpdated )
+			if ( ! wasDeleted)
 			{
+				if ( _childrenUpdated )
+				{
+					Iterator it = children.entrySet().iterator();
+					while (it.hasNext())
+					{
+						Entry entry = (Entry) it.next();
+						DataModelCollection list = (DataModelCollection) entry.getValue();
+						list.commit();
+					}
+				}
 				Iterator it = children.entrySet().iterator();
 				while (it.hasNext())
 				{
 					Entry entry = (Entry) it.next();
 					DataModelCollection list = (DataModelCollection) entry.getValue();
-					list.commit();
+					list.refreshAfterCommit();
 				}
-			}
-			Iterator it = children.entrySet().iterator();
-			while (it.hasNext())
-			{
-				Entry entry = (Entry) it.next();
-				DataModelCollection list = (DataModelCollection) entry.getValue();
-				list.refreshAfterCommit();
 			}
 			_childrenUpdated = false;
 		}
