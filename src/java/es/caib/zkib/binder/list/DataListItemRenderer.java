@@ -59,7 +59,7 @@ public class DataListItemRenderer implements ListitemRenderer {
 			}
 			Iterator it1 = master.getChildren().iterator();
 			Listhead listhead = item.getListbox().getListhead();
-			Iterator headersIterator = listhead == null? Collections.emptyIterator():
+			Iterator headersIterator = listhead == null? Collections.emptyList().iterator():
 										listhead.getChildren().iterator();
 			while ( it1.hasNext() )
 			{
