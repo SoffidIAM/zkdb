@@ -156,6 +156,8 @@ public class DataListbox extends Listbox implements XPathSubscriber,
      */
     private void syncSelectedItem() {
         Object value = valueBinder.getValue();
+        if ("label".equals(getMold()))
+        	invalidate();
         Object instance = value instanceof DataNode ? ((DataNode)value).getInstance(): value;
         if (value != null) {
             Iterator it = getItems().iterator();
