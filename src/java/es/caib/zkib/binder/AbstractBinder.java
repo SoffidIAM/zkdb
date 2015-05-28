@@ -16,6 +16,8 @@ import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
 import org.zkoss.zk.ui.event.Events;
 
+import es.caib.zkib.component.MasterListItem;
+import es.caib.zkib.component.MasterRow;
 import es.caib.zkib.datasource.DataSource;
 import es.caib.zkib.events.XPathEvent;
 import es.caib.zkib.events.XPathRerunEvent;
@@ -201,7 +203,14 @@ public abstract class AbstractBinder implements BindContext, XPathSubscriber {
 			Component c = _component.getParent();
 			while (c != null)
 			{
-				if ( c instanceof BindContext )
+				if ( c instanceof MasterRow && ((MasterRow) c).isMaster ||
+						c instanceof MasterListItem)
+				{
+					_ds = null;
+					_xPath = null;
+					return;
+				}
+				else if ( c instanceof BindContext )
 				{
 					BindContext b = (BindContext) c;
 					if (b.getDataSource() != null )

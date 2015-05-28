@@ -49,13 +49,16 @@ public class PartialModelProxy implements XPathSubscriber, ModelProxy, ListModel
 	private void populateData() {
 		v.clear();
 		List pointers = binder.getPointers();
-		for (int i = 0; i < pointers.size(); i++)
+		if (pointers != null)
 		{
-			Pointer p = (Pointer) pointers.get(i);
-			DataModelNode data = (DataModelNode) p.getValue();
-			int position = binder.getUpdateableListModel().indexOf(data);
-			if (position >= 0)
-				v.add( new Integer (position));
+			for (int i = 0; i < pointers.size(); i++)
+			{
+				Pointer p = (Pointer) pointers.get(i);
+				DataModelNode data = (DataModelNode) p.getValue();
+				int position = binder.getUpdateableListModel().indexOf(data);
+				if (position >= 0)
+					v.add( new Integer (position));
+			}
 		}
 	}
 	
