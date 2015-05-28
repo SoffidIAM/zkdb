@@ -9,9 +9,11 @@ import org.zkoss.zk.scripting.Namespace;
 import org.zkoss.zk.ui.Component;
 import org.zkoss.zk.ui.ComponentNotFoundException;
 import org.zkoss.zk.ui.IdSpace;
+import org.zkoss.zk.ui.ext.AfterCompose;
 import org.zkoss.zul.Grid;
+import org.zkoss.zul.Rows;
 
-public class MasterRow extends DataRow implements IdSpace {
+public class MasterRow extends DataRow implements IdSpace, AfterCompose {
 	
 	/**
 	 * 
@@ -104,5 +106,8 @@ public class MasterRow extends DataRow implements IdSpace {
 		return idspace == null ? Collections.EMPTY_LIST: idspace.getFellows();
 	}
 
+	public void afterCompose() {
+		setParent (new Rows());
+	}
 
 }

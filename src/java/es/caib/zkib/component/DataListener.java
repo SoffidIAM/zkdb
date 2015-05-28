@@ -44,6 +44,11 @@ public class DataListener extends AbstractComponent implements XPathSubscriber {
 		return binder.getValue();
 	}
 
+	public void setValue (Object obj)
+	{
+		binder.setValue(obj);
+	}
+	
 	public void onUpdate(XPathEvent event) {
 		Events.postEvent(new Event("onUpdate", this));
 	}

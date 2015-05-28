@@ -7,6 +7,7 @@ import org.zkoss.util.logging.Log;
 import org.zkoss.zk.ui.Component;
 import org.zkoss.zk.ui.Page;
 import org.zkoss.zk.ui.UiException;
+import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
 import org.zkoss.zk.ui.event.Events;
 import org.zkoss.zul.Columns;
@@ -42,7 +43,6 @@ public class DataGrid extends Grid implements BindContext, XPathSubscriber {
 
 	private DataRow _masterRow;
 	private EventListener onInitListener;
-	private Rows _masterRows;
 
 	public DataGrid() {
 		super();
@@ -54,6 +54,7 @@ public class DataGrid extends Grid implements BindContext, XPathSubscriber {
 		super.setPage(page);
 		if (page == null && _model != null) {
 			_model.removeListDataListener(_dataListener);
+			removeEventListener("onRenderDataGrid", onInitListener);
 			_model = null;
 		}
 		binder.setPage(page);
@@ -64,8 +65,11 @@ public class DataGrid extends Grid implements BindContext, XPathSubscriber {
 		if (parent == null && _model != null) {
 			_model.removeListDataListener(_dataListener);
 			_model = null;
+			binder.setParent(parent);
+		} else {
+			binder.setParent(parent);
+			applyDataPath();
 		}
-		binder.setParent(parent);
 	}
 
 	/** Returns the list model associated with this listbox, or null
@@ -134,9 +138,9 @@ public class DataGrid extends Grid implements BindContext, XPathSubscriber {
 	 * @param max the higher index that a range of invalidated items
 	 */
 	private void syncModel() {
-		final int newsz = _model.getSize();
-		if (getRows() == null)
+		if (_model == null || getRows() == null)
 			return;
+		final int newsz = _model.getSize();
 		
 		final int oldsz = getRows().getChildren().size();
 
@@ -213,8 +217,8 @@ public class DataGrid extends Grid implements BindContext, XPathSubscriber {
 			Rows rows = new Rows ();
 			rows.setParent(this);
 		}
-		_masterRows = new Rows ();
-		_masterRow.setParent(_masterRows);
+		// This parent will be removed on aftercompose
+		_masterRow.setParent( getRows());
 	}
 
 	private Row getRowAtIndex(int i) {
@@ -296,9 +300,18 @@ public class DataGrid extends Grid implements BindContext, XPathSubscriber {
 	}
 
 	public Object clone() {
-		DataGrid clone = (DataGrid) super.clone();
+		final DataGrid clone = (DataGrid) super.clone();
 		clone.binder = new CollectionBinder (clone);
 		clone.binder.setDataPath(binder.getDataPath());
+		clone._dataListener = null;
+		clone.onInitListener = null;
+		clone.addEventListener("onApplyDatapath", new EventListener() {
+			
+			public void onEvent(Event event) throws Exception {
+				clone.applyDataPath();
+			}
+		});
+		Events.postEvent(new Event("onApplyDatapath", clone));
 		return clone;
 	}
 
