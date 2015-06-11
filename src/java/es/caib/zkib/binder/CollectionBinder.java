@@ -4,8 +4,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Vector;
 
-
 import org.zkoss.zk.ui.Component;
+import org.zkoss.zk.ui.event.Event;
+import org.zkoss.zk.ui.event.Events;
 
 import es.caib.zkib.binder.list.FullModelProxy;
 import es.caib.zkib.binder.list.ListModelProxy;
@@ -13,6 +14,9 @@ import es.caib.zkib.binder.list.ModelProxy;
 import es.caib.zkib.binder.list.PartialModelProxy;
 import es.caib.zkib.datamodel.DataModelNode;
 import es.caib.zkib.datamodel.DataModelCollection;
+import es.caib.zkib.events.XPathEvent;
+import es.caib.zkib.events.XPathRerunEvent;
+import es.caib.zkib.events.XPathSubscriber;
 import es.caib.zkib.jxpath.JXPathContext;
 import es.caib.zkib.jxpath.JXPathException;
 import es.caib.zkib.jxpath.Pointer;
@@ -89,20 +93,29 @@ public class CollectionBinder extends AbstractBinder  {
 	 */
 	private void parsePartialModel(String path) {
 		// Buscar el padre
-		int i = path.lastIndexOf('[');
-		if ( i >=  0)
+		_model = null;
+		_modelPointer = null;
+		_xPathSubscription = null;
+		String path2 = path;
+		while (path2.endsWith("]"))
 		{
-			String parentPath = path.substring(0, i); 
-			try {
-				Pointer p = getDataSource().getJXPathContext().getPointer(parentPath);
-				Object obj = p.getValue();
-				if ( obj instanceof DataModelCollection)
-				{
-					_model = (DataModelCollection) obj;
-					_modelPointer = p;
-					_xPathSubscription = p.asPath();
+			int i = path2.lastIndexOf('[');
+			if ( i >=  0)
+			{
+				String parentPath = path2.substring(0, i); 
+				try {
+					Pointer p = getDataSource().getJXPathContext().getPointer(parentPath);
+					Object obj = p.getValue();
+					if ( obj instanceof DataModelCollection)
+					{
+						_model = (DataModelCollection) obj;
+						_modelPointer = p;
+						_xPathSubscription = p.asPath();
+						break;
+					}
+				} catch (JXPathException e) {
 				}
-			} catch (JXPathException e) {
+				path2 = parentPath;
 			}
 		}
 		parseNoModel(path);
@@ -195,6 +208,13 @@ public class CollectionBinder extends AbstractBinder  {
 
 	public boolean isValid() {
 		return true;
+	}
+
+	public void onUpdate (XPathEvent event) {
+		super.onUpdate(event);
+
+		if ( event instanceof XPathRerunEvent)
+			_jxpContext = null;
 	}
 
 	

@@ -1,12 +1,17 @@
 package es.caib.zkib.component;
 
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Set;
 
 import org.zkoss.zk.ui.Component;
 import org.zkoss.zk.ui.Page;
 import org.zkoss.zk.ui.UiException;
 import org.zkoss.zk.ui.event.EventListener;
+import org.zkoss.zk.ui.ext.AfterCompose;
 import org.zkoss.zul.ListModel;
 import org.zkoss.zul.Listbox;
 import org.zkoss.zul.Listhead;
@@ -28,14 +33,17 @@ import es.caib.zkib.events.XPathRerunEvent;
 import es.caib.zkib.events.XPathSubscriber;
 import es.caib.zkib.events.XPathValueEvent;
 import es.caib.zkib.jxpath.JXPathContext;
+import es.caib.zkib.jxpath.Pointer;
 import es.caib.zkib.jxpath.Variables;
 
 public class DataListbox extends Listbox implements XPathSubscriber,
-        BindContext, DataSource {
+        BindContext, DataSource, AfterCompose {
+	String dataPath;
     /**
      * 
      */
     private static final long serialVersionUID = 7972552691186027886L;
+    SingletonBinder nofilterCollectionBinder = new SingletonBinder(this);
     CollectionBinder collectionBinder = new CollectionBinder(this);
     SingletonBinder valueBinder = new SingletonBinder(this);
     ChildDataSourceImpl dsImpl = null;
@@ -46,6 +54,7 @@ public class DataListbox extends Listbox implements XPathSubscriber,
 
     private MasterListItem _masterListItem;
 	private String selectedItemXPath;
+	private String additionalFilter;
 
     public DataListbox() {
         super();
@@ -68,7 +77,7 @@ public class DataListbox extends Listbox implements XPathSubscriber,
     }
 
     public String getDataPath() {
-        return collectionBinder.getDataPath();
+        return dataPath;
     }
     
     public String getSelectedItemXPath () {
@@ -77,7 +86,7 @@ public class DataListbox extends Listbox implements XPathSubscriber,
 
     public void setDataPath(String bind) {
 
-        collectionBinder.setDataPath(bind);
+    	dataPath = bind;
         applyDataPath();
         if (bind != null)
         	enableOnSelectListener();
@@ -91,6 +100,18 @@ public class DataListbox extends Listbox implements XPathSubscriber,
         if (oldListModel != null && oldListModel instanceof ModelProxy)
             ((ModelProxy) oldListModel).unsubscribe();
 
+        additionalFilter = getAdditionalFilter ();
+        if (additionalFilter == null || additionalFilter.length() == 0)
+        {
+        	nofilterCollectionBinder.setDataPath(null);
+        	collectionBinder.setDataPath(dataPath);
+        }
+        else
+        {
+        	String newdp = dataPath+additionalFilter;
+        	nofilterCollectionBinder.setDataPath(dataPath);
+        	collectionBinder.setDataPath(newdp);
+        }
         ListModel lm = collectionBinder.createModel();
         setModel(lm);
 
@@ -110,6 +131,87 @@ public class DataListbox extends Listbox implements XPathSubscriber,
             }
         }
     }
+
+    
+    private void findFilters (Component c, List<HeaderFilter> filters)
+    {
+    	if (c instanceof HeaderFilter)
+    	{
+    		filters.add((HeaderFilter) c);
+    	}
+    	else
+    	{
+    		for (Component child: (Collection<Component>)c.getChildren())
+    		{
+    			findFilters(child, filters);
+    		}
+    	}
+    }
+    
+    @SuppressWarnings("unchecked")
+	private String getAdditionalFilter() {
+    	StringBuffer filter = new StringBuffer();
+    	List<HeaderFilter> selectors = new LinkedList<HeaderFilter>();
+		findFilters (this, selectors);
+    	for (HeaderFilter lbf: selectors)
+    	{
+   			lbf.appendFilter (filter);
+    	}
+    	return filter.toString();
+	}
+
+    @SuppressWarnings("unchecked")
+	public void updateFilters() {
+    	// Search selectors
+    	List<HeaderFilter> selectors = new LinkedList<HeaderFilter>();
+		findFilters (this, selectors);
+		if (selectors.isEmpty())
+			return;
+		HeaderFilter selectorsArray[] = selectors.toArray(new HeaderFilter[selectors.size()]);
+		HashSet<String> values[] = new HashSet[selectors.size()];
+		for (int i = 0; i < selectors.size(); i++)
+			values[i] = new HashSet<String>();
+		
+		// Createa data context
+		JXPathContext ctx;
+		String path ;
+		if (nofilterCollectionBinder.getDataPath() == null)
+			ctx = collectionBinder.getJXPathContext();
+		else
+			ctx = nofilterCollectionBinder.getJXPathContext();
+		if (ctx == null)
+			return ;
+		// Search data
+		for ( Iterator it = ctx.iteratePointers("/"); it.hasNext();)
+		{
+			Pointer p = (Pointer) it.next();
+			for (int i = 0; i < selectors.size(); i++)
+			{
+				HeaderFilter selector = selectorsArray[i];
+				Object value = ctx.getRelativeContext(p).getValue( selector.getBind());
+				if (value != null)
+				{
+					values[i].add(value.toString());
+				}
+			}
+		}
+		// Update filters
+		for (int i = 0;i < selectorsArray.length; i++)
+		{
+			HeaderFilter selector = selectorsArray[i];
+			if (selector instanceof ListboxFilter)
+			{
+				ListboxFilter listboxSelector = (ListboxFilter) selector;
+				List<Listitem> items = listboxSelector.getItems();
+				items.clear();
+				items.add(new Listitem ("-", null));
+				for (String value :values[i] ) {
+					items.add (new Listitem (value, value));
+				}
+				listboxSelector.setSelectedIndex(0);
+			}
+		}
+	}
 
     public DataSource getDataSource() {
         return collectionBinder.getDataSource();
@@ -144,6 +246,7 @@ public class DataListbox extends Listbox implements XPathSubscriber,
             _updateValueBinder = false;
             applyDataPath();
             setSelectedIndex(-1);
+            updateFilters();
             valueBinder.setDataPath(valueBinder.getDataPath());
             syncSelectedItem();
             _updateValueBinder = oldValue;
@@ -426,5 +529,16 @@ public class DataListbox extends Listbox implements XPathSubscriber,
 
 	public String getRootPath() {
 		return dsImpl.getRootPath();
+	}
+	
+	public void onUpdateFilterSelection ()
+	{
+        String newAdditionalFilter = getAdditionalFilter ();
+        if ( ! newAdditionalFilter.equals(additionalFilter))
+        	applyDataPath();
+	}
+
+	public void afterCompose() {
+		updateFilters();
 	}
 }

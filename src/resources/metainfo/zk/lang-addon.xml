@@ -124,6 +124,22 @@
 	</component>
 
 	<component>
+		<component-name>listboxfilter</component-name>
+		<extends>listbox</extends>
+		<mold>
+			<mold-name>select</mold-name>
+			<mold-uri>~./zul/html/listbox-select.dsp</mold-uri>
+		</mold>
+		<component-class>es.caib.zkib.component.ListboxFilter</component-class>
+	</component>
+
+	<component>
+		<component-name>textboxfilter</component-name>
+		<extends>textbox</extends>
+		<component-class>es.caib.zkib.component.TextboxFilter</component-class>
+	</component>
+
+	<component>
 		<extends>listcell</extends>
 		<component-name>listcell</component-name>
 		<component-class>es.caib.zkib.component.DataListcell</component-class>

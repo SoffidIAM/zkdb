@@ -134,7 +134,8 @@ public abstract class AbstractBinder implements BindContext, XPathSubscriber {
 			else if (_component.getPage() != null)
 			{
 				int i = _bind.indexOf(":");
-				if ( i == -1)
+				int j = _bind.indexOf('[');
+				if ( i == -1 || j >= 0 && i > j)
 				{
 					String bind = _bind;
 					if ( ! bind.startsWith("/") && ! bind.startsWith("["))

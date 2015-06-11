@@ -6,6 +6,7 @@ package es.caib.zkib.datasource;
 
 import es.caib.zkib.events.XPathRerunEvent;
 import es.caib.zkib.events.XPathValueEvent;
+import es.caib.zkib.jxpath.ClassFunctions;
 import es.caib.zkib.jxpath.JXPathContext;
 import es.caib.zkib.jxpath.Pointer;
 import es.caib.zkib.jxpath.Variables;
@@ -75,12 +76,14 @@ public class JXPContext extends JXPathContextReferenceImpl {
 		super(parentContext, pointer.getNode());
 		this.pointer = pointer;
 		this.parentContext = parentContext;
+		setFunctions(new ClassFunctions(StringFunctions.class, "soffid"));
 		setFactory(JXPathFactory.getInstance());
 	} 
 	
 	public JXPContext (DataSource ds, Object obj) {
 		super(null, obj);
 		this.ds = ds;
+		setFunctions(new ClassFunctions(StringFunctions.class, "soffid"));
 		setFactory(JXPathFactory.getInstance());
 	} 
 
