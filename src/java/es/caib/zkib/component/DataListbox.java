@@ -33,6 +33,7 @@ import es.caib.zkib.events.XPathRerunEvent;
 import es.caib.zkib.events.XPathSubscriber;
 import es.caib.zkib.events.XPathValueEvent;
 import es.caib.zkib.jxpath.JXPathContext;
+import es.caib.zkib.jxpath.JXPathNotFoundException;
 import es.caib.zkib.jxpath.Pointer;
 import es.caib.zkib.jxpath.Variables;
 
@@ -188,10 +189,14 @@ public class DataListbox extends Listbox implements XPathSubscriber,
 			for (int i = 0; i < selectors.size(); i++)
 			{
 				HeaderFilter selector = selectorsArray[i];
-				Object value = ctx.getRelativeContext(p).getValue( selector.getBind());
-				if (value != null)
-				{
-					values[i].add(value.toString());
+				try {
+					Object value = ctx.getRelativeContext(p).getValue( selector.getBind());
+					if (value != null)
+					{
+						values[i].add(value.toString());
+					}
+				} catch (JXPathNotFoundException e) {
+					// Ignore temporary invalid paths
 				}
 			}
 		}
