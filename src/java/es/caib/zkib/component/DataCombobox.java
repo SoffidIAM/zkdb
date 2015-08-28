@@ -55,7 +55,8 @@ public class DataCombobox extends org.zkoss.zul.Combobox implements XPathSubscri
 					}
 				}
 			}
-			if (! value.equals(valueBinder.getValue()))
+			if (value == null && valueBinder.getValue() != null ||
+				value != null && ! value.equals(valueBinder.getValue()))
 				valueBinder.setValue(value);
 		}
 	}
