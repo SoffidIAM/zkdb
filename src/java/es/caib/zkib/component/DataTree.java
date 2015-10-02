@@ -412,6 +412,8 @@ public class DataTree extends Tree implements XPathSubscriber, BindContext, Data
 			}
 		} else node.setOpen(true);
 
+		setSelectedItem(node);
+		
 		return true;
 	}
 	

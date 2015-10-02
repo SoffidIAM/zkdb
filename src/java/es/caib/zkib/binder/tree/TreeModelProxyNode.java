@@ -119,8 +119,7 @@ public class TreeModelProxyNode implements XPathSubscriber {
 				onListChange ( (XPathCollectionEvent) event);
 			else if (event instanceof XPathRerunEvent )
 			{
-				if (parent == null ||
-						getXPath().equals(event.getXPath()))
+				if (getXPath().equals(event.getXPath()))
 					refresh();
 			}
 		}
