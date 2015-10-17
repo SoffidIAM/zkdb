@@ -36,6 +36,11 @@ public abstract class AbstractBinder implements BindContext, XPathSubscriber {
 		private boolean _pendingParse = false;
 		private boolean _processingXPathRerunEvent = false;
 		
+		public void invalidate ()
+		{
+			_pendingParse = true;
+		}
+		
 		protected void smartParse ()
 		{
 			if (_pendingParse && _bind != null)

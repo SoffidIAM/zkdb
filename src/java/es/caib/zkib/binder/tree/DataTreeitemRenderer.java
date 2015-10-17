@@ -47,7 +47,7 @@ public class DataTreeitemRenderer implements TreeitemRenderer {
 
 			TreeModelProxyNode node = (TreeModelProxyNode) data;
 			SingletonBinder binder = new SingletonBinder (item);
-			binder.setDataPath(node.getPointer().asPath());
+			binder.setDataPath(node.getLocalPath());
 			item.setAttribute(BindContext.BINDCTX_ATTRIBUTE, binder, Component.COMPONENT_SCOPE);
 			MasterTreeitem master = (MasterTreeitem) node.getHint();
 			// Copiar atributos
@@ -86,7 +86,7 @@ public class DataTreeitemRenderer implements TreeitemRenderer {
 			}
 			if (master.getBind() != null)
 			{
-				JXPathContext ctx = _tree.getDataSource().getJXPathContext().getRelativeContext(node.pointer);
+				JXPathContext ctx = _tree.getDataSource().getJXPathContext().getRelativeContext(node.getPointer());
 				item.setValue(ctx.getValue(master.getBind()));
 			}
 			// Agregar los hijos

@@ -18,32 +18,36 @@ import es.caib.zkib.events.XPathEvent;
 import es.caib.zkib.events.XPathRerunEvent;
 import es.caib.zkib.events.XPathSubscriber;
 import es.caib.zkib.jxpath.JXPathContext;
+import es.caib.zkib.jxpath.JXPathNotFoundException;
 import es.caib.zkib.jxpath.Pointer;
 
 
 @SuppressWarnings("unchecked")
 public class TreeModelProxyNode implements XPathSubscriber {
 
-	Pointer pointer;
+	String pointerPath;
 	Object hint;
 	TreeModelProxyNode children [];
 	TreeModelProxyNode parent;
 	FullTreeModelProxy modelProxy;
 	private String fullXPath = null;
 	boolean detached = false;
+	private String localPath;
 	
 	public TreeModelProxyNode(FullTreeModelProxy proxy) {
 		super();
-		pointer = proxy.getBinder().getPointer();
+		pointerPath = proxy.getBinder().getPointer().asPath();
+		localPath = pointerPath;
 		parent = null;
 		this.modelProxy = proxy;
 		subscribe ();
 	}
 
-	public TreeModelProxyNode(TreeModelProxyNode parent, Pointer pointer, Object hint) {
+	public TreeModelProxyNode(TreeModelProxyNode parent, String base, String localPath, Object hint) {
 		super();
 		this.parent = parent;
-		this.pointer = (Pointer) pointer.clone();
+		this.pointerPath = XPathUtils.concat(base, localPath);
+		this.localPath = localPath;
 		this.hint = hint;
 		this.modelProxy = parent.modelProxy;
 		subscribe ();
@@ -96,16 +100,18 @@ public class TreeModelProxyNode implements XPathSubscriber {
 	/**
 	 * @return Returns the xPath.
 	 */
-	public Pointer getPointer() {
-		return pointer;
+	public Pointer getPointer() throws JXPathNotFoundException {
+		JXPathContext ctx = modelProxy.getBinder().getJXPathContext();
+		return ctx.getPointer(pointerPath);
 	}
 	
 	public Object getValue()
 	{
-		if (pointer == null)
+		try {
+			return getPointer().getValue();
+		} catch (JXPathNotFoundException e) {
 			return null;
-		else
-			return pointer.getValue();
+		}
 	}
 		
 	public Object getHint () {
@@ -141,23 +147,30 @@ public class TreeModelProxyNode implements XPathSubscriber {
 	 */
 	protected TreeModelProxyNode[] searchChildren() {
 		Vector work = new Vector ();
-		JXPathContext ctx = modelProxy.getBinder().getDataSource().getJXPathContext();
-		ctx = ctx.getRelativeContext(pointer);
-		ChildXPathQuery queries [] = modelProxy.getChildXPathQuerys();
-		for (int i = 0 ; i < queries.length; i ++)
+		try
 		{
-			ChildXPathQuery query = queries[i];
-			Iterator pointers = ctx.iteratePointers(query.getXPath());
-			while (pointers.hasNext())
+			JXPathContext ctx = modelProxy.getBinder().getDataSource().getJXPathContext();
+			ctx = ctx.getRelativeContext(getPointer());
+			ChildXPathQuery queries [] = modelProxy.getChildXPathQuerys();
+			for (int i = 0 ; i < queries.length; i ++)
 			{
-				Pointer pointer = (Pointer) pointers.next();
-				if (pointer.getNode() != null)
+				ChildXPathQuery query = queries[i];
+				Iterator pointers = ctx.iteratePointers(query.getXPath());
+				while (pointers.hasNext())
 				{
-					TreeModelProxyNode child = new TreeModelProxyNode(this, pointer, query.getHint());
-					work.add(child);
+					Pointer pointer = (Pointer) pointers.next();
+					if (pointer.getNode() != null)
+					{
+						TreeModelProxyNode child = new TreeModelProxyNode(this, 
+								pointerPath,
+								pointer.asPath(),
+								query.getHint());
+						work.add(child);
+					}
 				}
+				
 			}
-			
+		} catch (JXPathNotFoundException e) {
 		}
 		children = (TreeModelProxyNode[]) work.toArray(new TreeModelProxyNode[work.size()]);
 		return children;
@@ -172,7 +185,7 @@ public class TreeModelProxyNode implements XPathSubscriber {
 		if (detached)
 			throw new UiException("Cannot add child to a detached TreeModelProxyNode");
 		JXPathContext ctx = modelProxy.getBinder().getDataSource().getJXPathContext();
-		ctx = ctx.getRelativeContext(pointer);
+		ctx = ctx.getRelativeContext(getPointer());
 		ChildXPathQuery queries [] = modelProxy.getChildXPathQuerys();
 
 		String thisPath = XPathUtils.concat (modelProxy.getBinder().getDataSource().getRootPath(),getXPathPrefix());
@@ -193,7 +206,10 @@ public class TreeModelProxyNode implements XPathSubscriber {
 					{
 						work[j] = children[j];
 					}
-					TreeModelProxyNode child = new TreeModelProxyNode(this, pointer, query.getHint());
+					TreeModelProxyNode child = new TreeModelProxyNode(this, 
+							pointerPath, 
+							pointer.asPath(),
+							query.getHint());
 					work [size] = child;
 					children = work;
 					modelProxy.sendEvent ( new TreeDataEvent (modelProxy, TreeDataEvent.INTERVAL_ADDED, this, size, size));
@@ -229,9 +245,29 @@ public class TreeModelProxyNode implements XPathSubscriber {
 		if (!detached)
 		{
 			unsubscribe();
-			if (children != null)
-			{
-				if (children.length > 0)
+			
+			// Refresh pointer
+			try {
+				Pointer pointer =  getPointer();
+				if (children != null)
+				{
+					if (children.length > 0)
+					{
+						modelProxy.sendEvent ( new TreeDataEvent (modelProxy, TreeDataEvent.INTERVAL_REMOVED, this, 0, children.length -1));
+						for (int i = 0; i < children.length; i++)
+						{
+							children[i].detach();
+						}
+					}
+					
+					searchChildren();
+					
+					if (children != null && children.length > 0)
+						modelProxy.sendEvent ( new TreeDataEvent (modelProxy, TreeDataEvent.INTERVAL_ADDED, this, 0, children.length -1));
+				}
+				subscribe ();
+			} catch (JXPathNotFoundException e) {
+				if (children != null && children.length > 0)
 				{
 					modelProxy.sendEvent ( new TreeDataEvent (modelProxy, TreeDataEvent.INTERVAL_REMOVED, this, 0, children.length -1));
 					for (int i = 0; i < children.length; i++)
@@ -239,14 +275,8 @@ public class TreeModelProxyNode implements XPathSubscriber {
 						children[i].detach();
 					}
 				}
-				
-		
-				searchChildren();
-				
-				if (children.length > 0)
-					modelProxy.sendEvent ( new TreeDataEvent (modelProxy, TreeDataEvent.INTERVAL_ADDED, this, 0, children.length -1));
 			}
-			subscribe ();
+
 		}
 	}
 
@@ -264,7 +294,7 @@ public class TreeModelProxyNode implements XPathSubscriber {
 		
 		for (int i = 0 ; i < children.length; i ++)  
 		{
-			String newPath  = XPathUtils.concat(thisPath,children[i].pointer.asPath());
+			String newPath  = XPathUtils.concat(thisPath,children[i].pointerPath);
 			if (path.equals(newPath))
 			{
 				int size = children.length;
@@ -311,9 +341,9 @@ public class TreeModelProxyNode implements XPathSubscriber {
 		{
 			String parentPath = parent.getXPath();
 			if (parentPath.equals ("/"))
-				fullXPath = pointer.asPath();
+				fullXPath = pointerPath;
 			else
-				fullXPath = XPathUtils.concat(parent.getXPath(),pointer.asPath());
+				fullXPath = XPathUtils.concat(parent.getXPath(),localPath);
 			return fullXPath;
 		}
 	}
@@ -332,6 +362,10 @@ public class TreeModelProxyNode implements XPathSubscriber {
 		{
 			modelProxy.sendEvent ( new TreeDataEvent (modelProxy, TreeDataEvent.CONTENTS_CHANGED, this, 0, children.length -1));
 		}
+	}
+
+	public String getLocalPath() {
+		return localPath;
 	}
 	
 }
