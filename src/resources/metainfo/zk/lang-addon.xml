@@ -290,4 +290,15 @@
 		</mold>
 	</component>
 
+	<javascript src="~./js/ext/codemirror/lib/codemirror.js" charset="UTF-8"/>
+	<javascript-module name="ext.codemirror.codemirror" version="1.0"/>
+	<javascript-module name="codemirror.codemirror" version="1.0"/>
+	<component>
+		<component-name>codemirror</component-name>
+		<component-class>com.soffid.codemirror.Codemirror</component-class>
+		<mold>
+			<mold-name>default</mold-name>
+			<mold-uri>~./codemirror/codemirror.dsp</mold-uri>
+		</mold>
+	</component>
 </language-addon>
