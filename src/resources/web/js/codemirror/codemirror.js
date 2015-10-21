@@ -27,6 +27,7 @@ zkCodemirror.init = function (ed) {
 		lineNumbers: ("true" == ln),
 		readonly: ("true" == ro)
 	});
+	ed.codemirror.setSize (ed.getAttribute("width"), ed.getAttribute("height"));
 	ed.codemirror.on ("change", function() {
 			var req = {uuid: ed.id, cmd: "onChange", data : [ed.codemirror.getDoc().getValue()]};
 			zkau.send (req, 5);

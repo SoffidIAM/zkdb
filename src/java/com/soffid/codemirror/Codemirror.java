@@ -58,7 +58,9 @@ public class Codemirror extends InputElement implements XPathSubscriber {
 	private boolean _autocomplete = false;
 	
 	private static final Map <String, String> languages = initLanguages();
-	
+
+	public Codemirror () {
+	}
 	
 	public void onChange(InputEvent evt){
 		setValue( evt.getValue() );
@@ -103,6 +105,9 @@ public class Codemirror extends InputElement implements XPathSubscriber {
 		HTMLs.appendAttribute(sb, "z.lang", getLanguage());
 		HTMLs.appendAttribute(sb, "z.readonly", isReadonly());
 		HTMLs.appendAttribute(sb, "z.linenumbers", _linenumbers);
+		HTMLs.appendAttribute(sb, "style", getStyle());
+		HTMLs.appendAttribute(sb, "width", getWidth());
+		HTMLs.appendAttribute(sb, "height", getHeight());
 		return sb.toString();
 	}
 

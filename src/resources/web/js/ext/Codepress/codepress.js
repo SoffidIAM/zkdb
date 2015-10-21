@@ -58,7 +58,7 @@ CodePress = function(obj) {
 	}
 	
 	self.getCode = function() {
-		return self.textarea.disabled ? self.editor.getCode() : self.textarea.value;
+		return self.textarea.disabled ? (self.editor == null ? "" : self.editor.getCode()) : self.textarea.value;
 	}
 
 	self.setCode = function(code) {
