@@ -16,6 +16,17 @@ public class MasterTreeitem extends Treeitem implements AfterCompose {
 	private String bind;
 	private String path;
 	private DataTree theTree;
+	Long openLevels;
+	
+	public Long getOpenLevels() {
+		return openLevels;
+	}
+
+
+	public void setOpenLevels(Long openLevels) {
+		this.openLevels = openLevels;
+	}
+
 
 	/* (non-Javadoc)
 	 * @see org.zkoss.zul.Treeitem#setParent(org.zkoss.zk.ui.Component)

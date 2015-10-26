@@ -56,12 +56,12 @@ public class TreeModelProxyNode implements XPathSubscriber {
 	private void subscribe() {
 		modelProxy.getBinder().getDataSource().subscribeToExpression(getXPath(),this);
 
-		ChildXPathQuery querys[] = modelProxy.getChildXPathQuerys();
+		ChildXPathQuery queries[] = modelProxy.getChildXPathQuerys();
 		
-		for (int i = 0; i < querys.length; i++)
+		for (int i = 0; i < queries.length; i++)
 		{
 			modelProxy.getBinder().getDataSource().subscribeToExpression(
-					XPathUtils.concat(getXPathPrefix(),querys[i].getXPath()),this);
+					XPathUtils.concat(getXPathPrefix(),queries[i].getXPath()),this);
 		}
 	}
 
@@ -118,15 +118,64 @@ public class TreeModelProxyNode implements XPathSubscriber {
 		return hint;
 	}
 
+	private boolean duringOnRerunXPath = false;
+	
+	private boolean isDuringOnRerunXPath ()
+	{
+		return duringOnRerunXPath || (parent != null && parent.isDuringOnRerunXPath());
+	}
+	
 	public void onUpdate(XPathEvent event) {
 		if (!detached)
 		{
 			if (event instanceof XPathCollectionEvent)
 				onListChange ( (XPathCollectionEvent) event);
-			else if (event instanceof XPathRerunEvent )
+			else if (event instanceof XPathRerunEvent  && !isDuringOnRerunXPath())
 			{
-				if (getXPath().equals(event.getXPath()))
-					refresh();
+				duringOnRerunXPath = true;
+				try
+				{
+					String baseEventPath = ((XPathRerunEvent) event).getBaseXPath();
+					if (parent == null  || parent.children == null)
+					{
+						refresh ();
+					}
+					else if (getXPath().equals(baseEventPath))
+					{
+						for (int i = 0; i < parent.children.length; i++)
+						{
+							if (parent.children[i] == this)
+							{
+								parent.modelProxy.sendEvent ( new TreeDataEvent (modelProxy, TreeDataEvent.INTERVAL_ADDED, parent, i, i));
+								if (children != null)
+								{
+									for (int j = 0; j < children.length; j++)
+									{
+										children[j].detach();
+									}
+								}
+									
+								searchChildren();
+								parent.modelProxy.sendEvent ( new TreeDataEvent (modelProxy, TreeDataEvent.INTERVAL_REMOVED, parent, i, i));
+							}
+						}
+					}
+					else 
+					{
+						ChildXPathQuery queries[] = modelProxy.getChildXPathQuerys();
+						
+						for (int i = 0; i < queries.length; i++)
+						{
+							if (XPathUtils.concat(getXPathPrefix(),queries[i].getXPath()).equals(baseEventPath))
+							{
+								refresh();
+							}
+						}
+						
+					}
+				} finally {
+					duringOnRerunXPath =false;
+				}
 			}
 		}
 	}
@@ -244,11 +293,10 @@ public class TreeModelProxyNode implements XPathSubscriber {
 	void refresh() {
 		if (!detached)
 		{
-			unsubscribe();
 			
+			unsubscribe();
 			// Refresh pointer
 			try {
-				Pointer pointer =  getPointer();
 				if (children != null)
 				{
 					if (children.length > 0)
@@ -276,7 +324,6 @@ public class TreeModelProxyNode implements XPathSubscriber {
 					}
 				}
 			}
-
 		}
 	}
 

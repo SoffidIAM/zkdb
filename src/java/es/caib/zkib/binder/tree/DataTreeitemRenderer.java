@@ -109,10 +109,23 @@ public class DataTreeitemRenderer implements TreeitemRenderer {
 					}
 				}
 			}
-			if (master.isOpen())
+			if (master.getOpenLevels() != null) {
+				int level = 0;
+				Treeitem current = item;
+				do
+				{
+					level ++;
+					current = current.getParentItem();
+				} while (current != null);
+				if (level <= master.getOpenLevels().intValue())
+				{
+					Events.postEvent("onTreeitemOpen", _tree, item);
+				}
+			} 
+			else if (master.isOpen())
 			{
 				Events.postEvent("onTreeitemOpen", _tree, item);
-			}
+			} 
 			Events.postEvent("onNewRow", _tree, item);
 		} catch (Exception e) {
 			e.printStackTrace();
