@@ -47,7 +47,13 @@ public class DataComboitemRenderer implements ComboitemRenderer {
 				item.setValue(binder.getJXPathContext().getValue(master.getBind()));
 			
 			if (master.getLabelBind() != null)
-				item.setLabel(binder.getJXPathContext().getValue(master.getLabelBind()).toString());
+			{
+				Object v = binder.getJXPathContext().getValue(master.getLabelBind());
+				if (v != null)
+					item.setLabel(v.toString());
+				else
+					item.setLabel("");
+			}
 
 			// Agregar los hijos
 			while (item.getChildren().size() > 0)
