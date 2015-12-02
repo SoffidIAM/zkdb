@@ -341,7 +341,7 @@ public class TreeModelProxyNode implements XPathSubscriber {
 		
 		for (int i = 0 ; i < children.length; i ++)  
 		{
-			String newPath  = XPathUtils.concat(thisPath,children[i].pointerPath);
+			String newPath  = XPathUtils.concat(thisPath,children[i].localPath);
 			if (path.equals(newPath))
 			{
 				int size = children.length;
