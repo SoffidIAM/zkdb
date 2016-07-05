@@ -122,11 +122,12 @@ public class XPathUtils {
 		else if (parent instanceof Collection)
 		{
 			int i = 0;
+			boolean fullRefresh = ((Collection)parent).size() > 10;
 			boolean removed = false;
 			for (@SuppressWarnings("rawtypes")
 			Iterator it = ((Collection) parent).iterator(); it.hasNext(); i++)
 			{
-				if (removed)
+				if (removed && !fullRefresh)
 					ds.sendEvent ( new XPathCollectionEvent (ds, parentXPath, XPathCollectionEvent.RECREATED,  i - 1));
 				Object next = it.next();
 				if (next == objectToRemove)
@@ -137,7 +138,10 @@ public class XPathUtils {
 			}
 			if (removed)
 			{
-				ds.sendEvent ( new XPathCollectionEvent (ds, parentXPath, XPathCollectionEvent.DELETED, ((Collection)parent).size() ));
+				if (fullRefresh)
+					ds.sendEvent ( new XPathRerunEvent(ds, parentXPath));
+				else
+					ds.sendEvent ( new XPathCollectionEvent (ds, parentXPath, XPathCollectionEvent.DELETED, ((Collection)parent).size() ));
 			}
 		}
 		else

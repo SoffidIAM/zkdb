@@ -2,6 +2,8 @@ package es.caib.zkib.datamodel.xml.handler;
 
 import java.lang.reflect.Method;
 
+import javax.ejb.EJBHome;
+import javax.ejb.EJBLocalHome;
 import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.rmi.PortableRemoteObject;
@@ -49,9 +51,15 @@ public abstract class AbstractEJBHandler extends AbstractInvokerHandler {
 			if (jndiContext == null)
 				jndiContext = new InitialContext ();
 			Object home = jndiContext.lookup(jndi);
-			Method createMethod = home.getClass().getMethod("create", null);
-			Object ejb = createMethod.invoke(home, null);
-			return ejb;
+			if (home instanceof EJBHome ||
+					home instanceof EJBLocalHome)
+			{
+				Method createMethod = home.getClass().getMethod("create", null);
+				Object ejb = createMethod.invoke(home, null);
+				return ejb;
+			}
+			else
+				return home;
 		} catch (Exception e) {
 			throw new UiException (e);
 		}

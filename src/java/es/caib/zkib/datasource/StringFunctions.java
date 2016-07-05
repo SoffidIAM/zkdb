@@ -4,11 +4,13 @@ public class StringFunctions {
 
 	public static String toLowerCase (String d)
 	{
-		return d.toLowerCase();
+		if (d == null) return "";
+		else  return d.toLowerCase();
 	}
 
 	public static String toUpperCase (String d)
 	{
-		return d.toUpperCase();
+		if (d == null) return "";
+		else return d.toUpperCase();
 	}
 }

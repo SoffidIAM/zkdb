@@ -56,7 +56,14 @@ public abstract class AbstractDataModel extends AbstractDataSource  {
 				tx = (UserTransaction) new InitialContext()
 						.lookup("/UserTransaction");
 			} catch (NamingException e1) {
-				throw new RuntimeException(e1);
+				
+				try {
+					tx = (UserTransaction) new InitialContext()
+							.lookup("java:/comp/UserTransaction");
+				} catch (NamingException e2) {
+					
+					throw new RuntimeException(e2);
+				}
 			}
 			try {
 				tx.begin();
