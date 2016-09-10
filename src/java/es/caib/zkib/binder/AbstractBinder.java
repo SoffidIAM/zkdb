@@ -281,6 +281,8 @@ public abstract class AbstractBinder implements BindContext, XPathSubscriber {
 				path = path.substring(0, toDelete) + path.substring(first+3);
 			}
 			while (true); 
+			if (path.endsWith("/") && path.length() > 1)
+				path = path.substring(0, path.length()-1);
 			return path;
 		}
 

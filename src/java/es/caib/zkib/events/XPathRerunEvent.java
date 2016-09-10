@@ -5,7 +5,7 @@ import es.caib.zkib.datasource.DataSource;
 public class XPathRerunEvent extends XPathEvent {
 
 	String baseXPath;
-	
+
 	public XPathRerunEvent(DataSource ds, String xPath) {
 		super(ds, xPath);
 		baseXPath = xPath;
@@ -29,7 +29,7 @@ public class XPathRerunEvent extends XPathEvent {
 
 	public String toString ()
 	{
-		return "XPathRerunEvent[path="+getXPath()+"]";
+		return "XPathRerunEvent[path="+getXPath()+" basePath="+getBaseXPath()+" recursive="+recursive+"]";
 	}
 
 }

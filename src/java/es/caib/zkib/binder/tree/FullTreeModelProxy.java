@@ -59,7 +59,7 @@ public class FullTreeModelProxy implements TreeModelProxy {
 		if (arg0 == null)
 			return true;
 		TreeModelProxyNode node = (TreeModelProxyNode) arg0;
-		return  node.getChildren().length == 0;
+		return  !node.isContainer();
 	}
 
 	public Object getChild(Object arg0, int arg1) {

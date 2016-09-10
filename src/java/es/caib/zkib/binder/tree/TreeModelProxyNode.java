@@ -1,6 +1,7 @@
 package es.caib.zkib.binder.tree;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
@@ -11,6 +12,7 @@ import org.zkoss.zk.ui.UiException;
 import org.zkoss.zul.Treeitem;
 import org.zkoss.zul.event.TreeDataEvent;
 
+import es.caib.zkib.datamodel.DataModelCollection;
 import es.caib.zkib.datasource.DataSource;
 import es.caib.zkib.datasource.XPathUtils;
 import es.caib.zkib.events.XPathCollectionEvent;
@@ -36,7 +38,8 @@ public class TreeModelProxyNode implements XPathSubscriber {
 	
 	public TreeModelProxyNode(FullTreeModelProxy proxy) {
 		super();
-		pointerPath = proxy.getBinder().getPointer().asPath();
+//		pointerPath = proxy.getBinder().getPointer().asPath();
+		pointerPath = ".";
 		localPath = pointerPath;
 		parent = null;
 		this.modelProxy = proxy;
@@ -166,7 +169,8 @@ public class TreeModelProxyNode implements XPathSubscriber {
 						
 						for (int i = 0; i < queries.length; i++)
 						{
-							if (XPathUtils.concat(getXPathPrefix(),queries[i].getXPath()).equals(baseEventPath))
+							String path = XPathUtils.concat(getXPathPrefix(),queries[i].getXPath());
+							if (path.equals(baseEventPath))
 							{
 								refresh();
 							}
@@ -190,6 +194,42 @@ public class TreeModelProxyNode implements XPathSubscriber {
 		}
 		return children;
 	}
+	
+	/**
+	 * @param node
+	 * @return
+	 */
+	public boolean isContainer() {
+		TreeModelProxyNode[] ch = getChildren();
+		if (ch != null && ch.length > 0)
+			return true;
+		
+		try
+		{
+			JXPathContext ctx = modelProxy.getBinder().getDataSource().getJXPathContext();
+			ctx = ctx.getRelativeContext(getPointer());
+			ChildXPathQuery queries [] = modelProxy.getChildXPathQuerys();
+			for (int i = 0 ; i < queries.length; i ++)
+			{
+				ChildXPathQuery query = queries[i];
+				try
+				{
+					Object obj = ctx.getValue(query.getXPath());
+					if (obj != null)
+					{
+						if (obj instanceof Collection ||
+								obj instanceof DataModelCollection )
+							return true;
+					}
+				
+				} catch (Exception e) {
+				}
+			}
+		} catch (JXPathNotFoundException e) {
+		}
+		return false;
+	}
+
 	/**
 	 * @param node
 	 * @return
@@ -233,8 +273,15 @@ public class TreeModelProxyNode implements XPathSubscriber {
 	private void addChild(String path) {
 		if (detached)
 			throw new UiException("Cannot add child to a detached TreeModelProxyNode");
-		JXPathContext ctx = modelProxy.getBinder().getDataSource().getJXPathContext();
-		ctx = ctx.getRelativeContext(getPointer());
+		JXPathContext ctx;
+		try 
+		{
+			ctx = modelProxy.getBinder().getDataSource().getJXPathContext();
+			ctx = ctx.getRelativeContext(getPointer());
+		} catch (JXPathNotFoundException e) {
+			// Ignore this event
+			return ;
+		}
 		ChildXPathQuery queries [] = modelProxy.getChildXPathQuerys();
 
 		String thisPath = XPathUtils.concat (modelProxy.getBinder().getDataSource().getRootPath(),getXPathPrefix());
@@ -391,6 +438,8 @@ public class TreeModelProxyNode implements XPathSubscriber {
 				fullXPath = pointerPath;
 			else
 				fullXPath = XPathUtils.concat(parent.getXPath(),localPath);
+			if (! fullXPath.startsWith("/"))
+				fullXPath = "/"+fullXPath;
 			return fullXPath;
 		}
 	}

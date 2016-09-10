@@ -5,7 +5,16 @@ import es.caib.zkib.datasource.DataSource;
 public class XPathEvent {
 	private String xPath;
 	private DataSource dataSource;
+	boolean recursive = false;
 	
+	public boolean isRecursive() {
+		return recursive;
+	}
+
+	public void setRecursive(boolean recursive) {
+		this.recursive = recursive;
+	}
+
 
 	public XPathEvent(DataSource ds, String xPath) {
 		this.dataSource = ds;

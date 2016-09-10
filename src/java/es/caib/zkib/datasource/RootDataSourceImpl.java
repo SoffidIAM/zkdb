@@ -2,6 +2,7 @@ package es.caib.zkib.datasource;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.Set;
 
 import org.zkoss.util.logging.Log;
@@ -129,54 +130,83 @@ public class RootDataSourceImpl {
 			}
 		}
 	}
+	
+	private ThreadLocal<LinkedList<XPathEvent>> nestedEvents = new ThreadLocal<LinkedList<XPathEvent>>();
 	/* (non-Javadoc)
 	 * @see es.caib.seycon.net.web.zul.DataSource#updateDisplays(es.caib.zkib.jxpath.Pointer)
 	 */
 	public void sendEvent (XPathEvent event) {
-		// Evento a notificar a todos los hijos
-		log.debug ("SENDEVENT: "+event);
-		SubscriberInfo info = getSubscriberInfo(event.getXPath(), false);
-		if (info != null && ! info.subscribers.isEmpty()) {
-			XPathSubscriber subscribers[] = (XPathSubscriber[]) info.subscribers.toArray(new XPathSubscriber[0]);
-			for ( int j = 0; j < subscribers.length; j++)
-			{
-				subscribers[j].onUpdate(event);
-			}
-		}
-		// Ahora enviar el evento XPathRerunEvent a los hijos
-		if ( (event instanceof XPathRerunEvent || event instanceof XPathValueEvent) &&
-			 info != null && ! info.childSubscriptions.isEmpty())
+		LinkedList<XPathEvent> nestedEventsInstance = nestedEvents.get();
+		// Search for a nested event and dismiss
+		if (! event.isRecursive () )
 		{
-			String keys[] = (String[]) info.childSubscriptions.toArray(new String[0]);
-			for (int i = 0; i < keys.length; i++)
+			if (nestedEventsInstance != null)
 			{
-				XPathRerunEvent newEvent = new XPathRerunEvent (event.getDataSource(), keys[i]);
-				if (event instanceof XPathRerunEvent)
-					newEvent.setBaseXPath( ((XPathRerunEvent) event).getBaseXPath());
-				else
-					newEvent.setBaseXPath(event.getXPath());
-				sendEvent(newEvent);
-			}
- 		}
-		// Marcar el padre como modificado
-		if ( event instanceof XPathValueEvent)
-		{
-			JXPathContext ctx = getJXPathContext();
-			String path = event.getXPath();
-			Object value;
-			try {
-				do
+				for (XPathEvent nestedEvent: nestedEventsInstance)
 				{
-					path = getParentPath (path);
-					if (path == null)
-						return;
-					value = ctx.getValue(path);
-				} while (value != null &&  ! ( value instanceof DataModelNode) );
-				if (value != null)
-					( (DataModelNode) value ).update();
-			} catch (JXPathException e) {
-				
+					if (event.getXPath().startsWith(nestedEvent.getXPath()))
+						return; // Ignore
+				}
 			}
+			
+		}
+		
+		// Register nested event if needed
+		if (nestedEventsInstance == null)
+		{
+			nestedEventsInstance = new LinkedList<XPathEvent>();
+			nestedEvents.set(nestedEventsInstance);
+		}
+		nestedEventsInstance.addLast(event);
+		try {
+			// Evento a notificar a todos los hijos
+			log.debug ("SENDEVENT: "+event);
+			SubscriberInfo info = getSubscriberInfo(event.getXPath(), false);
+			if (info != null && ! info.subscribers.isEmpty()) {
+				XPathSubscriber subscribers[] = (XPathSubscriber[]) info.subscribers.toArray(new XPathSubscriber[0]);
+				for ( int j = 0; j < subscribers.length; j++)
+				{
+					subscribers[j].onUpdate(event);
+				}
+			}
+			// Ahora enviar el evento XPathRerunEvent a los hijos
+			if ( (event instanceof XPathRerunEvent || event instanceof XPathValueEvent) &&
+				 info != null && ! info.childSubscriptions.isEmpty())
+			{
+				String keys[] = (String[]) info.childSubscriptions.toArray(new String[0]);
+				for (int i = 0; i < keys.length; i++)
+				{
+					XPathRerunEvent newEvent = new XPathRerunEvent (event.getDataSource(), keys[i]);
+					if (event instanceof XPathRerunEvent)
+						newEvent.setBaseXPath( ((XPathRerunEvent) event).getBaseXPath());
+					else
+						newEvent.setBaseXPath(event.getXPath());
+					newEvent.setRecursive(true);
+					sendEvent(newEvent);
+				}
+	 		}
+			// Marcar el padre como modificado
+			if ( event instanceof XPathValueEvent)
+			{
+				JXPathContext ctx = getJXPathContext();
+				String path = event.getXPath();
+				Object value;
+				try {
+					do
+					{
+						path = getParentPath (path);
+						if (path == null)
+							return;
+						value = ctx.getValue(path);
+					} while (value != null &&  ! ( value instanceof DataModelNode) );
+					if (value != null)
+						( (DataModelNode) value ).update();
+				} catch (JXPathException e) {
+					
+				}
+			}
+		} finally {
+			nestedEventsInstance.removeLast();
 		}
 	}
 

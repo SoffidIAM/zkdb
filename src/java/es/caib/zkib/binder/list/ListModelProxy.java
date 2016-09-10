@@ -105,7 +105,7 @@ public class ListModelProxy implements XPathSubscriber, ModelProxy, ListModelExt
 		if (path.startsWith(prefix))
 		{
 			path = path.substring(prefix.length());
-			binder.getDataSource().sendEvent(new XPathValueEvent(binder.getDataSource(), binder.getDataPath()));
+			binder.getDataSource().sendEvent(new XPathValueEvent(binder.getDataSource(), binder.getXPath()));
 		}
 		if (event.getType() == XPathCollectionEvent.ADDED)
 		{
