@@ -86,6 +86,9 @@ public class XPathUtils {
 	
 	public static Object getValue (Component ctxComponent, String xpath) 
 	{
+		if (ctxComponent instanceof DataSource)
+			return getValue ((DataSource) ctxComponent, xpath);
+
 		BindContext ctx = getComponentContext(ctxComponent);
 		return ctx.getDataSource().getJXPathContext().getValue( concat(ctx.getXPath(), xpath));
 	}
@@ -93,6 +96,15 @@ public class XPathUtils {
 	public static void setValue (BindContext ctx, String xpath, Object obj) 
 	{
 		ctx.getDataSource().getJXPathContext().setValue( concat(ctx.getXPath(), xpath), obj);
+	}
+	
+
+	public static void setValue (Component cmp, String xpath, Object obj) 
+	{
+		if (cmp instanceof DataSource)
+			setValue ((DataSource) cmp, xpath, obj);
+		else
+			setValue( getComponentContext(cmp), xpath, obj);
 	}
 	
 	public static void removePath (DataSource ds, String xpath)
