@@ -168,6 +168,12 @@ public class Parser {
 			dynaBean.set(attribute, Boolean.valueOf(value));
 		else if (prop != null && prop.getType() == Boolean.TYPE)
 			dynaBean.set(attribute, Boolean.valueOf(value).booleanValue());
+		else if (prop != null && prop.getType() == Long.class)
+			dynaBean.set(attribute, Long.valueOf(value));
+		else if (prop != null && prop.getType() == Integer.class)
+			dynaBean.set(attribute, Integer.valueOf(value));
+		else if (prop != null && prop.getType() == Double.class)
+			dynaBean.set(attribute, Double.valueOf(value));
 		else
 			dynaBean.set(attribute, value);
 	}

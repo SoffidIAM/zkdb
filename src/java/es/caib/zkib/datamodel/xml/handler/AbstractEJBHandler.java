@@ -10,7 +10,9 @@ import javax.rmi.PortableRemoteObject;
 import javax.servlet.jsp.el.ELException;
 
 import org.apache.commons.beanutils.BeanUtils;
+import org.apache.commons.beanutils.BeanUtilsBean;
 import org.apache.commons.beanutils.ConvertUtils;
+import org.apache.commons.beanutils.PropertyUtils;
 import org.apache.commons.beanutils.converters.DoubleArrayConverter;
 import org.apache.commons.beanutils.converters.DoubleConverter;
 import org.apache.commons.beanutils.converters.FloatArrayConverter;
@@ -84,7 +86,7 @@ public abstract class AbstractEJBHandler extends AbstractInvokerHandler {
 	        ConvertUtils.register(new LongConverter(null), Long.class);
 	        ConvertUtils.register(new ShortConverter(null), Short.class);
 	        ConvertUtils.register(new IntegerConverter(null), Integer.class);
-			BeanUtils.copyProperties(ctx.getData(), obj);
+	        PropertyUtils.copyProperties(ctx.getData(), obj);
 		}
 		else
 		{
@@ -96,7 +98,7 @@ public abstract class AbstractEJBHandler extends AbstractInvokerHandler {
 		        ConvertUtils.register(new LongConverter(null), Long.class);
 		        ConvertUtils.register(new ShortConverter(null), Short.class);
 		        ConvertUtils.register(new IntegerConverter(null), Integer.class);
-				BeanUtils.setProperty(ctx.getData(), property, obj);
+				PropertyUtils.setProperty(ctx.getData(), property, obj);
 			}
 		}
 		return obj;

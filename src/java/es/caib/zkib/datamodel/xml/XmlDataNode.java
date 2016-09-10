@@ -142,7 +142,7 @@ public class XmlDataNode extends DataNode {
 			}
 		}
 		if (!found)
-			throw new RuntimeException ("Insert not allowed");
+			throw new RuntimeException ("Insert not allowed on "+getXPath());
 	}
 
 	protected void doUpdate() throws Exception {
@@ -158,7 +158,7 @@ public class XmlDataNode extends DataNode {
 			}
 		}
 		if (!found)
-			throw new RuntimeException ("Update not allowed");
+			throw new RuntimeException ("Update not allowed for object "+getXPath());
 	}
 
 	protected void validate() throws Exception {
@@ -180,7 +180,7 @@ public class XmlDataNode extends DataNode {
 			}
 		}
 		if (!found)
-			throw new RuntimeException ("Delete not allowed");
+			throw new RuntimeException ("Delete not allowed from "+getXPath());
 	}
 
 }
