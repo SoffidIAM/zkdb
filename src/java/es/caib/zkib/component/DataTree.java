@@ -31,6 +31,7 @@ import es.caib.zkib.datamodel.xml.XmlDataNode;
 import es.caib.zkib.datasource.ChildDataSourceImpl;
 import es.caib.zkib.datasource.CommitException;
 import es.caib.zkib.datasource.DataSource;
+import es.caib.zkib.datasource.XPathUtils;
 import es.caib.zkib.events.XPathCollectionEvent;
 import es.caib.zkib.events.XPathEvent;
 import es.caib.zkib.events.XPathRerunEvent;
@@ -467,10 +468,17 @@ public class DataTree extends Tree implements XPathSubscriber, BindContext, Data
 				throw new UiException("Unable to delete treeitem without context");
 			
 			Object obj = data.getValue ();
-			if (obj == null || ! (obj instanceof DataModelNode))
+			if (obj == null)
 				throw new UiException ("Unable to delete object "+obj);
-			( (DataModelNode) obj).delete();
-			if (autocommit) commit ();
+			if ( obj instanceof DataModelNode)
+			{
+				( (DataModelNode) obj).delete();
+				if (autocommit) commit ();
+			}
+			else
+			{
+				XPathUtils.removePath(data.getDataSource(), data.getXPath());
+			}
 			setSelectedItem(null);
 		}
 	}

@@ -2,6 +2,7 @@ package es.caib.zkib.binder.tree;
 
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Set;
 import java.util.Vector;
 
@@ -17,6 +18,7 @@ import org.zkoss.zul.TreeModel;
 import org.zkoss.zul.Treechildren;
 import org.zkoss.zul.Treeitem;
 import org.zkoss.zul.TreeitemRenderer;
+import org.zkoss.zul.Treerow;
 
 import es.caib.zkib.binder.BindContext;
 import es.caib.zkib.binder.SingletonBinder;
@@ -90,10 +92,11 @@ public class DataTreeitemRenderer implements TreeitemRenderer {
 				item.setValue(ctx.getValue(master.getBind()));
 			}
 			// Agregar los hijos
-			while (item.getChildren().size() > 0)
+			List<Component> children = new LinkedList<Component>(item.getChildren());
+			for (Component c: children)
 			{
-				Component c = (Component) item.getChildren().get(0);
-				c.setParent(null);
+				if (! (c instanceof Treechildren))
+					c.setParent(null);
 			}
 			Iterator it1 = master.getChildren().iterator();
 			while ( it1.hasNext() )
