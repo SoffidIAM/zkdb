@@ -595,7 +595,10 @@
     if (last.length != display.lineNumChars) {
       var test = display.measure.appendChild(elt("div", [elt("div", last)],
                                                  "CodeMirror-linenumber CodeMirror-gutter-elt"));
-      var innerW = test.firstChild.offsetWidth, padding = test.offsetWidth - innerW;
+      var innerW = test.firstChild.offsetWidth;
+      if (innerW < 28) innerW = 28;
+      var padding = test.offsetWidth - innerW;
+      if (padding < 8) padding = 8;
       display.lineGutter.style.width = "";
       display.lineNumInnerWidth = Math.max(innerW, display.lineGutter.offsetWidth - padding) + 1;
       display.lineNumWidth = display.lineNumInnerWidth + padding;

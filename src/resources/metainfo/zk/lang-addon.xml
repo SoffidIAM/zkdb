@@ -90,6 +90,12 @@
 	</component>
 
 	<component>
+		<extends>doublebox</extends>
+		<component-name>doublebox</component-name>
+		<component-class>es.caib.zkib.component.DataDoublebox</component-class>
+	</component>
+
+	<component>
 		<extends>datebox</extends>
 		<component-name>datebox</component-name>
 		<component-class>es.caib.zkib.component.DataDatebox</component-class>

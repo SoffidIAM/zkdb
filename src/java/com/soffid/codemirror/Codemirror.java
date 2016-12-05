@@ -17,21 +17,13 @@ import java.util.Set;
 import java.util.TreeMap;
 
 import org.zkoss.xml.HTMLs;
-import org.zkoss.zk.au.AuRequest;
-import org.zkoss.zk.au.Command;
-import org.zkoss.zk.au.ComponentCommand;
-import org.zkoss.zk.ui.AbstractComponent;
-import org.zkoss.zk.ui.UiException;
 import org.zkoss.zk.ui.WrongValueException;
-import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.Events;
 import org.zkoss.zk.ui.event.InputEvent;
-import org.zkoss.zk.ui.ext.client.Errorable;
-import org.zkoss.zk.ui.ext.client.InputableX;
 import org.zkoss.zul.impl.InputElement;
-import org.zkoss.zul.impl.XulElement;
 
 import es.caib.zkib.binder.SingletonBinder;
+import es.caib.zkib.component.DataTextbox;
 import es.caib.zkib.datasource.DataSource;
 import es.caib.zkib.events.XPathEvent;
 import es.caib.zkib.events.XPathSubscriber;
@@ -309,5 +301,12 @@ public class Codemirror extends InputElement implements XPathSubscriber {
 			super.setReadonly(true);
 		else
 			super.setReadonly(false);
+	}
+
+	public Object clone() {
+		Codemirror clone = (Codemirror) super.clone();
+		clone.binder = new SingletonBinder (clone);
+		clone.binder.setDataPath(binder.getDataPath());
+		return clone;
 	}
 }

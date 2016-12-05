@@ -6,4 +6,4 @@
 <script src="${pageContext.request.contextPath}/zkau/web/js/ext/codemirror/mode/javascript/javascript.js"> </script>
 <div id="${self.uuid}"${self.outerAttrs} z.type="codemirror.codemirror.Codemirror"
 ${c:attr('class',self.sclass)}${c:attr('style',self.style)} ${self.innerAttrs}>
-</textarea>
+</div>

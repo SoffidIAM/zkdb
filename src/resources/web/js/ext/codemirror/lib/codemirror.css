@@ -198,6 +198,7 @@ div.CodeMirror span.CodeMirror-nonmatchingbracket {color: #f22;}
   height: 100%;
   display: inline-block;
   margin-bottom: -30px;
+  min-width: 25px;
   /* Hack to make IE7 behave */
   *zoom:1;
   *display:inline;
