@@ -64,7 +64,11 @@ public class XPathUtils {
 		String result;
 		if (path2.startsWith("/") && path1.endsWith("/"))
 			result = path1 + path2.substring(1);
-		else if (path2.startsWith("/") || path1.endsWith("/"))
+		else if (path2.startsWith("[") && 
+				path1.endsWith("/") && 
+				path1.length() > 1)
+			result = path1.substring(0, path1.length()-1) + path2;
+		else if (path2.startsWith("[") || path2.startsWith("/")  || path1.endsWith("/"))
 			result = path1 + path2;
 		else
 			result = path1 + "/" + path2;

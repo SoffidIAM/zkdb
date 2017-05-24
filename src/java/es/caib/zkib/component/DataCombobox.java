@@ -48,7 +48,7 @@ public class DataCombobox extends org.zkoss.zul.Combobox implements XPathSubscri
 				while (it.hasNext())
 				{
 					Comboitem item = (Comboitem) it.next();
-					if (value.equals(item.getLabel()))
+					if (value.toString().equalsIgnoreCase(item.getLabel()))
 					{
 						value = item.getValue();
 						break;
@@ -154,6 +154,7 @@ public class DataCombobox extends org.zkoss.zul.Combobox implements XPathSubscri
 					Comboitem item = (Comboitem) it.next();
 					if (value.equals(item.getValue()))
 					{
+						label = item.getLabel();
 						setSelectedItem(item);
 						return;
 					}

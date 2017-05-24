@@ -9,6 +9,16 @@
 
   <language-name>xul/html</language-name>
 
+  <javascript src="~./js/ext/codemirror/lib/codemirror.js" />
+  <javascript src="~./js/ext/codemirror/mode/xml/xml.js" />
+  <javascript src="~./js/ext/codemirror/mode/java/java.js" />
+  <javascript src="~./js/ext/codemirror/mode/javascript/javascript.js" />
+  <javascript src="~./js/ext/codemirror/addon/hint/show-hint.js" />
+  <javascript src="~./js/ext/codemirror/addon/hint/java-hint.js" />
+
+  <stylesheet href="~./js/ext/codemirror/lib/codemirror.css" type="text/css"/>
+  <stylesheet href="~./js/ext/codemirror/addon/hint/show-hint.css" type="text/css"/>
+
 	 <zscript>
 		 import es.caib.zkib.component.*;
 		 import es.caib.zkib.datamodel.xml.XmlDataNode;

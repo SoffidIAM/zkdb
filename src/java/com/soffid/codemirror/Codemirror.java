@@ -48,7 +48,32 @@ public class Codemirror extends InputElement implements XPathSubscriber {
 	
 	private boolean _linenumbers = true;
 	private boolean _autocomplete = false;
+	private String globalVars;
 	
+	public String getGlobalVars() {
+		return globalVars;
+	}
+
+	public void setGlobalVars(String globalVars) {
+		this.globalVars = globalVars;
+	}
+
+	public void setGlobalVars(Map<String, String> globalVars) {
+		StringBuffer sb = new StringBuffer();
+		for (String k: globalVars.keySet())
+		{
+			if (sb.length() > 0)
+				sb.append(",");
+			sb.append("'")
+				.append(k.replaceAll("'", "\\'"))
+				.append("':'")
+				.append(globalVars.get(k).replaceAll("'", "\\'"))
+				.append("'");
+		}
+		this.globalVars = sb.toString();
+		invalidate();
+	}
+
 	private static final Map <String, String> languages = initLanguages();
 
 	public Codemirror () {
@@ -97,6 +122,7 @@ public class Codemirror extends InputElement implements XPathSubscriber {
 		HTMLs.appendAttribute(sb, "z.lang", getLanguage());
 		HTMLs.appendAttribute(sb, "z.readonly", isReadonly());
 		HTMLs.appendAttribute(sb, "z.linenumbers", _linenumbers);
+		HTMLs.appendAttribute(sb, "z.globalvars", globalVars);
 		HTMLs.appendAttribute(sb, "style", getStyle());
 		HTMLs.appendAttribute(sb, "width", getWidth());
 		HTMLs.appendAttribute(sb, "height", getHeight());

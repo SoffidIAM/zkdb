@@ -14,7 +14,7 @@ import es.caib.zkib.datamodel.xml.ParseException;
 public class MethodDefinition implements DefinitionInterface {
 	private String method;
 	private Vector params = new Vector ();
-        private Vector catchs = new Vector ();
+    private Vector catchs = new Vector ();
 	
 	public MethodDefinition() {
 		super();

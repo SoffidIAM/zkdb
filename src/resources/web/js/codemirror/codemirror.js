@@ -22,8 +22,21 @@ zkCodemirror.init = function (ed) {
 	var ro = ed.getAttribute("z.readonly");
 	ed.codemirror = new CodeMirror(ed, {
 		value: v,
+		hintOptions:   {
+			globalVars: JSON.parse( ed.getAttribute("z.globalvars")),
+		    hint: CodeMirror.hint.auto,
+		    completeSingle: true,
+		    alignWithWord: true,
+		    closeCharacters: /[\s()\[\]{};:>,]/,
+		    closeOnUnfocus: true,
+		    completeOnSingleClick: false,
+		    container: null,
+		    customKeys: null,
+		    extraKeys: null
+		},
 		smartIndent: true,
 		mode: lang,
+		extraKeys: {"Ctrl-Space": "autocomplete"},
 		lineNumbers: ("true" == ln),
 		readonly: ("true" == ro)
 	});
