@@ -306,7 +306,6 @@
 		</mold>
 	</component>
 
-	<javascript src="~./js/ext/codemirror/lib/codemirror.js" charset="UTF-8"/>
 	<javascript-module name="ext.codemirror.codemirror" version="1.0"/>
 	<javascript-module name="codemirror.codemirror" version="1.0"/>
 	<component>
