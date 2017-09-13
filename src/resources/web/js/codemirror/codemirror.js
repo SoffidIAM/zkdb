@@ -38,15 +38,28 @@ zkCodemirror.init = function (ed) {
 		mode: lang,
 		extraKeys: {"Ctrl-Space": "autocomplete"},
 		lineNumbers: ("true" == ln),
-		readonly: ("true" == ro)
+		readOnly: ("true" == ro)
 	});
 	ed.codemirror.setSize (ed.getAttribute("width"), ed.getAttribute("height"));
 	ed.codemirror.on ("change", function() {
 			var req = {uuid: ed.id, cmd: "onChange", data : [ed.codemirror.getDoc().getValue()]};
 			zkau.send (req, 5);
 		});
+	ed.codemirror.on ("focus", function() {
+		ed.codemirror.refresh();
+	});
+
+	window.addEventListener("resize", function() {
+		ed.codemirror.setSize(ed.offsetWidth, ed.offsetHeight);
+		ed.codemirror.refresh();
+	});
 	
 };
+
+zkCodemirror.refresh = function (ed) {
+	ed.codemirror.refresh();
+};
+
 
 zkCodemirror.cleanup = function (ed) {
 };
@@ -56,7 +69,8 @@ zkCodemirror.setAttr = function (ed, name, value) {
 	switch (name) {
 	case "value":
 		ed.codemirror.doc.setValue(value);
-		return true;
+		return true;;
 	}
 	return false;
 };
+

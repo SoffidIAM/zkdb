@@ -79,8 +79,6 @@ var CodeMirrorJavaPackages={};
 				var first = true;
 
 				var context = [];
-				console.log("at tprop");
-				console.log(tprop);
 				while (!end && (tprop.type == "property" || (tprop.type == 'variable' || first) || tprop.string.startsWith ('{'))) {
 					first = false;
 					var hasDot = ( tprop.type == "property" ) ;
@@ -149,7 +147,6 @@ var CodeMirrorJavaPackages={};
 
 
 					tprop.hasDot = hasDot;
-					console.log(tprop);
 					if (tprop.string.trim() != '')
 						context.unshift(tprop);
 				}
@@ -182,7 +179,7 @@ var CodeMirrorJavaPackages={};
 				var found = [], start = token.string, global = options
 						&& options.globalScope;
 				function maybeAdd(str) {
-					if (str.lastIndexOf(start, 0) == 0
+					if (str.toLowerCase().lastIndexOf(start.toLowerCase(), 0) == 0
 							&& !arrayContains(found, str))
 						found.push(str);
 				}
@@ -193,8 +190,6 @@ var CodeMirrorJavaPackages={};
 				 * Function) forEach(funcProps, maybeAdd); for (var name in obj)
 				 * maybeAdd(name); }
 				 */
-				console.log("Context ");
-				console.log(context);
 				var javaType = null;
 				var hasDot;
 				if (context && context.length) {
@@ -205,8 +200,6 @@ var CodeMirrorJavaPackages={};
 					for (var o = 0; o < context.length; o++) {
 						hasDot = context[o].hasDot;
 						var currentToken = context[o].string;
-						console.log("Context "+o+"="+currentToken);
-						console.log(javaType);
 						if (javaType == null)
 						{
 							if ( currentType == null) currentType = currentToken;
@@ -235,13 +228,9 @@ var CodeMirrorJavaPackages={};
 								javaType = CodeMirrorJavaTypes[currentType];
 							}
 						}
-						console.log(javaType);
 					}
 					
-					console.log("currentType="+currentType);
-					console.log("CodeMirrorJavaPackages["+currentType+"]");
-					console.log(CodeMirrorJavaPackages[currentType]);
-					if (javaType == null && CodeMirrorJavaPackages[currentType])
+					if (javaType == null && CodeMirrorJavaPackages != null && CodeMirrorJavaPackages[currentType] != null)
 					{
 						var members = CodeMirrorJavaPackages[currentType];
 						for (var i=0; i < members.length; i++)
@@ -276,15 +265,11 @@ var CodeMirrorJavaPackages={};
 					for (i in options.globalVars)
 						maybeAdd(i);
 					forEach(keywords, maybeAdd);
-					console.log(CodeMirrorJavaPackages[""]);
 					forEach(CodeMirrorJavaPackages[""], maybeAdd);
 					var dt = options.globalVars[token.string];
-					console.log(token.string);
-					console.log(dt);
 					if (dt)
 					{
 						javaType = CodeMirrorJavaTypes[dt];
-						console.log(javaType);
 	
 						if (javaType)
 						{
@@ -296,6 +281,7 @@ var CodeMirrorJavaPackages={};
 						}
 					}
 				}
+				found.sort();
 				return found;
 			}
 		});

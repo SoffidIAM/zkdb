@@ -17,6 +17,7 @@ import java.util.Set;
 import java.util.TreeMap;
 
 import org.zkoss.xml.HTMLs;
+import org.zkoss.zk.au.out.AuInvoke;
 import org.zkoss.zk.ui.WrongValueException;
 import org.zkoss.zk.ui.event.Events;
 import org.zkoss.zk.ui.event.InputEvent;
@@ -42,7 +43,7 @@ public class Codemirror extends InputElement implements XPathSubscriber {
 	private SingletonBinder binder = new SingletonBinder (this);
 	private boolean duringOnUpdate = false;
 
-	private String style = "";
+	private String style = "overflow: hidden";
 	
 	private String _language = "text";
 	
@@ -102,7 +103,8 @@ public class Codemirror extends InputElement implements XPathSubscriber {
 	@Override
 	public void setText(String value) throws WrongValueException {
 		super.setText(value);
-		binder.setValue(value);
+		if (binder.isValid() && !binder.isVoid())
+			binder.setValue(value);
 	}
 
 	public String getValue()
@@ -323,10 +325,10 @@ public class Codemirror extends InputElement implements XPathSubscriber {
 			duringOnUpdate = false;
 		}
 		
-		if (!binder.isVoid () && ! binder.isValid())
-			super.setReadonly(true);
-		else
-			super.setReadonly(false);
+//		if (!binder.isVoid () && ! binder.isValid())
+//			super.setReadonly(true);
+//		else
+//			super.setReadonly(false);
 	}
 
 	public Object clone() {
@@ -334,5 +336,17 @@ public class Codemirror extends InputElement implements XPathSubscriber {
 		clone.binder = new SingletonBinder (clone);
 		clone.binder.setDataPath(binder.getDataPath());
 		return clone;
+	}
+
+	@Override
+	public boolean setVisible(boolean visible) {
+		boolean b = super.setVisible(visible);
+		invalidate();
+		return b;
+	}
+	
+	public void refresh()
+	{
+	    response ("refresh", new AuInvoke (this, "refresh")); //$NON-NLS-1$ //$NON-NLS-2$
 	}
 }
