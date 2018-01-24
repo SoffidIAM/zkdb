@@ -1,5 +1,6 @@
 package es.caib.zkib.binder.tree;
 
+import java.io.Serializable;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
@@ -11,10 +12,15 @@ import org.zkoss.zul.event.TreeDataListener;
 import es.caib.zkib.binder.SingletonBinder;
 
 @SuppressWarnings("unchecked")
-public class FullTreeModelProxy implements TreeModelProxy {
+public class FullTreeModelProxy implements TreeModelProxy, Serializable {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	
 	TreeModelProxyNode root;
 	Vector v = null;
-	Vector listeners;
+	transient Vector listeners;
 	Vector childrenXPath;
 	SingletonBinder binder;
 	
@@ -163,5 +169,12 @@ public class FullTreeModelProxy implements TreeModelProxy {
 		return node;
 	}
 	
+	//-- Serializable --//
+	private synchronized void readObject(java.io.ObjectInputStream s)
+	throws java.io.IOException, ClassNotFoundException {
+		s.defaultReadObject();
+		listeners = new Vector();
+	}
+
 }
 

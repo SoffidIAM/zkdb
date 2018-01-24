@@ -1,5 +1,6 @@
 package es.caib.zkib.binder.tree;
 
+import java.io.Serializable;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -28,7 +29,11 @@ import es.caib.zkib.component.MasterListItem;
 import es.caib.zkib.component.MasterTreeitem;
 import es.caib.zkib.jxpath.JXPathContext;
 
-public class DataTreeitemRenderer implements TreeitemRenderer {
+public class DataTreeitemRenderer implements TreeitemRenderer, Serializable {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	DataTree _tree;
 	
 	public DataTreeitemRenderer(DataTree tree) {

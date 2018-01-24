@@ -1,5 +1,6 @@
 package es.caib.zkib.datamodel.xml.definition;
 
+import java.io.Serializable;
 import java.util.HashMap;
 
 import org.w3c.dom.Element;
@@ -12,7 +13,12 @@ import bsh.EvalError;
 import bsh.Interpreter;
 
 
-public class ModelDefinition implements DefinitionInterface {
+public class ModelDefinition implements DefinitionInterface, Serializable {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	
 	HashMap nodes = new HashMap ();
 	
 	public ModelDefinition() {

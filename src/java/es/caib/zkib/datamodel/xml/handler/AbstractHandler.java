@@ -1,5 +1,7 @@
 package es.caib.zkib.datamodel.xml.handler;
 
+import java.io.Serializable;
+
 import javax.servlet.jsp.el.ELException;
 
 import bsh.EvalError;
@@ -7,7 +9,12 @@ import es.caib.zkib.datamodel.DataContext;
 import es.caib.zkib.datamodel.xml.Interpreter;
 import es.caib.zkib.datamodel.xml.definition.DefinitionInterface;
 
-public abstract class AbstractHandler implements DefinitionInterface {
+public abstract class AbstractHandler implements DefinitionInterface, Serializable {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	
 	String ifString;
 	String unlessString;
 	

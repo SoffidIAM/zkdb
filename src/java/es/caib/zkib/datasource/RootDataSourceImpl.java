@@ -1,12 +1,12 @@
 package es.caib.zkib.datasource;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Set;
 
-import org.zkoss.util.logging.Log;
-import org.zkoss.zk.ui.Executions;
+import org.apache.commons.logging.LogFactory;
 import org.zkoss.zul.Textbox;
 
 import es.caib.zkib.datamodel.DataModelNode;
@@ -17,13 +17,18 @@ import es.caib.zkib.events.XPathValueEvent;
 import es.caib.zkib.jxpath.JXPathContext;
 import es.caib.zkib.jxpath.JXPathException;
 
-public class RootDataSourceImpl {
+public class RootDataSourceImpl implements Serializable {
+	/**
+	 * lo
+	 */
+	private static final long serialVersionUID = 1L;
+	
 	Object data;
-	JXPathContext context;
+	transient JXPathContext context;
 	private HashMap registry = new HashMap();
 	DataSource ds;
-	Log log = Log.lookup(RootDataSourceImpl.class);
-	
+	static org.apache.commons.logging.Log log = LogFactory.getLog(RootDataSourceImpl.class);
+			
 	public RootDataSourceImpl(DataSource ds, Object data) {
 		this.ds = ds;
 		this.data = data;
@@ -131,11 +136,13 @@ public class RootDataSourceImpl {
 		}
 	}
 	
-	private ThreadLocal<LinkedList<XPathEvent>> nestedEvents = new ThreadLocal<LinkedList<XPathEvent>>();
+	private transient ThreadLocal<LinkedList<XPathEvent>> nestedEvents = null;
 	/* (non-Javadoc)
 	 * @see es.caib.seycon.net.web.zul.DataSource#updateDisplays(es.caib.zkib.jxpath.Pointer)
 	 */
 	public void sendEvent (XPathEvent event) {
+		if (nestedEvents == null)
+			nestedEvents = new ThreadLocal<LinkedList<XPathEvent>>();
 		LinkedList<XPathEvent> nestedEventsInstance = nestedEvents.get();
 		// Search for a nested event and dismiss
 		if (! event.isRecursive () )
@@ -210,7 +217,12 @@ public class RootDataSourceImpl {
 		}
 	}
 
-	class SubscriberInfo {
+	class SubscriberInfo implements Serializable {
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 1L;
+		
 		Set childSubscriptions = new HashSet();
 		Set subscribers = new HashSet ();
 	}

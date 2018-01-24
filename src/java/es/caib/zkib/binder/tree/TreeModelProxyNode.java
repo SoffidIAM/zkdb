@@ -1,5 +1,6 @@
 package es.caib.zkib.binder.tree;
 
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -25,8 +26,12 @@ import es.caib.zkib.jxpath.Pointer;
 
 
 @SuppressWarnings("unchecked")
-public class TreeModelProxyNode implements XPathSubscriber {
+public class TreeModelProxyNode implements XPathSubscriber, Serializable {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	String pointerPath;
 	Object hint;
 	TreeModelProxyNode children [];

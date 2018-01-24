@@ -1,5 +1,7 @@
 package es.caib.zkib.datamodel.xml.validation;
 
+import java.io.Serializable;
+
 import org.apache.commons.beanutils.BeanUtils;
 import org.w3c.dom.Element;
 import org.zkoss.lang.SystemException;
@@ -11,7 +13,11 @@ import es.caib.zkib.datamodel.xml.ParseException;
 import es.caib.zkib.datamodel.xml.definition.DefinitionInterface;
 import es.caib.zkib.exceptions.ValidationException;
 
-public class AttributeValidationDefinition implements DefinitionInterface, ValidatorInterface {
+public class AttributeValidationDefinition implements DefinitionInterface, ValidatorInterface, Serializable {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	String attribute;
 	String friendlyName;
 	String expr;

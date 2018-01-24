@@ -1,5 +1,6 @@
 package es.caib.zkib.datasource;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
@@ -19,14 +20,14 @@ import es.caib.zkib.jxpath.Pointer;
 import es.caib.zkib.jxpath.Variables;
 import es.caib.zkib.jxpath.ri.model.beans.NullPointer;
 
-public class ChildDataSourceImpl implements DataSource {
+public class ChildDataSourceImpl implements DataSource, Serializable {
 	DataSource parent;
 	String xpathBase;
 	String currentPath;
-	Pointer pointer;
-	JXPathContext context;
+	transient Pointer pointer;
+	transient JXPathContext context;
 	private HashMap registry = new HashMap();
-	Log log = Log.lookup(ChildDataSourceImpl.class);
+	static Log log = Log.lookup(ChildDataSourceImpl.class);
 	
 	public ChildDataSourceImpl() {
 	}
@@ -53,12 +54,8 @@ public class ChildDataSourceImpl implements DataSource {
 		{
 			String oldPath = currentPath;
 			context = null;
+			pointer = null;
 			currentPath = fullPath;
-			try {
-				pointer = parent.getJXPathContext().getPointer(currentPath);
-			} catch (JXPathException e) {
-				pointer = new NullPointer (null, parent.getJXPathContext().getLocale());
-			}
 
 			// Reregistrar todos los hijos
 			String keys[] = (String []) registry.keySet().toArray(new String[0]);
@@ -83,6 +80,18 @@ public class ChildDataSourceImpl implements DataSource {
 			}
 //			parent.sendEvent( new XPathRerunEvent (parent, oldPath));
 		}
+	}
+
+	private Pointer getPointer() {
+		if (pointer == null)
+		{
+			try {
+				pointer = parent.getJXPathContext().getPointer(currentPath);
+			} catch (JXPathException e) {
+				pointer = new NullPointer (null, parent.getJXPathContext().getLocale());
+			}
+		}
+		return pointer;
 	}
 
 	/**
@@ -116,10 +125,10 @@ public class ChildDataSourceImpl implements DataSource {
 
 	public JXPathContext getJXPathContext ()
 	{
-		if (context == null && pointer != null)
+		if (context == null)
 		{
 			JXPathContext ctx = parent.getJXPathContext();
-			context = ctx.getRelativeContext(pointer);
+			context = ctx.getRelativeContext(getPointer());
 		}
 		return context;
 	}

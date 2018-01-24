@@ -1,5 +1,6 @@
 package es.caib.zkib.datamodel;
 
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
@@ -29,7 +30,14 @@ import es.caib.zkib.events.XPathEvent;
 import es.caib.zkib.events.XPathRerunEvent;
 
 
-public abstract class DataNode implements DataModelNode, DynaBean, Map {
+public abstract class DataNode implements DataModelNode, DynaBean, Map, Serializable
+{
+	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	
 	HashMap<String,DataNodeCollection> children;
 	protected List dynaProperties;
 	protected HashMap dynaPropertiesMap;
@@ -701,31 +709,37 @@ public abstract class DataNode implements DataModelNode, DynaBean, Map {
 
 }
 
-class DataNodeDynaClass implements DynaClass 
+class DataNodeDynaClass implements DynaClass, Serializable
 {
 	DataNode master;
-	DynaClass wrappedDynaClass;
+	transient DynaClass wrappedDynaClass;
 	
+	DynaClass getWrappedDynaClass ()
+	{
+		if (wrappedDynaClass == null)
+			wrappedDynaClass = WrapDynaClass.createDynaClass(master.getInstance().getClass());
+		return wrappedDynaClass;
+			
+	}
 	DataNodeDynaClass (DataNode master)
 	{
 		this.master = master;
-		wrappedDynaClass = WrapDynaClass.createDynaClass(master.getInstance().getClass());
 	}
 
 	public String getName() {
-		return wrappedDynaClass.getName();
+		return getWrappedDynaClass().getName();
 	}
 	public DynaProperty getDynaProperty(String name) {
 		DynaProperty prop = (DynaProperty) master.dynaPropertiesMap.get(name);
 		if ( prop != null)
 			return prop;
 		else
-			return wrappedDynaClass.getDynaProperty(name);
+			return getWrappedDynaClass().getDynaProperty(name);
 	}
 	
 	public DynaProperty[] getDynaProperties() {
 		Vector<DynaProperty> v = new Vector<DynaProperty>(master.dynaProperties);
-		DynaProperty d [] = wrappedDynaClass.getDynaProperties();
+		DynaProperty d [] = getWrappedDynaClass().getDynaProperties();
 		for (int i = 0; i < d.length; i++)
 			v.add (d[i]);
 		return (DynaProperty[]) v.toArray(new DynaProperty[0]);

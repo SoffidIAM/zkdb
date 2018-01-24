@@ -1,5 +1,6 @@
 package es.caib.zkib.binder.list;
 
+import java.io.Serializable;
 import java.util.Iterator;
 
 import org.zkoss.zk.ui.Component;
@@ -17,7 +18,11 @@ import es.caib.zkib.component.DataListbox;
 import es.caib.zkib.component.MasterComboItem;
 import es.caib.zkib.component.MasterListItem;
 
-public class DataComboitemRenderer implements ComboitemRenderer {
+public class DataComboitemRenderer implements ComboitemRenderer, Serializable {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	DataCombobox _combobox;
 
 	public DataComboitemRenderer(DataCombobox combobox) {

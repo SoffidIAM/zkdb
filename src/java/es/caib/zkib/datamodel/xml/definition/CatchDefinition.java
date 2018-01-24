@@ -1,7 +1,13 @@
 package es.caib.zkib.datamodel.xml.definition;
 
-public class CatchDefinition {
-    public String value;
+import java.io.Serializable;
+
+public class CatchDefinition implements Serializable {
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	public String value;
     public String exception;
     
     public String getValue() {

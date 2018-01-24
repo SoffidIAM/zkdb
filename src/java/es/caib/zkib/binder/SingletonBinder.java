@@ -20,9 +20,9 @@ import es.caib.zkib.jxpath.ri.model.beans.NullPointer;
 
 
 public class SingletonBinder extends AbstractBinder {
-		private Pointer _pointer;
+		transient private Pointer _pointer;
 		private String _xPath;
-		private JXPathContext _xPathContext = null;
+		transient private JXPathContext _xPathContext = null;
 		private Object oldValue = null;
 		
 		public SingletonBinder (Component component)

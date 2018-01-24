@@ -1,5 +1,6 @@
 package es.caib.zkib.component;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Iterator;
 
@@ -28,6 +29,35 @@ import es.caib.zkib.events.XPathRerunEvent;
 import es.caib.zkib.events.XPathSubscriber;
 
 public class DataGrid extends Grid implements BindContext, XPathSubscriber {
+	private final class OnApplyDatapathListener implements EventListener, Serializable {
+		private static final long serialVersionUID = 1L;
+		private final DataGrid clone;
+
+		private OnApplyDatapathListener(DataGrid clone) {
+			this.clone = clone;
+		}
+
+		public void onEvent(Event event) throws Exception {
+			clone.applyDataPath();
+		}
+	}
+
+	private final class OnChangeDataListener implements ListDataListener, Serializable {
+		private static final long serialVersionUID = 1L;
+		public void onChange(ListDataEvent event) {
+			onListDataChange(event);
+		}
+	}
+
+	private final class OnInitListener implements EventListener, Serializable {
+		private static final long serialVersionUID = 1L;
+		public boolean isAsap() {return false;}
+
+		public void onEvent(org.zkoss.zk.ui.event.Event arg0) {
+			syncModel();
+		}
+	}
+
 	/**
 	 * 
 	 */
@@ -98,11 +128,7 @@ public class DataGrid extends Grid implements BindContext, XPathSubscriber {
 				_model = model;
 
 				if (_dataListener == null) {
-					_dataListener = new ListDataListener() {
-						public void onChange(ListDataEvent event) {
-							onListDataChange(event);
-						}
-					};
+					_dataListener = new OnChangeDataListener();
 				}
 				_model.addListDataListener(_dataListener);
 			}
@@ -110,12 +136,7 @@ public class DataGrid extends Grid implements BindContext, XPathSubscriber {
 			//Always syncModel because it is easier for user to enfore reload
 			if (onInitListener == null)
 			{
-				onInitListener = new EventListener () {
-					public boolean isAsap() {return false;};
-					public void onEvent(org.zkoss.zk.ui.event.Event arg0) {
-						syncModel();
-					};
-				};
+				onInitListener = new OnInitListener();
 				addEventListener("onRenderDataGrid", onInitListener);
 			}
 			Events.postEvent("onRenderDataGrid", this, null);
@@ -305,12 +326,7 @@ public class DataGrid extends Grid implements BindContext, XPathSubscriber {
 		clone.binder.setDataPath(binder.getDataPath());
 		clone._dataListener = null;
 		clone.onInitListener = null;
-		clone.addEventListener("onApplyDatapath", new EventListener() {
-			
-			public void onEvent(Event event) throws Exception {
-				clone.applyDataPath();
-			}
-		});
+		clone.addEventListener("onApplyDatapath", new OnApplyDatapathListener(clone));
 		Events.postEvent(new Event("onApplyDatapath", clone));
 		return clone;
 	}

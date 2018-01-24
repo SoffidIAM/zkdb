@@ -4,6 +4,8 @@ import org.zkoss.zk.ui.Component;
 import org.zkoss.zk.ui.event.EventListener;
 import org.zkoss.zul.Textbox;
 
+import es.caib.zkib.events.SerializableEventListener;
+
 public class TextboxFilter extends Textbox implements HeaderFilter {
 	String bind;
 	public String getBind() {
@@ -16,7 +18,7 @@ public class TextboxFilter extends Textbox implements HeaderFilter {
 	public TextboxFilter() {
 		super();
 		final TextboxFilter filter = this;
-        EventListener onSelectListener = new EventListener() 
+        EventListener onSelectListener = new SerializableEventListener() 
         {
             public void onEvent(org.zkoss.zk.ui.event.Event arg0) 
             {

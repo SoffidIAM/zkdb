@@ -1,5 +1,6 @@
 package es.caib.zkib.datamodel.xml.validation;
 
+import java.io.Serializable;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -10,8 +11,12 @@ import es.caib.zkib.datamodel.xml.ParseException;
 import es.caib.zkib.datamodel.xml.definition.DefinitionInterface;
 import es.caib.zkib.exceptions.ValidationException;
 
-public class ValidationDefinition implements DefinitionInterface, ValidatorInterface {
+public class ValidationDefinition implements DefinitionInterface, ValidatorInterface, Serializable {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	List<ValidatorInterface> validators = new LinkedList<ValidatorInterface>();
 	
 	public void test(Element element) throws ParseException {
