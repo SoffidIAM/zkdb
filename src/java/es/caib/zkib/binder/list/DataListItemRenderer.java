@@ -1,5 +1,6 @@
 package es.caib.zkib.binder.list;
 
+import java.io.Serializable;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -22,7 +23,11 @@ import es.caib.zkib.component.DataCombobox;
 import es.caib.zkib.component.DataListbox;
 import es.caib.zkib.component.MasterListItem;
 
-public class DataListItemRenderer implements ListitemRenderer {
+public class DataListItemRenderer implements ListitemRenderer, Serializable {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	DataListbox _listbox;
 	DataCombobox _combobox;
 	

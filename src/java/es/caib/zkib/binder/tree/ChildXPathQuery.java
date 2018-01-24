@@ -1,6 +1,13 @@
 package es.caib.zkib.binder.tree;
 
-public class ChildXPathQuery {
+import java.io.Serializable;
+
+public class ChildXPathQuery implements Serializable {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	
 	String xPath;
 	Object hint;
 	public ChildXPathQuery(String path, Object hint) {

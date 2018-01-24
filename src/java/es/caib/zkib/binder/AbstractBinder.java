@@ -3,6 +3,8 @@
  */
 package es.caib.zkib.binder;
 
+import java.io.IOException;
+import java.io.Serializable;
 import java.util.List;
 import java.util.Vector;
 
@@ -19,12 +21,17 @@ import org.zkoss.zk.ui.event.Events;
 import es.caib.zkib.component.MasterListItem;
 import es.caib.zkib.component.MasterRow;
 import es.caib.zkib.datasource.DataSource;
+import es.caib.zkib.events.SerializableEventListener;
 import es.caib.zkib.events.XPathEvent;
 import es.caib.zkib.events.XPathRerunEvent;
 import es.caib.zkib.events.XPathSubscriber;
 import es.caib.zkib.jxpath.Pointer;
 
-public abstract class AbstractBinder implements BindContext, XPathSubscriber {
+public abstract class AbstractBinder implements BindContext, XPathSubscriber, Serializable {
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = -2848895654092930960L;
 		/**
 		 * 
 		 */
@@ -57,7 +64,7 @@ public abstract class AbstractBinder implements BindContext, XPathSubscriber {
 			_component = component;
 			if ( _component instanceof XPathSubscriber)
 				addSubscriber((XPathSubscriber) _component);
-			_component.addEventListener("onEvalDataPath", new EventListener () {
+			_component.addEventListener("onEvalDataPath", new SerializableEventListener () {
 				public boolean isAsap() {
 					return false;
 				}
@@ -342,6 +349,13 @@ public abstract class AbstractBinder implements BindContext, XPathSubscriber {
 		{
 			return _bind == null; 
 		}
+		
+	    private void readObject(java.io.ObjectInputStream stream)
+	            throws IOException, ClassNotFoundException {
+	        stream.defaultReadObject();
+	        _pendingParse = true;
+	    }
+
 
 }
 

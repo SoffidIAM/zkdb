@@ -1,5 +1,6 @@
 package es.caib.zkib.component;
 
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -32,6 +33,7 @@ import es.caib.zkib.datasource.ChildDataSourceImpl;
 import es.caib.zkib.datasource.CommitException;
 import es.caib.zkib.datasource.DataSource;
 import es.caib.zkib.datasource.XPathUtils;
+import es.caib.zkib.events.SerializableEventListener;
 import es.caib.zkib.events.XPathCollectionEvent;
 import es.caib.zkib.events.XPathEvent;
 import es.caib.zkib.events.XPathRerunEvent;
@@ -218,14 +220,27 @@ public class DataTree extends Tree implements XPathSubscriber, BindContext, Data
 		dsImpl.subscribeToExpression(path, subscriber);
 		if (onSelectListener == null)
 		{
-			onSelectListener = new EventListener () {
-				public void onEvent(org.zkoss.zk.ui.event.Event arg0) {// NOTHING TO DO
-				};
-			};
-				
+			onSelectListener = new DummyEventListener ();
 			this.addEventListener("onSelect", onSelectListener);
 			
 		}
+	}
+	
+	private final class OnOpenTreeEventListener extends SerializableEventListener {
+		private static final long serialVersionUID = 1L;
+
+		public void onEvent(Event arg0) throws Exception {
+			Treeitem item = (Treeitem) arg0.getData();
+			item.setOpen(true);
+		}
+	}
+
+	class DummyEventListener implements EventListener, Serializable
+	{
+		private static final long serialVersionUID = 1L;
+
+		public void onEvent(org.zkoss.zk.ui.event.Event arg0) {// NOTHING TO DO
+		};
 	}
 
 	/* (non-Javadoc)
@@ -526,7 +541,7 @@ public class DataTree extends Tree implements XPathSubscriber, BindContext, Data
 		return clone;
 	}
 	
-	protected class ExtraCtrl extends Tree.ExtraCtrl
+	protected class ExtraCtrl extends Tree.ExtraCtrl implements Serializable
 	{
 		//-- Selectable --//
 		public void selectItemsByClient(Set selItems) {
@@ -561,12 +576,7 @@ public class DataTree extends Tree implements XPathSubscriber, BindContext, Data
 
 	public void afterCompose() {
 		composed = true;
-		addEventListener("onTreeitemOpen", new EventListener() {
-			public void onEvent(Event arg0) throws Exception {
-				Treeitem item = (Treeitem) arg0.getData();
-				item.setOpen(true);
-			}
-		});
+		addEventListener("onTreeitemOpen", new OnOpenTreeEventListener());
 		try {
 			applyModel();
 		} catch (Exception e) {

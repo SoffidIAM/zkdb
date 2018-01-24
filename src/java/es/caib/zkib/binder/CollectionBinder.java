@@ -22,11 +22,12 @@ import es.caib.zkib.jxpath.JXPathException;
 import es.caib.zkib.jxpath.Pointer;
 
 public class CollectionBinder extends AbstractBinder  {
-	private List<Pointer> items;
+	private List<String> itemPaths;
+	transient private List<Pointer> items;
 	private DataModelCollection _model;
 	private String _xPathSubscription = null;
-	private JXPathContext _jxpContext;
-	private Pointer _modelPointer;
+	transient private JXPathContext _jxpContext;
+	transient private Pointer _modelPointer;
 	boolean partialModel = false;
 	
 	/* (non-Javadoc)
@@ -55,6 +56,7 @@ public class CollectionBinder extends AbstractBinder  {
 
 		if (path == null) {
 			items = new Vector<Pointer> ();
+			itemPaths = new Vector<String>();
 		} else if (path.endsWith("]")) {
 			parsePartialModel(path);
 		} else {	// Caso B => un solo objeto (posiblemente lista)
@@ -67,6 +69,7 @@ public class CollectionBinder extends AbstractBinder  {
 	 */
 	private void parseFullModel(String path) {
 		items = null;
+		itemPaths = null;
 		Object value = null;
 		Pointer p = null;
 		try {
@@ -127,6 +130,7 @@ public class CollectionBinder extends AbstractBinder  {
 	private void parseNoModel(String path) {
 		partialModel = true;
 		items = new Vector ();
+		itemPaths = new Vector<String>();
 		// Buscar los hijos
 		try { 
 		    JXPathContext ctx = getDataSource().getJXPathContext();
@@ -141,10 +145,12 @@ public class CollectionBinder extends AbstractBinder  {
 					_model = null;
 					_modelPointer = null;
 				}
+				itemPaths.add(p.asPath());
 				items.add(ctx.getPointer(p.asPath()));
 			}
 		} catch (JXPathException e) {
 			items = null;
+			itemPaths = null;
 		}
 	}
 
@@ -175,6 +181,15 @@ public class CollectionBinder extends AbstractBinder  {
 	 */
 	public List getPointers() {
 		smartParse();
+		if (items == null && itemPaths != null)
+		{
+		    JXPathContext ctx = getDataSource().getJXPathContext();
+			items = new Vector<Pointer>(itemPaths.size());
+			for (int i = 0; i < itemPaths.size(); i++)
+			{
+				items.set(i, ctx.getPointer(itemPaths.get(i)));
+			}
+		}
 		return items;
 	}
 	
@@ -184,7 +199,7 @@ public class CollectionBinder extends AbstractBinder  {
 		
 		if (getDataSource() == null)
 			return null;
-		if (_model == null && items == null)
+		if (_model == null && getPointers() == null)
 			return null;
 		else if (_model == null)
 			return new ListModelProxy (this);

@@ -1,8 +1,11 @@
 package es.caib.zkib.component;
 
 import org.zkoss.zk.ui.Component;
+import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
 import org.zkoss.zul.Listbox;
+
+import es.caib.zkib.events.SerializableEventListener;
 
 public class ListboxFilter extends Listbox implements HeaderFilter
 {
@@ -36,7 +39,7 @@ public class ListboxFilter extends Listbox implements HeaderFilter
 	public ListboxFilter() {
 		super();
 		setMold("select");
-        EventListener onSelectListener = new EventListener() {
+        EventListener onSelectListener = new SerializableEventListener() {
             public void onEvent(org.zkoss.zk.ui.event.Event arg0) {// NOTHING
                                                                     // TO DO
             };

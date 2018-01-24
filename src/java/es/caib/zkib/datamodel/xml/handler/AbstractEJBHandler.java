@@ -31,7 +31,7 @@ import es.caib.zkib.datamodel.xml.definition.MethodDefinition;
 
 public abstract class AbstractEJBHandler extends AbstractInvokerHandler {
 	private String jndi;
-	private Context jndiContext ;
+	private transient Context jndiContext ;
 	
 	protected String getObjectName() 
 	{

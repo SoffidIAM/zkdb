@@ -1,5 +1,6 @@
 package es.caib.zkib.datamodel.xml.definition;
 
+import java.io.Serializable;
 import java.util.Vector;
 
 import javax.servlet.jsp.el.ELException;
@@ -11,7 +12,11 @@ import es.caib.zkib.datamodel.xml.Interpreter;
 import es.caib.zkib.datamodel.xml.ParseException;
 
 
-public class MethodDefinition implements DefinitionInterface {
+public class MethodDefinition implements DefinitionInterface, Serializable {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	private String method;
 	private Vector params = new Vector ();
     private Vector catchs = new Vector ();

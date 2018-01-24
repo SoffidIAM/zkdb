@@ -1,5 +1,6 @@
 package es.caib.zkib.datamodel.xml;
 
+import java.io.Serializable;
 import java.util.Collection;
 
 import es.caib.zkib.datamodel.DataContext;
@@ -8,7 +9,11 @@ import es.caib.zkib.datamodel.xml.definition.ModelDefinition;
 import es.caib.zkib.datamodel.xml.handler.FinderHandler;
 import es.caib.zkib.datamodel.xml.handler.NewInstanceHandler;
 
-public class DataNodeFinder implements es.caib.zkib.datamodel.ExtendedFinder {
+public class DataNodeFinder implements es.caib.zkib.datamodel.ExtendedFinder, Serializable {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	FinderDefinition definition ;
 	DataContext ctx;
 	

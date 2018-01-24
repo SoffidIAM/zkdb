@@ -81,7 +81,7 @@ public class DataModel extends AbstractDataModel {
 				info.setType(root);
 				DataContext newCtx = new DataContext ();
 				newCtx.setDataSource(this);
-				newCtx.setData(new Object ());
+				newCtx.setData("");
 				newCtx.setCustomData(info);
 				data = new XmlDataNode(newCtx);
 				newCtx.setCurrent(data);

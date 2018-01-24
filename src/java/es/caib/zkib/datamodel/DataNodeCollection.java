@@ -1,5 +1,6 @@
 package es.caib.zkib.datamodel;
 
+import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
 import java.util.Iterator;
@@ -18,7 +19,13 @@ import es.caib.zkib.events.XPathEvent;
 import es.caib.zkib.events.XPathRerunEvent;
 
 
-public class DataNodeCollection implements List, DataModelCollection {
+public class DataNodeCollection implements List, DataModelCollection, Serializable {
+	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	
 	Class clazz;
 	Vector elements = new Vector ();
 	DataContext ctx;

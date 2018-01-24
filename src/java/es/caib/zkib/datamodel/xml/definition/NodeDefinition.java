@@ -1,5 +1,6 @@
 package es.caib.zkib.datamodel.xml.definition;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -11,7 +12,11 @@ import es.caib.zkib.datamodel.xml.ParseException;
 import es.caib.zkib.datamodel.xml.handler.PersistenceHandler;
 import es.caib.zkib.datamodel.xml.validation.ValidationDefinition;
 
-public class NodeDefinition implements DefinitionInterface {
+public class NodeDefinition implements DefinitionInterface, Serializable {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	String name;
 	HashMap finders = new HashMap();
 	Vector persistencers = new Vector (3);

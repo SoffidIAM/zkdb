@@ -4,6 +4,8 @@
 package es.caib.zkib.datasource;
 
 
+import java.io.Serializable;
+
 import es.caib.zkib.events.XPathRerunEvent;
 import es.caib.zkib.events.XPathValueEvent;
 import es.caib.zkib.jxpath.ClassFunctions;
@@ -12,7 +14,11 @@ import es.caib.zkib.jxpath.Pointer;
 import es.caib.zkib.jxpath.Variables;
 import es.caib.zkib.jxpath.ri.JXPathContextReferenceImpl;
 
-public class JXPContext extends JXPathContextReferenceImpl {
+public class JXPContext extends JXPathContextReferenceImpl implements Serializable {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	DataSource ds = null;
 	Pointer pointer;
 	JXPContext parentContext = null;

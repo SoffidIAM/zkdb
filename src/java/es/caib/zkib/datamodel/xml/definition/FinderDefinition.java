@@ -1,5 +1,6 @@
 package es.caib.zkib.datamodel.xml.definition;
 
+import java.io.Serializable;
 import java.util.Vector;
 
 import org.w3c.dom.Element;
@@ -8,7 +9,11 @@ import es.caib.zkib.datamodel.xml.ParseException;
 import es.caib.zkib.datamodel.xml.handler.FinderHandler;
 import es.caib.zkib.datamodel.xml.handler.NewInstanceHandler;
 
-public class FinderDefinition implements DefinitionInterface {
+public class FinderDefinition implements DefinitionInterface, Serializable {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	String name;
 	String type;
 	boolean refreshAfterCommit = false;

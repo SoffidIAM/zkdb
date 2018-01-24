@@ -1,8 +1,15 @@
 package es.caib.zkib.datamodel;
 
+import java.io.Serializable;
+
 import es.caib.zkib.datasource.DataSource;
 
-public class DataContext implements Cloneable {
+public class DataContext implements Cloneable, Serializable {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	
 	private DataNode parent;
 	private DataNode current;
 	private DataNodeCollection listModel;

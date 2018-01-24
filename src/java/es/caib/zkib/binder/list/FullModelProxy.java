@@ -1,5 +1,6 @@
 package es.caib.zkib.binder.list;
 
+import java.io.Serializable;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
@@ -28,13 +29,18 @@ import es.caib.zkib.events.XPathEvent;
 import es.caib.zkib.events.XPathRerunEvent;
 import es.caib.zkib.events.XPathSubscriber;
 
-public class FullModelProxy implements ModelProxy, XPathSubscriber, ListModelExt {
+public class FullModelProxy implements ModelProxy, XPathSubscriber, ListModelExt, Serializable {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	
 	DataModelCollection model;
 	/**
 	 * Vector de Pointers.
 	 */
 	Vector v = null;
-	Vector listeners;
+	transient Vector listeners;
 	CollectionBinder binder;
 	
 	public FullModelProxy(CollectionBinder binder) {
@@ -233,5 +239,11 @@ public class FullModelProxy implements ModelProxy, XPathSubscriber, ListModelExt
 		}
 	}
 
+	//-- Serializable --//
+	private synchronized void readObject(java.io.ObjectInputStream s)
+	throws java.io.IOException, ClassNotFoundException {
+		s.defaultReadObject();
+		listeners = new Vector();
+	}
 	
 }

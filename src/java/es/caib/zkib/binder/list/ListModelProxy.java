@@ -1,5 +1,6 @@
 package es.caib.zkib.binder.list;
 
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -30,14 +31,19 @@ import es.caib.zkib.events.XPathSubscriber;
 import es.caib.zkib.events.XPathValueEvent;
 import es.caib.zkib.jxpath.Pointer;
 
-public class ListModelProxy implements XPathSubscriber, ModelProxy, ListModelExt {
+public class ListModelProxy implements XPathSubscriber, ModelProxy, ListModelExt, Serializable {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	
 	DataModelCollection model;
 	/**
 	 * Vector de punteros (Pointers)
 	 * Cada entrada contiene el pointer a la fila correspondiente
 	 */
 	List v = null;
-	Vector listeners;
+	transient Vector listeners;
 	CollectionBinder binder;
 	
 	
@@ -208,5 +214,12 @@ public class ListModelProxy implements XPathSubscriber, ModelProxy, ListModelExt
 			Collections.sort(v, new XPathComparator(binder.getDataSource().getJXPathContext(), bind, ascending));
 			sendEvent ( new ListDataEvent(this, ListDataEvent.INTERVAL_ADDED, 0,v.size()-1));
 		}
+	}
+
+	//-- Serializable --//
+	private synchronized void readObject(java.io.ObjectInputStream s)
+	throws java.io.IOException, ClassNotFoundException {
+		s.defaultReadObject();
+		listeners = new Vector();
 	}
 }

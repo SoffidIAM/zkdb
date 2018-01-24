@@ -1,5 +1,6 @@
 package es.caib.zkib.datamodel.xml.definition;
 
+import java.io.Serializable;
 import java.util.List;
 import java.util.Vector;
 
@@ -7,7 +8,11 @@ import org.w3c.dom.Element;
 
 import es.caib.zkib.datamodel.xml.ParseException;
 
-public class CustomAttributeDefinition implements DefinitionInterface {
+public class CustomAttributeDefinition implements DefinitionInterface, Serializable {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	private String name;
 	private String value;
 	private String expr;

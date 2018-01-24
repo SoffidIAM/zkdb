@@ -1,5 +1,6 @@
 package es.caib.zkib.component;
 
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -306,15 +307,7 @@ public class DataListbox extends Listbox implements XPathSubscriber,
 
 	private void enableOnSelectListener() {
 		if (onSelectListener == null) {
-            onSelectListener = new EventListener() {
-                public boolean isAsap() {
-                    return true;
-                };
-
-                public void onEvent(org.zkoss.zk.ui.event.Event arg0) {// NOTHING
-                                                                        // TO DO
-                };
-            };
+            onSelectListener = new OnSelectListener();
 
             this.addEventListener("onSelect", onSelectListener);
 
@@ -513,7 +506,19 @@ public class DataListbox extends Listbox implements XPathSubscriber,
         return clone;
     }
 
-    protected class ExtraCtrl extends Listbox.ExtraCtrl {
+    private final class OnSelectListener implements EventListener, Serializable {
+		private static final long serialVersionUID = 1L;
+
+		public boolean isAsap() {
+		    return true;
+		}
+
+		public void onEvent(org.zkoss.zk.ui.event.Event arg0) {// NOTHING
+		                                                        // TO DO
+		}
+	}
+
+	protected class ExtraCtrl extends Listbox.ExtraCtrl {
 
         // -- Selectable --//
         public void selectItemsByClient(Set selItems) {
