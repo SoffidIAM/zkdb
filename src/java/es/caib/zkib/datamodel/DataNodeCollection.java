@@ -7,6 +7,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Vector;
+import java.util.concurrent.Future;
 
 import org.apache.commons.beanutils.ConstructorUtils;
 import org.zkoss.zk.ui.Component;
@@ -29,12 +30,18 @@ public class DataNodeCollection implements List, DataModelCollection, Serializab
 	Class clazz;
 	Vector elements = new Vector ();
 	DataContext ctx;
+	Future<?> delayedList = null;
+	int lastDelayedListMember;
 	
 	private boolean _dirty = true;
 	private boolean _firstRefresh = true;
 	Finder finder;
 	int nextKey = 0;
 	
+	
+	public boolean isDirty () {
+		return _dirty;
+	}
 	
 	protected DataNodeCollection(DataContext ctx, Class clazz, Finder finder) {
 		this.clazz = clazz;
@@ -74,6 +81,7 @@ public class DataNodeCollection implements List, DataModelCollection, Serializab
 	private synchronized void smartRefresh() throws Exception {
 		if (_dirty)
 		{
+			cancel();
 			// Purgar las tablas
 			elements.removeAllElements();
 			
@@ -91,11 +99,14 @@ public class DataNodeCollection implements List, DataModelCollection, Serializab
 			
 			if (coll != null)
 			{
+				delayedList = coll instanceof Future ? (Future) coll: null;
+				lastDelayedListMember = 0;
 				Iterator it = coll.iterator();
 				while (it.hasNext())
 				{
 				    Object obj = it.next();
 				    populate (obj);
+					lastDelayedListMember++;
 				}
 			}
 			
@@ -564,6 +575,44 @@ public class DataNodeCollection implements List, DataModelCollection, Serializab
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
+	}
+
+
+	public boolean isInProgress() {
+		if ( delayedList == null ) 
+			return false;
+		if (delayedList.isCancelled())
+			return false;
+		if (delayedList.isDone() && lastDelayedListMember >= ((Collection)delayedList).size())
+			return false;
+		return true;
+	}
+
+
+	public void updateProgressStatus() {
+		if (delayedList != null)
+		{
+			Iterator it = ((Collection) delayedList).iterator();
+			int i = 0;
+			while (it.hasNext())
+			{
+			    Object obj = it.next();
+				if ( i >= lastDelayedListMember)
+				{
+				    populate (obj);
+					lastDelayedListMember++;
+					getDataSource().sendEvent(new XPathCollectionEvent(getDataSource(), getXPath(), XPathCollectionEvent.ADDED, elements.size()-1));
+				}
+				i++;
+			}
+
+		}
+	}
+
+
+	public void cancel() {
+		if (delayedList != null)
+			delayedList.cancel(false);
 	}
 
 }

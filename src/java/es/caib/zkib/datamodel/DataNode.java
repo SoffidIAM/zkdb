@@ -130,7 +130,8 @@ public abstract class DataNode implements DataModelNode, DynaBean, Map, Serializ
 			{
 				Entry entry = (Entry) it.next();
 				DataModelCollection list = (DataModelCollection) entry.getValue();
-				list.prepareCommit();
+				if (! list.isDirty())
+					list.prepareCommit();
 			}
 		}
 		if (l < _lastUpdated)
@@ -160,7 +161,8 @@ public abstract class DataNode implements DataModelNode, DynaBean, Map, Serializ
 					{
 						Entry entry = (Entry) it.next();
 						DataModelCollection list = (DataModelCollection) entry.getValue();
-						list.commit();
+						if (! list.isDirty())
+							list.commit();
 					}
 				}
 				Iterator it = children.entrySet().iterator();

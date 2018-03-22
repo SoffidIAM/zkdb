@@ -32,4 +32,11 @@ public interface DataModelCollection {
 
 	public DataSource getDataSource ();
 	
+	public boolean isDirty();
+	
+	public boolean isInProgress ();
+	
+	public void updateProgressStatus();
+
+	public void cancel ();
 }
