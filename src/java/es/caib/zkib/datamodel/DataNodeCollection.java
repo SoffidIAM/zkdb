@@ -7,10 +7,12 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Vector;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 import org.apache.commons.beanutils.ConstructorUtils;
 import org.zkoss.zk.ui.Component;
+import org.zkoss.zk.ui.UiException;
 import org.zkoss.zk.ui.event.Events;
 
 import es.caib.zkib.datasource.CommitException;
@@ -588,24 +590,35 @@ public class DataNodeCollection implements List, DataModelCollection, Serializab
 		return true;
 	}
 
-
 	public void updateProgressStatus() {
 		if (delayedList != null)
 		{
-			Iterator it = ((Collection) delayedList).iterator();
-			int i = 0;
-			while (it.hasNext())
+			if (delayedList.isCancelled())
 			{
-			    Object obj = it.next();
-				if ( i >= lastDelayedListMember)
-				{
-				    populate (obj);
-					lastDelayedListMember++;
-					getDataSource().sendEvent(new XPathCollectionEvent(getDataSource(), getXPath(), XPathCollectionEvent.ADDED, elements.size()-1));
+				try {
+					delayedList.get();
+				} catch (ExecutionException e) {
+					throw new UiException(e.getCause());
+				} catch (InterruptedException e) {
+					// Ignore
 				}
-				i++;
 			}
-
+			else
+			{
+				Iterator it = ((Collection) delayedList).iterator();
+				int i = 0;
+				while (it.hasNext())
+				{
+				    Object obj = it.next();
+					if ( i >= lastDelayedListMember)
+					{
+					    populate (obj);
+						lastDelayedListMember++;
+						getDataSource().sendEvent(new XPathCollectionEvent(getDataSource(), getXPath(), XPathCollectionEvent.ADDED, elements.size()-1));
+					}
+					i++;
+				}
+			}
 		}
 	}
 
