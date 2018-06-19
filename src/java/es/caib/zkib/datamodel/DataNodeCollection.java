@@ -34,7 +34,7 @@ public class DataNodeCollection implements List, DataModelCollection, Serializab
 	DataContext ctx;
 	Future<?> delayedList = null;
 	int lastDelayedListMember;
-	
+
 	private boolean _dirty = true;
 	private boolean _firstRefresh = true;
 	Finder finder;
@@ -626,6 +626,17 @@ public class DataNodeCollection implements List, DataModelCollection, Serializab
 	public void cancel() {
 		if (delayedList != null)
 			delayedList.cancel(false);
+	}
+
+	public Finder getFinder() {
+		return finder;
+	}
+
+	public boolean updateBeforeParent() {
+		if (finder instanceof ExtendedFinder)
+			return ((ExtendedFinder) finder).updateBeforeParents();
+		else
+			return false;
 	}
 
 }

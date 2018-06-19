@@ -5,7 +5,6 @@ import java.util.Collection;
 
 import es.caib.zkib.datamodel.DataContext;
 import es.caib.zkib.datamodel.xml.definition.FinderDefinition;
-import es.caib.zkib.datamodel.xml.definition.ModelDefinition;
 import es.caib.zkib.datamodel.xml.handler.FinderHandler;
 import es.caib.zkib.datamodel.xml.handler.NewInstanceHandler;
 
@@ -57,6 +56,10 @@ public class DataNodeFinder implements es.caib.zkib.datamodel.ExtendedFinder, Se
 
 	public boolean findOnNewObjects() {
 		return definition.isExecuteOnNewObjects();
+	}
+
+	public boolean updateBeforeParents() {
+		return ! definition.isUpdateAfterParent();
 	}
 
 }

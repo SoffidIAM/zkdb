@@ -18,6 +18,7 @@ public class FinderDefinition implements DefinitionInterface, Serializable {
 	String type;
 	boolean refreshAfterCommit = false;
 	boolean executeOnNewObjects = false;
+	boolean updateAfterParent = true;
 
 	Vector finderHandlers = new Vector ();
 	Vector instanceHandler = new Vector ();
@@ -101,6 +102,14 @@ public class FinderDefinition implements DefinitionInterface, Serializable {
 
 	public void setExecuteOnNewObjects(boolean executeOnNewObjects) {
 		this.executeOnNewObjects = executeOnNewObjects;
+	}
+
+	public boolean isUpdateAfterParent() {
+		return updateAfterParent;
+	}
+
+	public void setUpdateAfterParent(boolean updateAfterParent) {
+		this.updateAfterParent = updateAfterParent;
 	}
 
 

@@ -12,4 +12,9 @@ public interface ExtendedFinder extends Finder {
 	 */
 	public boolean findOnNewObjects() ;
 	
+	/**
+	 * 
+	 */
+	public boolean updateBeforeParents() ;
+	
 }

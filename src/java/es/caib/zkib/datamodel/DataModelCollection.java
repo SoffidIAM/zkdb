@@ -39,4 +39,8 @@ public interface DataModelCollection {
 	public void updateProgressStatus();
 
 	public void cancel ();
+
+	public Finder getFinder();
+
+	public boolean updateBeforeParent();
 }

@@ -89,7 +89,6 @@ public abstract class DataNode implements DataModelNode, DynaBean, Map, Serializ
 		ctx2.setCustomData(customData);
 
 		DataNodeCollection listModel = new DataNodeCollection(ctx2, clazz, finder);
-
 		if ( ! _new)
 			listModel.setDirty();
 		
@@ -112,17 +111,50 @@ public abstract class DataNode implements DataModelNode, DynaBean, Map, Serializ
 		if (_transient)
 			return;
 		
+		long l = _lastUpdated;
 		try {
 			if (_deleted && ! _new)
+			{
+				updateChildCollections(false);
 				doDelete ();
+				l = _lastUpdated;
+			}
 			else if (_new && ! _deleted)
+			{
 				doInsert ();
+				l = _lastUpdated;
+				updateChildCollections(false);
+			}
 			else if (_updated)
+			{
+				updateChildCollections(false);
 				doUpdate ();
+				l = _lastUpdated;
+			}
+			else
+			{
+				updateChildCollections(false);				
+				if (_updated)
+				{
+					doUpdate ();
+					l = _lastUpdated;
+				}
+			}
 		} catch (Exception e) {
 			throw new CommitException (this, e);
 		}
-		long l = _lastUpdated;
+		updateChildCollections(true);
+		if (l < _lastUpdated)
+		{
+			try {
+				doUpdate ();
+			} catch (Exception e) {
+				throw new CommitException ();
+			}
+		}
+	}
+
+	private void updateChildCollections(boolean afterParent) throws CommitException {
 		if ( _childrenUpdated && !_deleted)
 		{
 			Iterator it = children.entrySet().iterator();
@@ -130,16 +162,13 @@ public abstract class DataNode implements DataModelNode, DynaBean, Map, Serializ
 			{
 				Entry entry = (Entry) it.next();
 				DataModelCollection list = (DataModelCollection) entry.getValue();
-				if (! list.isDirty())
-					list.prepareCommit();
-			}
-		}
-		if (l < _lastUpdated)
-		{
-			try {
-				doUpdate ();
-			} catch (Exception e) {
-				throw new CommitException ();
+				if (! list.isDirty() )
+				{
+					if (list.updateBeforeParent()? ! afterParent : afterParent)
+					{
+						list.prepareCommit();
+					}
+				}
 			}
 		}
 	}
@@ -706,7 +735,6 @@ public abstract class DataNode implements DataModelNode, DynaBean, Map, Serializ
 	public Set entrySet() {
 		throw new IllegalArgumentException();
 	}
-
 
 
 }
