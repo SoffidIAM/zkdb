@@ -37,7 +37,7 @@ public class SingletonBinder extends AbstractBinder {
 		protected void parsePath() {
 			try {
 				_xPathContext = null;
-				if ( getXPath () != null)
+				if ( getXPath () != null && getDataSource() != null)
 				{
 					_pointer = getDataSource().getJXPathContext().getPointer(getXPath());
 					_xPath = _pointer.asPath();
