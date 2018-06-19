@@ -162,61 +162,67 @@ public class DataListbox extends Listbox implements XPathSubscriber,
     	return filter.toString();
 	}
 
+    
+    boolean applyingFilter = false;
+    
     @SuppressWarnings("unchecked")
 	public void updateFilters() {
-    	// Search selectors
-    	List<HeaderFilter> selectors = new LinkedList<HeaderFilter>();
-		findFilters (this, selectors);
-		if (selectors.isEmpty())
-			return;
-		HeaderFilter selectorsArray[] = selectors.toArray(new HeaderFilter[selectors.size()]);
-		HashSet<String> values[] = new HashSet[selectors.size()];
-		for (int i = 0; i < selectors.size(); i++)
-			values[i] = new HashSet<String>();
-		
-		// Createa data context
-		JXPathContext ctx;
-		String path ;
-		if (nofilterCollectionBinder.getDataPath() == null)
-			ctx = collectionBinder.getJXPathContext();
-		else
-			ctx = nofilterCollectionBinder.getJXPathContext();
-		if (ctx == null)
-			return ;
-		// Search data
-		for ( Iterator it = ctx.iteratePointers("/"); it.hasNext();)
-		{
-			Pointer p = (Pointer) it.next();
+    	if (! applyingFilter)
+    	{
+	    	// Search selectors
+	    	List<HeaderFilter> selectors = new LinkedList<HeaderFilter>();
+			findFilters (this, selectors);
+			if (selectors.isEmpty())
+				return;
+			HeaderFilter selectorsArray[] = selectors.toArray(new HeaderFilter[selectors.size()]);
+			HashSet<String> values[] = new HashSet[selectors.size()];
 			for (int i = 0; i < selectors.size(); i++)
+				values[i] = new HashSet<String>();
+			
+			// Createa data context
+			JXPathContext ctx;
+			String path ;
+			if (nofilterCollectionBinder.getDataPath() == null)
+				ctx = collectionBinder.getJXPathContext();
+			else
+				ctx = nofilterCollectionBinder.getJXPathContext();
+			if (ctx == null)
+				return ;
+			// Search data
+			for ( Iterator it = ctx.iteratePointers("/"); it.hasNext();)
+			{
+				Pointer p = (Pointer) it.next();
+				for (int i = 0; i < selectors.size(); i++)
+				{
+					HeaderFilter selector = selectorsArray[i];
+					try {
+						Object value = ctx.getRelativeContext(p).getValue( selector.getBind());
+						if (value != null)
+						{
+							values[i].add(value.toString());
+						}
+					} catch (JXPathNotFoundException e) {
+						// Ignore temporary invalid paths
+					}
+				}
+			}
+			// Update filters
+			for (int i = 0;i < selectorsArray.length; i++)
 			{
 				HeaderFilter selector = selectorsArray[i];
-				try {
-					Object value = ctx.getRelativeContext(p).getValue( selector.getBind());
-					if (value != null)
-					{
-						values[i].add(value.toString());
+				if (selector instanceof ListboxFilter)
+				{
+					ListboxFilter listboxSelector = (ListboxFilter) selector;
+					List<Listitem> items = listboxSelector.getItems();
+					items.clear();
+					items.add(new Listitem ("-", null));
+					for (String value :values[i] ) {
+						items.add (new Listitem (value, value));
 					}
-				} catch (JXPathNotFoundException e) {
-					// Ignore temporary invalid paths
+					listboxSelector.setSelectedIndex(0);
 				}
 			}
-		}
-		// Update filters
-		for (int i = 0;i < selectorsArray.length; i++)
-		{
-			HeaderFilter selector = selectorsArray[i];
-			if (selector instanceof ListboxFilter)
-			{
-				ListboxFilter listboxSelector = (ListboxFilter) selector;
-				List<Listitem> items = listboxSelector.getItems();
-				items.clear();
-				items.add(new Listitem ("-", null));
-				for (String value :values[i] ) {
-					items.add (new Listitem (value, value));
-				}
-				listboxSelector.setSelectedIndex(0);
-			}
-		}
+    	}
 	}
 
     public DataSource getDataSource() {
@@ -545,7 +551,14 @@ public class DataListbox extends Listbox implements XPathSubscriber,
 	{
         String newAdditionalFilter = getAdditionalFilter ();
         if ( ! newAdditionalFilter.equals(additionalFilter))
-        	applyDataPath();
+        {
+        	applyingFilter = true;
+        	try {
+            	applyDataPath();
+        	} finally {
+        		applyingFilter = false;
+        	}
+        }
 	}
 
 	public void afterCompose() {
