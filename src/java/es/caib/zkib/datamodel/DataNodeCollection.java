@@ -571,9 +571,10 @@ public class DataNodeCollection implements List, DataModelCollection, Serializab
 
 
 	public void refreshAfterCommit()  {
-		if (finder instanceof ExtendedFinder && ((ExtendedFinder)finder).refreshAfterCommit())
+		if (finder instanceof ExtendedFinder && ((ExtendedFinder)finder).refreshAfterCommit()) 
 			try {
-				refresh();
+				if (! _firstRefresh)
+					refresh();
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
