@@ -293,21 +293,6 @@
 	    <macro-uri>~./es/caib/zkib/debug.zul</macro-uri>    
 	</component>
 	
-	<javascript src="~./js/ext/Codepress/codepress.js" charset="UTF-8"/>
-	<javascript-module name="ext.Codepress.codepress" version="1.0"/>
-	<javascript-module name="codepressz.codepressz" version="1.0"/>
-	<zscript>
-	import org.zkforge.codepress.*;
-	</zscript>
-	<component>
-		<component-name>codepress</component-name>
-		<component-class>org.zkforge.codepress.Codepress</component-class>
-		<mold>
-			<mold-name>default</mold-name>
-			<mold-uri>~./codepressz/codepress.dsp</mold-uri>
-		</mold>
-	</component>
-
 	<javascript-module name="ext.codemirror.codemirror" version="1.0"/>
 	<javascript-module name="codemirror.codemirror" version="1.0"/>
 	<component>
