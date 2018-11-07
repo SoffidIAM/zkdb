@@ -1,6 +1,8 @@
 package es.caib.zkib.datasource;
 
 import es.caib.zkib.jxpath.Pointer;
+import es.caib.zkib.jxpath.ri.model.beans.BeanPropertyPointer;
+import es.caib.zkib.jxpath.util.ValueUtils;
 
 public class DSPointer implements es.caib.zkib.jxpath.Pointer {
 
@@ -46,6 +48,15 @@ public class DSPointer implements es.caib.zkib.jxpath.Pointer {
 	 * @see es.caib.zkib.jxpath.Pointer#getValue()
 	 */
 	public Object getValue() {
+		if (_impl instanceof BeanPropertyPointer )
+		{
+			try {
+				_impl = _ctx.getNativePointer(_impl.asPath());
+			} catch (Exception e)
+			{
+				return null;
+			}
+		}
 		return _impl.getValue();
 	}
 	/* (non-Javadoc)

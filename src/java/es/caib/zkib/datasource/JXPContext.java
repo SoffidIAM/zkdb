@@ -118,5 +118,9 @@ public class JXPContext extends JXPathContextReferenceImpl implements Serializab
 		else
 			return parentContext.getDataSource();
 	}
+
+	protected Pointer getNativePointer(String asPath) {
+		return super.getPointer(asPath);
+	}
 }
 
