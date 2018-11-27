@@ -62,7 +62,15 @@ public class SingletonBinder extends AbstractBinder {
 			if (getPointer() == null)
 				return null;
 			else
-				return getPointer().getValue();
+			{
+				try {
+					return getPointer().getValue();
+				} catch (Exception e) {
+					_pointer = null;
+					invalidate();
+					return null;
+				}
+			}
 		}
 
 		public Object getValue (Object defaultValue)
@@ -74,7 +82,17 @@ public class SingletonBinder extends AbstractBinder {
 				return defaultValue;
 			}
 			else
-				return p.getValue();
+			{
+				try {
+					return p.getValue();
+				} catch (Exception e) {
+					LogFactory.getLog(getClass())
+						.debug("Error getting pointer value for "+p.asPath(), e);
+					_pointer = null;
+					invalidate();
+					return defaultValue;
+				}
+			}
 		}
 
 		public void setValue (Object value)
