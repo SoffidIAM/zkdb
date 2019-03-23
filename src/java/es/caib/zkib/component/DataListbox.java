@@ -1,7 +1,9 @@
 package es.caib.zkib.component;
 
 import java.io.Serializable;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -216,7 +218,9 @@ public class DataListbox extends Listbox implements XPathSubscriber,
 					List<Listitem> items = listboxSelector.getItems();
 					items.clear();
 					items.add(new Listitem ("-", null));
-					for (String value :values[i] ) {
+					LinkedList<String> l = new LinkedList<String>(values[i]);
+					Collections.sort(l);
+					for (String value : l ) {
 						items.add (new Listitem (value, value));
 					}
 					listboxSelector.setSelectedIndex(0);
