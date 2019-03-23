@@ -1,10 +1,13 @@
 package es.caib.zkib.binder.list;
 
 import java.sql.Date;
+import java.text.Collator;
 import java.util.Calendar;
 import java.util.Comparator;
 
 import org.apache.commons.collections.ComparatorUtils;
+import org.zkoss.util.Locales;
+import org.zkoss.zk.ui.Executions;
 
 import es.caib.zkib.jxpath.JXPathContext;
 import es.caib.zkib.jxpath.Pointer;
@@ -68,7 +71,9 @@ public abstract class AbstractComparator implements Comparator {
 			else if ( l > 0 ) return + multiply;
 			else return - multiply;
 		}
-		return multiply * v1.toString().compareTo(v2.toString());
+		
+		Collator coll = Collator.getInstance( Locales.getCurrent() );
+		coll.setStrength(Collator.PRIMARY);
+		return multiply * coll.compare(v1.toString(), v2.toString());
 	}
-
 }
