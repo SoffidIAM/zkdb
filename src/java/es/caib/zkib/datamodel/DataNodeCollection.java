@@ -3,6 +3,8 @@ package es.caib.zkib.datamodel;
 import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
@@ -640,5 +642,25 @@ public class DataNodeCollection implements List, DataModelCollection, Serializab
 			return false;
 	}
 
+	public void sort (Comparator comparator)
+	{
+		try {
+			smartRefresh();
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+		ComparatorHelper helper = new ComparatorHelper();
+		helper.superComparator = comparator;
+		Collections.sort(elements, helper);
+		getDataSource().sendEvent(new XPathRerunEvent(getDataSource(), getXPath()));		
+	}
 }
 
+class ComparatorHelper implements Comparator<DataNode> {
+	Comparator<Object> superComparator;
+
+	public int compare(DataNode o1, DataNode o2) {
+		return superComparator.compare(o1.getInstance(), o2.getInstance());
+	}
+	
+}

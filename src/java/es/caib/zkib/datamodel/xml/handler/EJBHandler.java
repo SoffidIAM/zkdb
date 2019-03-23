@@ -1,20 +1,11 @@
 package es.caib.zkib.datamodel.xml.handler;
 
-import java.lang.reflect.Method;
-
-import javax.naming.Context;
-import javax.naming.InitialContext;
-
 import org.w3c.dom.Element;
-
-import org.zkoss.zk.ui.UiException;
 
 import es.caib.zkib.datamodel.DataContext;
 import es.caib.zkib.datamodel.xml.ParseException;
 import es.caib.zkib.datamodel.xml.definition.DeleteMethodDefinition;
-import es.caib.zkib.datamodel.xml.definition.HandlerMethodDefinition;
 import es.caib.zkib.datamodel.xml.definition.InsertMethodDefinition;
-import es.caib.zkib.datamodel.xml.definition.MethodDefinition;
 import es.caib.zkib.datamodel.xml.definition.UpdateMethodDefinition;
 
 public class EJBHandler extends AbstractEJBHandler implements PersistenceHandler {
