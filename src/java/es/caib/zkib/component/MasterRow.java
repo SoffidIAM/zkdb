@@ -84,6 +84,9 @@ public class MasterRow extends DataRow implements IdSpace, AfterCompose {
 	 * this component doesn't belong to any ID space
 	 */
 	public Component getFellow(String compId) {
+		Component c = super.getFellowIfAny(compId);
+		if (c != null)
+			return c;
 		final IdSpace idspace = getRealSpaceOwner();
 		if (idspace == null)
 			throw new ComponentNotFoundException("This component doesn't belong to any ID space: "+this);
@@ -94,6 +97,9 @@ public class MasterRow extends DataRow implements IdSpace, AfterCompose {
 	 * <p>Unlike {@link #getFellow}, it returns null if not found.
 	 */
 	public Component getFellowIfAny(String compId) {
+		Component c = super.getFellowIfAny(compId);
+		if (c != null)
+			return c;
 		final IdSpace idspace = getRealSpaceOwner();
 		return idspace == null ? null: idspace.getFellowIfAny(compId);
 	}
