@@ -23,6 +23,7 @@ import org.apache.commons.beanutils.WrapDynaClass;
 import org.zkoss.zk.ui.Component;
 import org.zkoss.zk.ui.event.Events;
 
+import es.caib.zkib.binder.SmartEvents;
 import es.caib.zkib.datasource.CommitException;
 import es.caib.zkib.datasource.DataSource;
 import es.caib.zkib.events.XPathCollectionEvent;
@@ -331,6 +332,17 @@ public abstract class DataNode implements DataModelNode, DynaBean, Map, Serializ
 		return _updated;
 	}
 	
+	public void setDirty (boolean dirty)
+	{
+		if ( !dirty )
+		{
+			_new = _updated = _deleted = false;
+		}
+		else
+		{
+			if ( !_new ) _updated = true;
+		}
+	}
     /**
      * Does the specified mapped property contain a value for the specified
      * key value?
