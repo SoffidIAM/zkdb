@@ -19,6 +19,7 @@ import org.zkoss.zul.ListitemRenderer;
 
 import es.caib.zkib.binder.BindContext;
 import es.caib.zkib.binder.SingletonBinder;
+import es.caib.zkib.binder.SmartEvents;
 import es.caib.zkib.component.DataCombobox;
 import es.caib.zkib.component.DataListbox;
 import es.caib.zkib.component.MasterListItem;
@@ -87,7 +88,7 @@ public class DataListItemRenderer implements ListitemRenderer, Serializable {
 					}
 				}
 			}
-			Events.postEvent("onNewRow", _listbox, item);
+			SmartEvents.postEvent("onNewRow", _listbox, item);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

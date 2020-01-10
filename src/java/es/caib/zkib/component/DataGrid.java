@@ -22,6 +22,7 @@ import org.zkoss.zul.event.ListDataListener;
 
 import es.caib.zkib.binder.BindContext;
 import es.caib.zkib.binder.CollectionBinder;
+import es.caib.zkib.binder.SmartEvents;
 import es.caib.zkib.binder.list.ModelProxy;
 import es.caib.zkib.datasource.DataSource;
 import es.caib.zkib.events.XPathEvent;
@@ -139,7 +140,7 @@ public class DataGrid extends Grid implements BindContext, XPathSubscriber {
 				onInitListener = new OnInitListener();
 				addEventListener("onRenderDataGrid", onInitListener);
 			}
-			Events.postEvent("onRenderDataGrid", this, null);
+			SmartEvents.postEvent("onRenderDataGrid", this, null);
 			//Since user might setModel and setRender separately or repeatedly,
 			//we don't handle it right now until the event processing phase
 			//such that we won't render the same set of data twice
@@ -182,7 +183,7 @@ public class DataGrid extends Grid implements BindContext, XPathSubscriber {
 		{
 			r.setDataPath(((ModelProxy) getModel()).getBind(j));
 		}
-		Events.postEvent("onNewRow", this, r);
+		SmartEvents.postEvent("onNewRow", this, r);
 		return r;
 	}
 	

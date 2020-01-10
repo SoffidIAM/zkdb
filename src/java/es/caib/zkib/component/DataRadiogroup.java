@@ -9,6 +9,7 @@ import org.zkoss.zul.Radio;
 import org.zkoss.zul.Radiogroup;
 
 import es.caib.zkib.binder.SingletonBinder;
+import es.caib.zkib.binder.SmartEvents;
 import es.caib.zkib.events.XPathEvent;
 import es.caib.zkib.events.XPathSubscriber;
 
@@ -27,7 +28,7 @@ public class DataRadiogroup extends Radiogroup implements XPathSubscriber {
 	public void setBind (String bind)
 	{
 		binder.setDataPath(bind);
-		Events.postEvent("onInitRender", this, null);
+		SmartEvents.postEvent("onInitRender", this, null);
 	}
 	
 	public String getBind ()

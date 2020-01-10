@@ -23,6 +23,7 @@ import org.zkoss.zul.Treerow;
 
 import es.caib.zkib.binder.BindContext;
 import es.caib.zkib.binder.SingletonBinder;
+import es.caib.zkib.binder.SmartEvents;
 import es.caib.zkib.component.DataListbox;
 import es.caib.zkib.component.DataTree;
 import es.caib.zkib.component.MasterListItem;
@@ -127,14 +128,14 @@ public class DataTreeitemRenderer implements TreeitemRenderer, Serializable {
 				} while (current != null);
 				if (level <= master.getOpenLevels().intValue())
 				{
-					Events.postEvent("onTreeitemOpen", _tree, item);
+					SmartEvents.postEvent("onTreeitemOpen", _tree, item);
 				}
 			} 
 			else if (master.isOpen())
 			{
-				Events.postEvent("onTreeitemOpen", _tree, item);
+				SmartEvents.postEvent("onTreeitemOpen", _tree, item);
 			} 
-			Events.postEvent("onNewRow", _tree, item);
+			SmartEvents.postEvent("onNewRow", _tree, item);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

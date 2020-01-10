@@ -16,6 +16,7 @@ import org.zkoss.zk.ui.Page;
 import org.zkoss.zk.ui.UiException;
 import org.zkoss.zk.ui.event.Events;
 
+import es.caib.zkib.binder.SmartEvents;
 import es.caib.zkib.datasource.AbstractDataSource;
 import es.caib.zkib.datasource.CommitException;
 import es.caib.zkib.events.XPathRerunEvent;
@@ -39,8 +40,8 @@ public abstract class AbstractDataModel extends AbstractDataSource  {
 	public void refresh ()
 	{
 		getDataNode().refresh();
-                Events.postEvent("onChange", this, null);
-                sendEvent(new XPathRerunEvent (this, "/"));
+		SmartEvents.postEvent("onChange", this, null);
+        sendEvent(new XPathRerunEvent (this, "/"));
 	}
 	
 	
@@ -73,7 +74,7 @@ public abstract class AbstractDataModel extends AbstractDataSource  {
 			try {
 				getDataNode().prepareCommit();
 				getDataNode().commit();
-				Events.postEvent("onCommit", this, null);
+				SmartEvents.postEvent("onCommit", this, null);
 			} catch (CommitException e) {
 				if (tx != null)
 					tx.setRollbackOnly();

@@ -163,7 +163,7 @@ public abstract class AbstractBinder implements BindContext, XPathSubscriber, Se
 				_pendingParse = true;
 				_xPath = null;
 				_ds = null;
-				Events.postEvent("onEvalDataPath", _component, null);
+				SmartEvents.postEvent("onEvalDataPath", _component, null);
 			}
 		}
 
@@ -323,7 +323,7 @@ public abstract class AbstractBinder implements BindContext, XPathSubscriber, Se
 			}
 
 			if ( event instanceof XPathRerunEvent)
-				Events.postEvent(new Event ("onChangeXPath", _component, event.getXPath()));
+				SmartEvents.postEvent("onChangeXPath", _component, event.getXPath());
 		}
 
 		public String getXPath ()
