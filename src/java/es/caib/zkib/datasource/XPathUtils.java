@@ -51,6 +51,7 @@ public class XPathUtils {
 
 	public static Object getValue (DataSource ds, String xpath) 
 	{
+		if (ds == null || xpath == null) return null;
 		return ds.getJXPathContext().getValue(xpath);
 	}
 	
