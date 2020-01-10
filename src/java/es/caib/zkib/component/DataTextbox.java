@@ -1,5 +1,6 @@
 package es.caib.zkib.component;
 
+import org.zkoss.xml.HTMLs;
 import org.zkoss.zk.ui.Component;
 import org.zkoss.zk.ui.Page;
 import org.zkoss.zk.ui.WrongValueException;
@@ -16,7 +17,7 @@ public class DataTextbox extends org.zkoss.zul.Textbox implements XPathSubscribe
 	private static final long serialVersionUID = -6447081728620764693L;
 	private SingletonBinder binder = new SingletonBinder (this);
 	private boolean duringOnUpdate = false;
-	
+	private String placeholder;
 	
 	public void undo(){
 		binder.setOldValue();
@@ -135,5 +136,21 @@ public class DataTextbox extends org.zkoss.zul.Textbox implements XPathSubscribe
 		clone.effectiveDisabled = effectiveDisabled;
 		return clone;
 	}
+
+	public String getPlaceholder() {
+		return placeholder;
+	}
+
+	public void setPlaceholder(String placeholder) {
+		this.placeholder = placeholder;
+	}
+
+	public String getInnerAttrs() {
+		final StringBuffer sb =
+			new StringBuffer(64).append(super.getInnerAttrs());
+		HTMLs.appendAttribute(sb, "placeholder", placeholder);
+		return sb.toString();
+	}
+
 
 }
