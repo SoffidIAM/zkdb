@@ -150,7 +150,7 @@ public abstract class DataNode implements DataModelNode, DynaBean, Map, Serializ
 			try {
 				doUpdate ();
 			} catch (Exception e) {
-				throw new CommitException ();
+				throw new CommitException (this, e);
 			}
 		}
 	}

@@ -66,6 +66,16 @@ public class DataListbox extends Listbox implements XPathSubscriber,
     
     public void onCreate ()
     {
+    	if ( getRows() > 0 && getHeads() != null &&  ! getHeads().isEmpty() &&
+    			!"select".equals(getMold() ) &&
+    			!"paging".equals(getMold() ))
+    	{
+    		String style = getSclass();
+    		if (style == null || style.trim().isEmpty())
+    			setSclass("scroll-listbox listbox");
+    		else if ( !style.contains("scroll-listbox"))
+    			setSclass("scroll-listbox "+style);
+    	}
         syncSelectedItem();
     }
 
