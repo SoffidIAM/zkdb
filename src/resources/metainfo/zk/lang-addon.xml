@@ -292,6 +292,20 @@
 	    <component-name>debugwindow</component-name>    
 	    <macro-uri>~./es/caib/zkib/debug.zul</macro-uri>    
 	</component>
+
+	<component>
+		<component-name>datatable</component-name>
+		<component-class>es.caib.zkib.component.DataTable</component-class>
+	</component>
+
+	<component>
+		<component-name>switch</component-name>
+		<component-class>es.caib.zkib.component.Switch</component-class>
+		<mold>
+			<mold-name>default</mold-name>
+			<mold-uri>~./zul/html/switch.dsp</mold-uri>
+		</mold>
+	</component>
 	
 	<javascript-module name="ext.codemirror.codemirror" version="1.0"/>
 	<javascript-module name="codemirror.codemirror" version="1.0"/>
