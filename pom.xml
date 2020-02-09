@@ -48,7 +48,7 @@
    <dependency>
       <groupId>org.zkoss.zk</groupId>
       <artifactId>zk</artifactId>
-      <version>${zk.version}-1</version>
+      <version>${zk.version}</version>
     </dependency>
     <dependency>
       <groupId>org.zkoss.zk</groupId>
@@ -126,6 +126,11 @@
       <groupId>jdom</groupId>
       <artifactId>jdom</artifactId>
       <version>1.0</version>
+    </dependency>
+    <dependency>
+    	<groupId>org.json</groupId>
+    	<artifactId>json</artifactId>
+    	<version>20131018</version>
     </dependency>
   </dependencies>
   <reporting>
