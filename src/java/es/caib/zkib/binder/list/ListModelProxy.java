@@ -140,13 +140,21 @@ public class ListModelProxy implements XPathSubscriber, ModelProxy, ListModelExt
 
 			sendEvent ( new ListDataEvent(this, ListDataEvent.INTERVAL_ADDED, 0, v.size()-1));
 		}
+		if (event.getType() == XPathCollectionEvent.UPDATED) {
+			int i = v.indexOf(new Integer (event.getIndex()));
+			if ( i >= 0)
+			{
+				sendEvent ( new ListDataEvent(this, SoffidListDataEvent.INTERVAL_UPDATED, i, i));
+			}
+        }
 	}
 
 	public void onUpdate (XPathEvent event)
 	{
-		if (event instanceof XPathCollectionEvent)
+		if (event instanceof XPathCollectionEvent) {
 			if(binder.getDataSource() != null)	//Ignorem els events si l'element s'ha eliminat
 				onListChange ( (XPathCollectionEvent) event);
+		}
 		else if (event instanceof XPathRerunEvent )
 		{
 			sendEvent ( new ListDataEvent(this, ListDataEvent.INTERVAL_REMOVED, 0,v.size()-1));

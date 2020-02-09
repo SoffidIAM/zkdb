@@ -257,7 +257,8 @@ public class DataNodeCollection implements List, DataModelCollection, Serializab
 	}
 
 	public void onUpdate(DataModelNode model) {
-		// Nothing to do
+		int i = elements.indexOf(model);
+		getDataSource().sendEvent ( new XPathCollectionEvent (getDataSource(), getXPath(), XPathCollectionEvent.UPDATED,i ));
 	}
 	
 	public void setActiveNode (DataModelNode model) {

@@ -145,6 +145,13 @@ public class FullModelProxy implements ModelProxy, XPathSubscriber, ListModelExt
 
 			sendEvent ( new ListDataEvent(this, ListDataEvent.INTERVAL_ADDED, 0, v.size()-1));
 		}
+        if (event.getType() == XPathCollectionEvent.UPDATED) {
+			int i = v.indexOf(new Integer (event.getIndex()));
+			if ( i >= 0)
+			{
+				sendEvent ( new ListDataEvent(this, SoffidListDataEvent.INTERVAL_UPDATED, i, i));
+			}
+        }
 	}
 
 	public void onUpdate (XPathEvent event)

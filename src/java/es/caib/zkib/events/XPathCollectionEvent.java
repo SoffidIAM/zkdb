@@ -8,6 +8,7 @@ public class XPathCollectionEvent extends XPathEvent {
 	public final static int DELETED = 2;
 	public final static int RECREATED = 3;
 	public final static int FOCUSNODE = 4;
+	public final static int UPDATED = 5;
 	private int type;
 	private int index;
 	private DataModelCollection model;

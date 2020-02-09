@@ -409,7 +409,7 @@ public class DataListbox extends Listbox implements XPathSubscriber,
                     && collectionBinder.getDataSource() != null)
                 collectionBinder.getDataSource().commit();
         } catch (CommitException e) {
-            throw new UiException(e.getCause().toString());
+            throw new UiException(e);
         }
     }
 
@@ -578,4 +578,5 @@ public class DataListbox extends Listbox implements XPathSubscriber,
 	public void afterCompose() {
 		updateFilters();
 	}
+	
 }
