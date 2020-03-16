@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 
+
+<window 
+	id="MYwindow"
+	title="Información de debug"
+	closable="true"
+	sclass="overlapped"
+	onClose="self.visible = false; event.stopPropagation();">
+	<caption label="window"/>
+	<label value="Hola"/>
+</window>
+ -->
+ 
+ 	<label value="Hola"/>
+ 

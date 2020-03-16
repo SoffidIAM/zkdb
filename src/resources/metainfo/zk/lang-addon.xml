@@ -307,6 +307,38 @@
 		</mold>
 	</component>
 	
+	<component>
+		<component-name>select</component-name>
+		<component-class>es.caib.zkib.component.Select</component-class>
+	</component>
+
+	<component>
+		<component-name>databutton</component-name>
+		<component-class>es.caib.zkib.component.DatasourceButton</component-class>
+	</component>
+
+	<component>
+		<component-name>datacommitbutton</component-name>
+		<component-class>es.caib.zkib.component.CommitButton</component-class>
+	</component>
+
+	<component>
+		<component-name>datarollbackbutton</component-name>
+		<component-class>es.caib.zkib.component.RollbackButton</component-class>
+	</component>
+
+
+	<component>
+		<component-name>pager</component-name>
+		<component-class>es.caib.zkib.component.Pager</component-class>
+	</component>
+
+	<component>
+		<component-name>datatree2</component-name>
+		<component-class>es.caib.zkib.component.DataTree2</component-class>
+	</component>
+
+
 	<javascript-module name="ext.codemirror.codemirror" version="1.0"/>
 	<javascript-module name="codemirror.codemirror" version="1.0"/>
 	<component>

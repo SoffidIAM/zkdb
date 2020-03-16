@@ -1,10 +1,15 @@
 package es.caib.zkib.component;
 
+import java.io.IOException;
+import java.io.Writer;
+
 import org.zkoss.xml.HTMLs;
 import org.zkoss.zk.ui.Component;
 import org.zkoss.zk.ui.Page;
 import org.zkoss.zk.ui.WrongValueException;
+import org.zkoss.zk.ui.render.SmartWriter;
 
+import es.caib.zkib.binder.BindContext;
 import es.caib.zkib.binder.SingletonBinder;
 import es.caib.zkib.datasource.DataSource;
 import es.caib.zkib.events.XPathEvent;
@@ -79,7 +84,26 @@ public class DataTextbox extends org.zkoss.zul.Textbox implements XPathSubscribe
 		if (bind != null)
 		{
 			refreshValue ();
+			DataSource ds = getTopDatasource();
+			if (ds instanceof Component)
+				smartUpdate("dsid", ((Component) ds).getUuid());
+			else
+				smartUpdate("dsid", null);
 		}
+		else
+			smartUpdate("dsid", null);
+	}
+
+	public DataSource getTopDatasource() {
+		DataSource ds = binder.getDataSource();
+		if (ds != null )
+			do {
+				if (ds instanceof BindContext)
+					ds = ((BindContext)ds).getDataSource();
+				else
+					break;
+			} while (true);
+		return ds;
 	}
 
 	public void onUpdate (XPathEvent event) {
@@ -149,7 +173,35 @@ public class DataTextbox extends org.zkoss.zul.Textbox implements XPathSubscribe
 		final StringBuffer sb =
 			new StringBuffer(64).append(super.getInnerAttrs());
 		HTMLs.appendAttribute(sb, "placeholder", placeholder);
+		if (binder.getDataPath() != null)
+		{
+			DataSource ds = getTopDatasource();
+			if (ds != null && ds instanceof Component)
+				HTMLs.appendAttribute(sb, "dsid", ((Component)ds).getUuid());
+				
+		}
 		return sb.toString();
+	}
+
+	@Override
+	public void redraw(Writer out) throws IOException {
+		final SmartWriter wh = new SmartWriter(out);
+		final String uuid = getUuid();		
+
+		if (isMultiline())
+		{
+			wh.write("<textarea id=\"").write(uuid).write("\" z.type=\"zul.datasource.DataTxbox\"")
+			.write(getOuterAttrs()).write(getInnerAttrs())
+			.write(">")
+			.write(getAreaText())
+			.write("</textarea>");
+		}
+		else
+		{
+			wh.write("<input id=\"").write(uuid).write("\" z.type=\"zul.datasource.DataTxbox\"")
+			.write(getOuterAttrs()).write(getInnerAttrs())
+			.write("/>");
+		}
 	}
 
 

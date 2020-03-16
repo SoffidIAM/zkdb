@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<zkib-model>
+	<datanode name="countries">
+		<finder name="country" type ="country">
+			<script-finder>
+				import es.caib.zkib.sample.*;
+				
+				Country c1 = new Country();
+ 					c1.name="USA";
+					c1.abbreviation="us";
+					Country c2 = new Country ();
+					c2.name="Deutschland";
+					c2.abbreviation="de";
+					Country c3 = new Country ();
+					c3.name="España";
+					c3.abbreviation="es";
+					Country c4 = new Country ();
+					c4.name="Some other very long country";
+					c4.abbreviation="c";
+	
+					java.util.Vector v = new java.util.Vector();
+					v.add (c1);
+					v.add(c4);
+					v.add (c2);
+					v.add (c3);
+					return v;
+				
+			</script-finder>
+			<new-instance-script>
+				return new es.caib.zkib.sample.Country();
+			</new-instance-script>
+		</finder>
+	</datanode>
+
+	<datanode name="country">
+		<custom-attribute name="population" depends="@name">
+		<![CDATA[
+			return "molts<"+instance.name+">";
+			]]>
+		</custom-attribute>
+		<finder name="city" type ="city">
+			<script-finder>
+				import es.caib.zkib.sample.*;
+				
+				City d1 = new City();
+ 				d1.name="City 1";
+
+				City d2 = new City();
+ 				d2.name="City 2";
+	
+				java.util.Vector v = new java.util.Vector();
+				v.add (d1);
+				v.add (d2);
+				return v;
+				
+			</script-finder>
+			<new-instance-script>
+				return new es.caib.zkib.sample.Country();
+			</new-instance-script>
+		</finder>
+	</datanode>
+
+	<datanode name="city"/>
+
+</zkib-model>

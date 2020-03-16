@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?page title="ZKIB Demo" ?>
+
+<zk>
+	<include src="debug.zul"/>
+	<xmldatasource id="mydata" src="/my-data.xml" />
+		<vbox>
+		<form dataPath="/mydata:/title">
+			<label bind="@name"/>
+			<textbox bind="@name"/>
+			<textbox bind="@seleccionado"/>
+			<button label="update"/>
+			<label bind="@fecha" />
+			<datebox  format="dd/MM/yyyy" bind="@fecha"/>
+		</form>
+		
+		<listbox id="countries" dataPath="/mydata:/country" bind="/mydata:/title/@seleccionado">
+			<listhead>
+				<listheader label="Abbr"  sort="auto" />
+				<listheader label="Name" sort="auto" />
+			</listhead>
+			<dataitem bind="@abbreviation">
+				<listcell bind="@abbreviation" />
+				<listcell bind="@name" />
+			</dataitem>
+		</listbox>
+		
+		<label value="Grid de PAISES"/>
+		<grid dataPath="/mydata:/country">
+			<columns>
+				<column label="Abbr" />
+				<column label="Name"/>
+			</columns>
+			<datarow>
+				<label bind="@abbreviation" />
+				<label bind="@name" />
+			</datarow>
+		</grid>
+		
+
+		<listbox id="countries2" mold="select" bind="/mydata:/title/@seleccionado">
+			<listitem value="es">
+				<listcell label="españa"/>
+			</listitem>
+			<listitem value="de">
+				<listcell label="deustchland"/>
+			</listitem>
+			<listitem value="us">
+				<listcell label="USA"/>
+			</listitem>
+		</listbox>
+
+		<hbox>
+			<label value="Active country:"/>
+			<textbox bind="/countries:/@name"/>
+			<textbox bind="/mydata:/title/@seleccionado"/>
+		</hbox>
+		<radiogroup bind="/mydata:/title/@seleccionado">
+			<radio label="España" value="es"/>
+			<radio label="Deutschland" value="de"/>
+			<radio label="USA" value="us"/>
+		</radiogroup>
+		<grid dataPath="/countries:/city">
+			<columns>
+				<column label="City"/>
+				<column/>
+			</columns>
+			<datarow>
+				<label bind="@name" />
+				<image src="/img/remove.gif">
+					<attribute name="onClick">
+						row = self.parent;
+						ctx = row.dataSource.jXPathContext;
+						ctx.removePath(row.xPath);
+						ctx.getPointer("/").invalidate();
+					</attribute>
+				</image>
+			</datarow>
+		</grid>						
+		<button label="Add City">
+			<attribute name="onClick">
+				ctx = countries.jXPathContext;
+				pointer = ctx.createPath("/city[count(/city)+1]");
+				ctx2 = ctx.getRelativeContext(pointer);
+				ctx2.createPath("/@name").setValue("London");
+				mydata.getJXPathContext().getPointer("/").invalidate();
+			</attribute>
+		</button>
+		<label value="ARBOL"/>
+		<tree dataPath="/mydata:/">
+			<treecols>
+				<treecol label="Pais/Ciudad" />
+			</treecols>
+			<treeitemfinder path="/country">
+					<treerow>
+						<treecell bind="@name"/>
+					</treerow>
+			</treeitemfinder>
+			<treeitemfinder path="/city">
+					<treerow>
+						<treecell bind="@name"/>
+					</treerow>
+			</treeitemfinder>
+		</tree>
+	</vbox>
+	
+</zk>
+

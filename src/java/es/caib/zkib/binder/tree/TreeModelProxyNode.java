@@ -336,6 +336,10 @@ public class TreeModelProxyNode implements XPathSubscriber, Serializable {
 			{
 				refresh();
 			}
+			if (event.getType() == XPathCollectionEvent.UPDATED)
+			{
+				updateChild(childPath);
+			}
 		}
 	}
 
@@ -412,6 +416,26 @@ public class TreeModelProxyNode implements XPathSubscriber, Serializable {
 					children = work;
 					modelProxy.sendEvent ( new TreeDataEvent (modelProxy, TreeDataEvent.INTERVAL_REMOVED, this, i, i));
 				}
+			}
+		}
+	}
+
+	/**
+	 * @param childPath
+	 */
+	private void updateChild(String path) {
+		String thisPath = XPathUtils.concat(modelProxy.getBinder().getDataSource().getRootPath(),getXPathPrefix());
+		
+		// Cerquem si tenim fills (n'hi ha vegades que children arriba null):
+		if (children==null) 
+			children = searchChildren();
+		
+		for (int i = 0 ; i < children.length; i ++)  
+		{
+			String newPath  = XPathUtils.concat(thisPath,children[i].localPath);
+			if (path.equals(newPath))
+			{
+				modelProxy.sendEvent ( new TreeDataEvent (modelProxy, TreeDataEvent.CONTENTS_CHANGED, this, i, i));
 			}
 		}
 	}

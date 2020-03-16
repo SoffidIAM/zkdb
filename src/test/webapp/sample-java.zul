@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?page title="ZKIB Demo" ?>
+
+<zk>
+	<datamodel id="mydata2" class="es.caib.zkib.sample.RootNode" />
+	<xmldatasource id="staticdata" src="/my-data.xml" />
+	<datamodel id="mydata" src="/descriptor.xml" rootNode="countries" />
+		<vbox>
+		<form dataPath="/mydata:/title">
+			<label bind="@name"/>
+			<textbox bind="@name"/>
+			<datebox  format="dd/MM/yyyy" bind="@date"/>
+			<datebox  format="dd/MM/yyyy" bind="@calendar"/>
+		</form>
+		<listbox id="countries" dataPath="/mydata:/country"
+				bind="/staticdata:/title/@seleccionado"
+				autocommit="false">
+			<listhead>
+				<listheader label="Abbr" sort="auto"/>
+				<listheader label="Name" sort="auto"/>
+				<listheader label="Population" sort="auto"/>
+			</listhead>
+			<dataitem bind="@abbreviation">
+				<listcell bind="@abbreviation" />
+				<listcell bind="@name" />
+				<listcell bind="@population" />
+			</dataitem>
+		</listbox>
+		<hbox>
+			<label value="Active country:"/>
+			<textbox bind="/countries:/@name"/>
+		</hbox>
+		<grid dataPath="/countries:/city">
+			<columns>
+				<column label="City"/>
+				<column/>
+			</columns>
+			<datarow>
+				<label bind="@name" />
+				<image src="/img/remove.gif">
+					<attribute name="onClick">
+						row = self.parent;
+						ctx = row.dataSource.jXPathContext;
+						ctx.removePath(row.xPath);
+						ctx.getPointer("/").invalidate();
+					</attribute>
+				</image>
+			</datarow>
+		</grid>						
+		<button label="Add City">
+			<attribute name="onClick">
+			    System.out.println ("C="+countries);
+			    c = self.getFellow("countries");
+			    System.out.println ("C="+c);
+				ctx = c.getJXPathContext();
+				pointer = ctx.createPath("/city[count(/city)+1]");
+				ctx2 = ctx.getRelativeContext(pointer);
+				ctx2.createPath("/@name").setValue("London");
+				ctx.getPointer("/").invalidate();
+			</attribute>
+		</button>
+		<label value="ARBOL"/>
+		<tree dataPath="/mydata:/" id="theTree">
+			<treecols>
+				<treecol label="Pais/Ciudad" />
+			</treecols>
+			<treeitemfinder path="/country" bind="." open="true">
+					<treerow>
+						<treecell bind="@name"/>
+					</treerow>
+			</treeitemfinder>
+			<treeitemfinder path="/city" bind="." open="true">
+					<treerow>
+						<treecell bind="@name"/>
+					</treerow>
+			</treeitemfinder>
+		</tree>
+		<form dataPath="/theTree:/">
+			<label bind="@name" />
+		</form>
+		<hbox>
+			<button label="Add country">
+				<attribute name="onClick">
+				    theTree.addNew ("/country");
+				    country = theTree.getSelectedItem().getValue().instance;
+				    country.setName("Albania");
+				</attribute>
+			</button>
+			<button label="Refresh">
+				<attribute name="onClick">
+				    theTree.setDataPath("/mydata:/");
+				</attribute>
+			</button>
+		</hbox>
+		<label value="Ciudades del país" />
+		<listbox dataPath="/theTree:/city" id="citylistbox">
+			<listhead>
+				<listheader label="Name" sort="auto"/>
+			</listhead>
+			<dataitem>
+				<listcell bind="@name" />
+			</dataitem>
+		</listbox>
+	</vbox>
+	
+</zk>
+

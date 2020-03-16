@@ -2,10 +2,7 @@ package es.caib.zkib.component;
 
 import java.io.IOException;
 import java.io.Writer;
-import java.util.LinkedList;
-import java.util.List;
 
-import org.json.JSONArray;
 import org.json.JSONObject;
 import org.zkoss.xml.HTMLs;
 import org.zkoss.zk.au.AuRequest;
@@ -27,61 +24,51 @@ import org.zkoss.zul.event.ListDataListener;
 import org.zkoss.zul.impl.XulElement;
 
 import es.caib.zkdb.yaml.Yaml2Json;
-import es.caib.zkib.binder.BindContext;
 import es.caib.zkib.binder.CollectionBinder;
 import es.caib.zkib.binder.SingletonBinder;
 import es.caib.zkib.binder.list.ModelProxy;
-import es.caib.zkib.datamodel.DataModelNode;
 import es.caib.zkib.datamodel.DataNode;
 import es.caib.zkib.datasource.ChildDataSourceImpl;
 import es.caib.zkib.datasource.CommitException;
 import es.caib.zkib.datasource.DataSource;
-import es.caib.zkib.datasource.XPathUtils;
 import es.caib.zkib.events.XPathCollectionEvent;
 import es.caib.zkib.events.XPathEvent;
 import es.caib.zkib.events.XPathRerunEvent;
 import es.caib.zkib.events.XPathSubscriber;
+import es.caib.zkib.events.XPathValueEvent;
 import es.caib.zkib.jxpath.JXPathContext;
-import es.caib.zkib.jxpath.Variables;
+import es.caib.zkib.jxpath.JXPathContextFactory;
 
-public class DataTable extends XulElement implements XPathSubscriber,
-	BindContext, DataSource, AfterCompose {
+public class Select extends XulElement implements XPathSubscriber, AfterCompose {
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
-	String columns = null;
 	private String dataPath;
 	ListModel model;
     CollectionBinder collectionBinder = new CollectionBinder(this);
-    ChildDataSourceImpl dsImpl = null;
-    int selectedIndex = -1;
-    List<Integer> selectedIndexList = new LinkedList<Integer>();
-	private String selectedItemXPath;
+    String selectedValue = "";
     boolean autocommit = false;
     boolean _updateValueBinder = true;
 	private transient ListDataListener _dataListener;
 	private static final String SELECT_EVENT = "onSelect"; //$NON-NLS-1$
-	private static final String MULTI_SELECT_EVENT = "onMultiSelect"; //$NON-NLS-1$
 	private static final String CLIENT_ACTION_EVENT = "onClientAction"; //$NON-NLS-1$
-	boolean enablefilter = true;
-	int sortColumn = -1;
-	int sortDirection = +1;
-	boolean footer = true;
-	boolean multiselect = false;
-	String maxheight = "";
+	boolean sort = false;
+	String keyPath;
+	String labelPath;
+	EventListener onSelectListener = null;
+	private SingletonBinder valueBinder = new SingletonBinder(this);
+	String options;
+	boolean disabled = false;
 	
-	public DataTable () {
-		setSclass("datatable");
+	public Select () {
+		setSclass("select");
 	}
+	
     public String getDataPath() {
         return dataPath;
     }
     
-    public String getSelectedItemXPath () {
-    	return selectedItemXPath;
-    }
-
     public void setDataPath(String bind) {
     	dataPath = bind;
         applyDataPath();
@@ -90,13 +77,13 @@ public class DataTable extends XulElement implements XPathSubscriber,
     @Override
 	public void redraw(Writer out) throws IOException {
 		final SmartWriter wh = new SmartWriter(out);
-		final DataTable self = this;
+		final Select self = this;
 		final String uuid = self.getUuid();		
 
-		wh.write("<div id=\"").write(uuid).write("\" z.type=\"zul.datatable.Datatable\"")
+		wh.write("<select id=\"").write(uuid).write("\" z.type=\"zul.select.Select\"")
 		.write(self.getOuterAttrs()).write(self.getInnerAttrs())
 		.write(">")
-		.write("</div>");
+		.write("</select>");
 	}
 
 	
@@ -104,33 +91,19 @@ public class DataTable extends XulElement implements XPathSubscriber,
 	public String getInnerAttrs() {
 		StringBuffer sb = new StringBuffer ( super.getInnerAttrs() );
 		
-		HTMLs.appendAttribute(sb, "columns", columns);
-		HTMLs.appendAttribute(sb, "enablefilter", enablefilter);
-		HTMLs.appendAttribute(sb, "sortDirection", sortDirection);
-		HTMLs.appendAttribute(sb, "sortColumn", sortColumn);
-		HTMLs.appendAttribute(sb, "multiselect", multiselect);
-		HTMLs.appendAttribute(sb, "footer", footer);
-		HTMLs.appendAttribute(sb, "maxheight", maxheight);
+		if (options != null)
+			HTMLs.appendAttribute(sb, "options", options);
+		else if (getModel() != null)
+			HTMLs.appendAttribute(sb, "options", generateValuesList(getModel()).toString());
+		HTMLs.appendAttribute(sb, "value", selectedValue);
+		HTMLs.appendAttribute(sb, "sort", sort);
+		if (disabled)
+			HTMLs.appendAttribute(sb, "disabled", disabled);
 
 		return sb.toString();
 
 	}
 
-
-	public String getColumns() {
-		return columns;
-	}
-
-
-	public void setColumns(String columns) {
-		try {
-			this.columns = new Yaml2Json().transform(columns);
-		} catch (IOException e) {
-			throw new UiException("Unable to parse JSON descriptor "+columns);
-		}
-		
-		smartUpdate("columns", this.columns);
-	}
 
     /**
      * 
@@ -145,28 +118,7 @@ public class DataTable extends XulElement implements XPathSubscriber,
        	ListModel lm = collectionBinder.createModel();
         setModel(lm);
 
-        updateDataSource();
-	
     }
-
-	public void updateDataSource() {
-		ListModel lm = getModel();
-		if (lm == null) {
-            if (dsImpl != null)
-                dsImpl.setRootXPath(null);
-        } else if (getPage () != null) {
-            if (dsImpl == null)
-                dsImpl = new ChildDataSourceImpl();
-
-            dsImpl.setDataSource(collectionBinder.getDataSource());
-            dsImpl.setRootXPath(collectionBinder.getModelXPath());
-            if (lm instanceof ModelProxy) {
-                selectedItemXPath = ((ModelProxy) getModel())
-                        .getBind(getSelectedIndex());
-                dsImpl.setXPath(selectedItemXPath);
-            }
-        }
-	}
 
 	public ListModel getModel() {
 		return model;
@@ -180,15 +132,7 @@ public class DataTable extends XulElement implements XPathSubscriber,
 				}
 				this.model = model;
 
-				StringBuffer sb = new StringBuffer("[");
-				for (int i = 0; i < model.getSize();  i++)
-				{
-					String s = getClientValue(i);
-					if ( sb.length() > 1)
-						sb.append(",");
-					sb.append(s);
-				}
-				sb.append("]");
+				StringBuffer sb = generateValuesList(model);
 				response("setData", new AuInvoke(this, "setData", sb.toString()));
 				initDataListener();
 			}
@@ -198,6 +142,19 @@ public class DataTable extends XulElement implements XPathSubscriber,
 			this.model = null;
 			response("setData", new AuInvoke(this, "setData", "[]"));
 		}
+	}
+
+	public StringBuffer generateValuesList(ListModel model) {
+		StringBuffer sb = new StringBuffer("[");
+		for (int i = 0; i < model.getSize();  i++)
+		{
+			String s = getClientValue(i);
+			if ( sb.length() > 1)
+				sb.append(",");
+			sb.append(s);
+		}
+		sb.append("]");
+		return sb;
 	}
 
 	/** Initializes _dataListener and register the listener to the model
@@ -238,7 +195,7 @@ public class DataTable extends XulElement implements XPathSubscriber,
 			for (int i = event.getIndex0(); i <= event.getIndex1(); i++) 
 			{
 		        try {
-		            response("remove_"+i, new AuInvoke(this, "deleteRow", Integer.toString(i)));
+		            response("new_"+i, new AuInvoke(this, "deleteRow", Integer.toString(i)));
 		        } catch (Exception e) {
 		            throw new UiException(e);
 		        }
@@ -255,42 +212,6 @@ public class DataTable extends XulElement implements XPathSubscriber,
 		
 	}
 	
-	public int getSelectedIndex() {
-		return selectedIndex;
-	}
-
-	public List<Integer> getSelectedIndexes() {
-		return selectedIndexList;
-	}
-
-	public void setSelectedIndex(int selectedIndex) {
-		if (this.getSelectedIndex() != selectedIndex)
-		{
-			response("setSelected", new AuInvoke(this, "setSelected", Integer.toString(selectedIndex)));
-		}
-		this.selectedIndex = selectedIndex;
-		if (multiselect && selectedIndex >= 0)
-		{
-			selectedIndexList.clear();
-			selectedIndexList.add(selectedIndex);
-		}
-		updateDataSource();
-	}
-
-    public JXPathContext getJXPathContext() {
-        if (dsImpl == null)
-            return null;
-        else
-            return dsImpl.getJXPathContext();
-    }
-
-    EventListener onSelectListener = null;
-
-    public void subscribeToExpression(String path, XPathSubscriber subscriber) {
-        dsImpl.subscribeToExpression(path, subscriber);
-        enableOnSelectListener();
-    }
-
 	private void enableOnSelectListener() {
 		if (onSelectListener == null) {
             onSelectListener = new OnSelectListener();
@@ -300,32 +221,8 @@ public class DataTable extends XulElement implements XPathSubscriber,
         }
 	}
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.zkoss.zul.Listbox#smartUpdate(java.lang.String,
-     *      java.lang.String)
-     */
-    public void smartUpdate(String attr, String value) {
-        if ("selectedIndex".equals(attr) || "select".equals(attr)) {
-            int i = getSelectedIndex();
-
-            if (getModel() != null && getModel() instanceof ModelProxy
-                    && dsImpl != null) {
-                selectedItemXPath = ((ModelProxy) getModel()).getBind(i);
-                dsImpl.setXPath(selectedItemXPath);
-            }
-
-        }
-        super.smartUpdate(attr, value);
-    }
-
     public String getXPath() {
         return collectionBinder.getModelXPath();
-    }
-
-    public void unsubscribeToExpression(String xpath, XPathSubscriber subscriber) {
-        dsImpl.unsubscribeToExpression(xpath, subscriber);
     }
 
     public void autocommit() {
@@ -376,7 +273,6 @@ public class DataTable extends XulElement implements XPathSubscriber,
         	int i = dm.newInstance();
             String value = getClientValue(i);
             response("new_"+i, new AuInvoke(this, "addRow", Integer.toString(i), value));
-            setSelectedIndex(i);
         } catch (Exception e) {
             throw new UiException(e);
         }
@@ -388,57 +284,14 @@ public class DataTable extends XulElement implements XPathSubscriber,
     	Object element = getModel().getElementAt(pos);
     	if (element instanceof DataNode)
     		element = ((DataNode) element).getInstance();
-    	JSONObject o = new JSONObject(element);
+    	JXPathContext ctx = JXPathContextFactory.newInstance().newContext(null, element);
+    	Object value = ctx.getValue(keyPath);
+    	Object label = labelPath == null ? value :  ctx.getValue(labelPath);
+    	JSONObject o = new JSONObject();
+    	o.put("value", value);
+    	o.put("label", label);
     	return o.toString();
 	}
-
-	public void delete() {
-        ListModel lm = getModel();
-        if (lm == null || !(lm instanceof ModelProxy))
-            throw new UiException(
-                    "Not allowed to delete records without a model");
-
-        if (getSelectedIndex() >= 0) {
-            Object obj = lm.getElementAt(getSelectedIndex());
-            if (!(obj instanceof DataModelNode))
-                throw new UiException("Unable to delete object " + obj);
-            // response("remove_"+getSelectedIndex(), new AuInvoke(this, "removeRow", Integer.toString(getSelectedIndex())));
-            ((DataModelNode) obj).delete();
-            if (autocommit)
-                commit();
-            setSelectedIndex(-1);
-        }
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see es.caib.seycon.net.web.zul.datasource.ChildDataSourceImpl#getVariables()
-     */
-    public Variables getVariables() {
-        return dsImpl.getVariables();
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.zkoss.zul.Listbox#clearSelection()
-     */
-    public void clearSelection() {
-        selectedItemXPath = null;
-        if (dsImpl != null)
-            dsImpl.setXPath(null);
-        selectedIndex = -1;
-        selectedIndexList.clear();
-        response("clearSelection", new AuInvoke(this, "clearSelection"));
-    }
-
-    public boolean isCommitPending() {
-        if (dsImpl == null)
-            return false;
-        else
-            return dsImpl.isCommitPending();
-    }
 
     /*
      * (non-Javadoc)
@@ -460,9 +313,11 @@ public class DataTable extends XulElement implements XPathSubscriber,
     }
 
     public Object clone() {
-        DataTable clone = (DataTable) super.clone();
+        Select clone = (Select) super.clone();
+        clone.valueBinder = new SingletonBinder(clone);
         clone.collectionBinder = new CollectionBinder(clone);
         clone.setDataPath(collectionBinder.getDataPath());
+        clone.setBind(valueBinder.getDataPath());
         return clone;
     }
 
@@ -478,29 +333,21 @@ public class DataTable extends XulElement implements XPathSubscriber,
 		}
 	}
 
-	public String getRootPath() {
-		return dsImpl.getRootPath();
-	}
-	
-
     /**
      * 
      */
     private void syncSelectedItem() {
+    	this.selectedValue = (String) valueBinder.getValue();
+   		smartUpdate("selected", this.selectedValue);
     }
 
 	public void afterCompose() {
 	}
 
-    public DataSource getDataSource() {
-        return collectionBinder.getDataSource();
-    }
-
-    public void sendEvent(XPathEvent event) {
-        dsImpl.sendEvent(event);
-    }
-
 	public void onUpdate(XPathEvent event) {
+        if (event instanceof XPathValueEvent) {
+            syncSelectedItem();
+        }
         if (event instanceof XPathCollectionEvent) {
             XPathCollectionEvent e = (XPathCollectionEvent) event;
             if (e.getType() == XPathCollectionEvent.FOCUSNODE
@@ -508,26 +355,29 @@ public class DataTable extends XulElement implements XPathSubscriber,
                 ModelProxy mp = (ModelProxy) getModel();
                 int i = mp.getPosition(e.getIndex());
                 if (i >= 0) {
-                    setSelectedIndex(i);
+                    setSelectedValue(null);
                 }
             }
             if (e.getType() == XPathCollectionEvent.RECREATED
                     && getModel() instanceof ModelProxy) {
-                setSelectedIndex(-1);
+                setSelectedValue(null);
             }
         }
         if (event instanceof XPathRerunEvent) {
+            boolean oldValue = _updateValueBinder;
+            _updateValueBinder = false;
             applyDataPath();
-       		setSelectedIndex(-1);
+            setSelectedValue(null);
+            valueBinder.setDataPath(valueBinder.getDataPath());
             syncSelectedItem();
+            _updateValueBinder = oldValue;
         }
+
 	}
 
 	public Command getCommand(String cmdId) {
 		if (SELECT_EVENT.equals(cmdId))
 			return _onSelectCommand;
-		if (MULTI_SELECT_EVENT.equals(cmdId))
-			return _onMultiSelectCommand;
 		if (CLIENT_ACTION_EVENT.equals(cmdId))
 			return _onClientActionCommand;
 		
@@ -536,36 +386,16 @@ public class DataTable extends XulElement implements XPathSubscriber,
 
 	private static Command _onSelectCommand  = new ComponentCommand (SELECT_EVENT, 0) {
 		protected void process(AuRequest request) {
-			final DataTable table = (DataTable) request.getComponent();
-			table.selectedIndex = Integer.parseInt( request.getData()[0] );
-			table.updateDataSource();
-			Events.postEvent(new Event("onSelect", table, new Integer(table.selectedIndex)));
+			final Select table = (Select) request.getComponent();
+			table.selectedValue = request.getData()[0];
+			Events.postEvent(new Event("onSelect", table, table.selectedValue));
+			table.valueBinder.setValue(table.selectedValue);
 		}
-		
-	};
-
-	private static Command _onMultiSelectCommand  = new ComponentCommand (MULTI_SELECT_EVENT, 0) {
-		protected void process(AuRequest request) {
-			final DataTable table = (DataTable) request.getComponent();
-			JSONArray array = new JSONArray(request.getData()[0]);
-			table.selectedIndexList.clear();
-			for (int i = 0; i < array.length(); i++)
-			{
-				table.selectedIndexList.add(array.getInt(i));
-			}
-			if (table.selectedIndexList.size() == 1)
-				table.selectedIndex = table.selectedIndexList.get(0);
-			else
-				table.selectedIndex = -1;
-			table.updateDataSource();
-			Events.postEvent(new Event("onSelect", table, new Integer(table.selectedIndex)));
-		}
-		
 	};
 
 	private static Command _onClientActionCommand  = new ComponentCommand (CLIENT_ACTION_EVENT, 0) {
 		protected void process(AuRequest request) {
-			final DataTable table = (DataTable) request.getComponent();
+			final Select table = (Select) request.getComponent();
 			String[] data = request.getData();
 			String event = data[0];
 			Object[] newData = new Object [data.length-1];
@@ -576,62 +406,68 @@ public class DataTable extends XulElement implements XPathSubscriber,
 		
 	};
 
-	public void deleteSelectedItem() {
-        ListModel lm = getModel();
-        if (lm == null || !(lm instanceof ModelProxy))
-            throw new UiException(
-                    "Not allowed to delete records without a model");
+    public void setBind(String bind) {
+        valueBinder.setDataPath(bind);
+        if (bind != null)
+        	enableOnSelectListener();
+    }
 
-        if (autocommit)
-            commit();
+    public String getBind() {
+    	return valueBinder.getDataPath();
+    }
 
-        if (getSelectedIndex() >= 0) {
-            Object obj = lm.getElementAt(getSelectedIndex());
-            if (!(obj instanceof DataModelNode))
-                throw new UiException("Unable to delete object " + obj);
-            ((DataModelNode) obj).delete();
-            if (autocommit)
-                commit();
-            setSelectedIndex(-1);
-        }
+	public String getOptions() {
+		return options;
 	}
-	public boolean isEnablefilter() {
-		return enablefilter;
+
+	public void setOptions(String options) {
+		try {
+			this.options = new Yaml2Json().transform(options);
+		} catch (IOException e) {
+			throw new UiException("Unable to parse JSON descriptor "+options);
+		}
+		
+		response("setData", new AuInvoke(this, "setData", this.options));
 	}
-	public void setEnablefilter(boolean enablefilter) {
-		this.enablefilter = enablefilter;
+
+	public String getSelectedValue() {
+		return selectedValue;
 	}
-	public int getSortColumn() {
-		return sortColumn;
+
+	public void setSelectedValue(String selectedValue) {
+		this.selectedValue = selectedValue;
 	}
-	public void setSortColumn(int sortColumn) {
-		this.sortColumn = sortColumn;
+
+	public boolean isSort() {
+		return sort;
 	}
-	public int getSortDirection() {
-		return sortDirection;
+
+	public void setSort(boolean sort) {
+		this.sort = sort;
 	}
-	public void setSortDirection(int sortDirection) {
-		this.sortDirection = sortDirection;
+
+	public String getKeyPath() {
+		return keyPath;
 	}
-	public boolean isFooter() {
-		return footer;
+
+	public void setKeyPath(String keyPath) {
+		this.keyPath = keyPath;
 	}
-	public void setFooter(boolean footer) {
-		this.footer = footer;
-		smartUpdate("footer", Boolean.toString(footer));
+
+	public String getLabelPath() {
+		return labelPath;
 	}
-	public boolean isMultiselect() {
-		return multiselect;
+
+	public void setLabelPath(String labelPath) {
+		this.labelPath = labelPath;
 	}
-	public void setMultiselect(boolean multiselect) {
-		this.multiselect = multiselect;
-		smartUpdate("multiselect", Boolean.toString(multiselect));
+
+	public boolean isDisabled() {
+		return disabled;
 	}
-	public String getMaxheight() {
-		return maxheight;
+
+	public void setDisabled(boolean disabled) {
+		this.disabled = disabled;
 	}
-	public void setMaxheight(String maxheight) {
-		this.maxheight = maxheight;
-		smartUpdate("maxheight", maxheight);
-	}
+
 }

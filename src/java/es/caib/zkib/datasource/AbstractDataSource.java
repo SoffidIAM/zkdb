@@ -8,7 +8,7 @@ import java.util.List;
 
 import org.zkoss.zk.ui.Component;
 import org.zkoss.zk.ui.UiException;
-
+import org.zkoss.zk.ui.render.SmartWriter;
 
 import es.caib.zkib.binder.BindContext;
 import es.caib.zkib.datamodel.DataModelNode;
@@ -57,7 +57,12 @@ public abstract class AbstractDataSource extends org.zkoss.zk.ui.AbstractCompone
 	}
 
 	public void redraw(Writer out) throws IOException {
-		// Nothing to do
+		final SmartWriter wh = new SmartWriter(out);
+		final String uuid = getUuid();		
+
+		wh.write("<span id=\"").write(uuid).write("\" z.type=\"zul.datasource.Datasource\"")
+		.write(">")
+		.write("</span>");
 	}
 
 	public Variables getVariables() {

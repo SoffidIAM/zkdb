@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<my-data>
+	<title name="Paises del mundo" seleccionado="us" fecha="26/05/1970" />
+	<country name="España" abbreviation="es">
+		<city name="Palma de Mallorca" />
+		<city name="Madrid" />
+	</country>
+	<country name="USA" abbreviation="us">
+		<city name="Wasington"/>
+	</country>
+	<country name="Deutschland" abbreviation="de">
+		<city name="Berlin"/>
+		<city name="Bonn"/>
+		<city name="Hamburg"/>
+	</country>
+</my-data>

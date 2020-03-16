@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<window>
+	<vbox>
+	<label style="font-size: 14pt" value="ZKIB"/>
+	<space/>
+	<label onClick='Executions.sendRedirect("/sample.zul");' style="background-color:blue; cursor: pointer" value="Ejemplo XMLDataSource" />
+	<space/>
+	<label onClick='Executions.sendRedirect("/sample-java.zul");' style="background-color:blue; cursor: pointer" value="Ejemplo BeanDataSource" />
+	</vbox>
+</window>
