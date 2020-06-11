@@ -1,8 +1,13 @@
 package es.caib.zkib.component;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.TimeZone;
 
+import org.zkoss.util.Locales;
+import org.zkoss.util.TimeZones;
 import org.zkoss.zk.ui.Component;
 import org.zkoss.zk.ui.Page;
 import org.zkoss.zk.ui.WrongValueException;
@@ -16,10 +21,33 @@ public class DataDatebox extends org.zkoss.zul.Datebox implements XPathSubscribe
 	/**
 	 * 
 	 */
+	protected static final String DEFAULT_FORMAT = "default";
+	
 	private static final long serialVersionUID = -1023799659173045849L;
 	private SingletonBinder binder = new SingletonBinder (this);
 	private boolean duringOnUpdate = false;
+	protected boolean time;
 	
+	protected String getDefaultFormat() {
+		return DEFAULT_FORMAT;
+	}
+
+	protected DateFormat getDateFormat(String fmt) {
+		if (fmt.equals(DEFAULT_FORMAT))
+			if (time)
+				return DateFormats.getDateTimeFormat();
+			else
+				return DateFormats.getDateFormat();
+		else
+			return super.getDateFormat(fmt);
+	}
+
+	public void setTime(boolean time) {
+		this.time = time;
+	}
+	
+	public DataDatebox() {
+	}
 	/* (non-Javadoc)
 	 * @see com.centillex.zk.Bindable#getBind()
 	 */
@@ -137,6 +165,10 @@ public class DataDatebox extends org.zkoss.zul.Datebox implements XPathSubscribe
 	protected void validate(Object value) throws WrongValueException {
 		if (! duringOnUpdate)
 			super.validate(value);
+	}
+
+	public boolean isTime() {
+		return time;
 	}
 
 }
