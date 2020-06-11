@@ -42,7 +42,7 @@ zkCodemirror.init = function (ed) {
 	});
 	ed.codemirror.setSize (ed.getAttribute("width"), ed.getAttribute("height"));
 	ed.codemirror.on ("change", function() {
-			var req = {uuid: ed.id, cmd: "onChange", data : [ed.codemirror.getDoc().getValue()]};
+			var req = {uuid: ed.id, cmd: "onChange", data : [ed.codemirror.getDoc().getValue()], ignorable: true};
 			zkau.send (req, 5);
 		});
 	ed.codemirror.on ("focus", function() {
@@ -54,7 +54,32 @@ zkCodemirror.init = function (ed) {
 		ed.codemirror.refresh();
 	});
 	
+	// Detect visibilty
+	ed.__hidden = true;
+	try {
+		var observer = new IntersectionObserver((entries, observer) => {
+			entries.forEach(entry => {
+				if (entry.intersectionRatio > 0) {
+					if (ed.__hidden) {
+						window.setTimeout (() => { ed.codemirror.refresh() }, 100);
+						window.setTimeout (() => { ed.codemirror.refresh() }, 1000);
+						ed.__hidden = false;
+					}
+				} else if (!ed.__hidden) {
+					ed.__hidden = true;
+				}
+			});
+		}, {root: document.documentElement});
+		
+		observer.observe(ed);
+	} catch (e) {
+		// Not available in IE
+	}
 };
+
+zkCodemirror.onSize=function(ed) {
+	ed.codemirror.refresh();
+}
 
 zkCodemirror.refresh = function (ed) {
 	ed.codemirror.refresh();

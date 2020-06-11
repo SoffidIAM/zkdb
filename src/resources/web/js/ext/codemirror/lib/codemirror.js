@@ -326,7 +326,8 @@
 
   function updateGutterSpace(cm) {
     var width = cm.display.gutters.offsetWidth;
-    cm.display.sizer.style.marginLeft = width + "px";
+    if (width >= 38)
+    	cm.display.sizer.style.marginLeft = width + "px";
   }
 
   // Compute the character length of a line, taking into account
