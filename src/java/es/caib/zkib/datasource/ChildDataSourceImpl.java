@@ -60,6 +60,7 @@ public class ChildDataSourceImpl implements DataSource, Serializable {
 			// Reregistrar todos los hijos
 			String keys[] = (String []) registry.keySet().toArray(new String[0]);
 			XPathRerunEvent event = new XPathRerunEvent(this, "/");
+			HashSet<Object> components = new HashSet<Object>();
 			for (int i = 0; i < keys.length; i++)
 			{
 				String path = keys[i];
@@ -69,12 +70,16 @@ public class ChildDataSourceImpl implements DataSource, Serializable {
 					XPathSubscriber subscribers[] = (XPathSubscriber[]) subscriberSet.toArray(new XPathSubscriber[0]);
 					for ( int j = 0; j < subscribers.length; j++)
 					{
-						// Se le desconecta del padre, dado que al haber actualizado
-						// currentPath, el subscriptor no sabrá desconectarse
-						if ( oldPath != null)
-							parent.unsubscribeToExpression(oldPath + path, subscribers[j]);
-						log.debug("SENDMESSAGE "+event+" to "+subscribers[j] );
-						subscribers[j].onUpdate(event);
+						if (! components.contains(subscribers[j]))
+						{
+							components.add(subscribers[j]);
+							// Se le desconecta del padre, dado que al haber actualizado
+							// currentPath, el subscriptor no sabrá desconectarse
+							if ( oldPath != null)
+								parent.unsubscribeToExpression(oldPath + path, subscribers[j]);
+							log.debug("SENDMESSAGE "+event+" to "+subscribers[j] );
+							subscribers[j].onUpdate(event);
+						}
 					}
 				}
 			}
@@ -216,5 +221,14 @@ public class ChildDataSourceImpl implements DataSource, Serializable {
 		}
 		else
 			return root + suffix;
+	}
+
+	public void setRootXPath(String xPath, String selectedItemXPath) {
+		if (xPath != null && xPath.endsWith("/"))
+			xpathBase = xPath.substring(0, xPath.length()-1);
+		else
+			this.xpathBase = xPath;
+		
+		setXPath (selectedItemXPath);
 	}
 }
