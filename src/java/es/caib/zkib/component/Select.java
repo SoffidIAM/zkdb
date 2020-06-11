@@ -9,7 +9,6 @@ import org.zkoss.zk.au.AuRequest;
 import org.zkoss.zk.au.Command;
 import org.zkoss.zk.au.ComponentCommand;
 import org.zkoss.zk.au.out.AuInvoke;
-import org.zkoss.zk.au.out.AuSetAttribute;
 import org.zkoss.zk.ui.Component;
 import org.zkoss.zk.ui.Page;
 import org.zkoss.zk.ui.UiException;
@@ -28,9 +27,8 @@ import es.caib.zkib.binder.CollectionBinder;
 import es.caib.zkib.binder.SingletonBinder;
 import es.caib.zkib.binder.list.ModelProxy;
 import es.caib.zkib.datamodel.DataNode;
-import es.caib.zkib.datasource.ChildDataSourceImpl;
 import es.caib.zkib.datasource.CommitException;
-import es.caib.zkib.datasource.DataSource;
+import es.caib.zkib.datasource.JXPContext;
 import es.caib.zkib.events.XPathCollectionEvent;
 import es.caib.zkib.events.XPathEvent;
 import es.caib.zkib.events.XPathRerunEvent;
@@ -47,7 +45,7 @@ public class Select extends XulElement implements XPathSubscriber, AfterCompose 
 	private String dataPath;
 	ListModel model;
     CollectionBinder collectionBinder = new CollectionBinder(this);
-    String selectedValue = "";
+    protected Object selectedValue = "";
     boolean autocommit = false;
     boolean _updateValueBinder = true;
 	private transient ListDataListener _dataListener;
@@ -57,9 +55,10 @@ public class Select extends XulElement implements XPathSubscriber, AfterCompose 
 	String keyPath;
 	String labelPath;
 	EventListener onSelectListener = null;
-	private SingletonBinder valueBinder = new SingletonBinder(this);
+	protected SingletonBinder valueBinder = new SingletonBinder(this);
 	String options;
 	boolean disabled = false;
+	private int selectedPosition;
 	
 	public Select () {
 		setSclass("select");
@@ -95,7 +94,8 @@ public class Select extends XulElement implements XPathSubscriber, AfterCompose 
 			HTMLs.appendAttribute(sb, "options", options);
 		else if (getModel() != null)
 			HTMLs.appendAttribute(sb, "options", generateValuesList(getModel()).toString());
-		HTMLs.appendAttribute(sb, "value", selectedValue);
+		if (selectedValue != null)
+			HTMLs.appendAttribute(sb, "value", getSelectedPosition());
 		HTMLs.appendAttribute(sb, "sort", sort);
 		if (disabled)
 			HTMLs.appendAttribute(sb, "disabled", disabled);
@@ -105,7 +105,24 @@ public class Select extends XulElement implements XPathSubscriber, AfterCompose 
 	}
 
 
-    /**
+    private String getSelectedPosition() {
+    	if ( model != null) {
+    		for (int i =  0; i < model.getSize(); i++) {
+    			Object o = model.getElementAt(i);
+    			if (o != null)
+    			{
+    				Object key = JXPathContextFactory.newInstance().newContext(null, o).getValue(keyPath);
+    				if (key != null && key.equals(selectedValue)) {
+    			   		return Integer.toString(i);
+    				}
+    			}
+    		}
+
+    	}
+    	return selectedValue.toString();
+	}
+
+	/**
      * 
      */
     private void applyDataPath() {
@@ -133,16 +150,17 @@ public class Select extends XulElement implements XPathSubscriber, AfterCompose 
 				this.model = model;
 
 				StringBuffer sb = generateValuesList(model);
-				response("setData", new AuInvoke(this, "setData", sb.toString()));
+				smartUpdate("options", sb.toString());
 				initDataListener();
 			}
 
 		} else if (this.model != null) {
 			this.model.removeListDataListener(_dataListener);
 			this.model = null;
-			response("setData", new AuInvoke(this, "setData", "[]"));
+			smartUpdate("options", "[]");
 		}
 	}
+	
 
 	public StringBuffer generateValuesList(ListModel model) {
 		StringBuffer sb = new StringBuffer("[");
@@ -167,7 +185,6 @@ public class Select extends XulElement implements XPathSubscriber, AfterCompose 
 				}
 
 			};
-
 		model.addListDataListener(_dataListener);
 	}
 
@@ -282,25 +299,14 @@ public class Select extends XulElement implements XPathSubscriber, AfterCompose 
     	if (getModel() == null)
     		return "{}";
     	Object element = getModel().getElementAt(pos);
-    	if (element instanceof DataNode)
-    		element = ((DataNode) element).getInstance();
     	JXPathContext ctx = JXPathContextFactory.newInstance().newContext(null, element);
-    	Object value = ctx.getValue(keyPath);
+    	Object value = pos;
     	Object label = labelPath == null ? value :  ctx.getValue(labelPath);
     	JSONObject o = new JSONObject();
     	o.put("value", value);
-    	o.put("label", label);
+    	o.put("label", label == null? "": label);
     	return o.toString();
 	}
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.zkoss.zul.Listbox#onInitRender()
-     */
-    public void onInitRender() {
-        syncSelectedItem();
-    }
 
     public void setPage(Page page) {
         super.setPage(page);
@@ -310,6 +316,8 @@ public class Select extends XulElement implements XPathSubscriber, AfterCompose 
     public void setParent(Component parent) {
         super.setParent(parent);
         collectionBinder.setParent(parent);
+        valueBinder.setParent(parent);
+        syncSelectedItem();
     }
 
     public Object clone() {
@@ -337,11 +345,29 @@ public class Select extends XulElement implements XPathSubscriber, AfterCompose 
      * 
      */
     private void syncSelectedItem() {
-    	this.selectedValue = (String) valueBinder.getValue();
-   		smartUpdate("selected", this.selectedValue);
+    	Object value = valueBinder.getValue();
+    	selectedValue = value;
+    	if (model == null) {
+	   		smartUpdate("selected", selectedValue == null ? null:
+	   			selectedValue.toString());
+    	} else {
+    		for (int i =  0; i < model.getSize(); i++) {
+    			Object o = model.getElementAt(i);
+    			if (o != null)
+    			{
+    				Object key = JXPathContextFactory.newInstance().newContext(null, o).getValue(keyPath);
+    				if (key != null && key.equals(value)) {
+    			   		smartUpdate("selected", Integer.toString(i));
+    			   		return;
+    				}
+    			}
+    		}
+	   		smartUpdate("selected", null);
+    	}
     }
 
 	public void afterCompose() {
+		syncSelectedItem();
 	}
 
 	public void onUpdate(XPathEvent event) {
@@ -387,9 +413,7 @@ public class Select extends XulElement implements XPathSubscriber, AfterCompose 
 	private static Command _onSelectCommand  = new ComponentCommand (SELECT_EVENT, 0) {
 		protected void process(AuRequest request) {
 			final Select table = (Select) request.getComponent();
-			table.selectedValue = request.getData()[0];
-			Events.postEvent(new Event("onSelect", table, table.selectedValue));
-			table.valueBinder.setValue(table.selectedValue);
+			table.clientSelect (request.getData()[0]);
 		}
 	};
 
@@ -412,7 +436,19 @@ public class Select extends XulElement implements XPathSubscriber, AfterCompose 
         	enableOnSelectListener();
     }
 
-    public String getBind() {
+    protected void clientSelect(String value ) {
+    	if (model != null) {
+    		int pos = Integer.parseInt(value);
+    		Object data = model.getElementAt(pos);
+    		selectedValue = JXPathContextFactory.newInstance().newContext(null, data).getValue(keyPath);
+    	} else {
+    		selectedValue = value;
+    	}
+		Events.postEvent(new Event("onSelect", this, selectedValue));
+		valueBinder.setValue(selectedValue);
+	}
+
+	public String getBind() {
     	return valueBinder.getDataPath();
     }
 
@@ -426,15 +462,16 @@ public class Select extends XulElement implements XPathSubscriber, AfterCompose 
 		} catch (IOException e) {
 			throw new UiException("Unable to parse JSON descriptor "+options);
 		}
-		
-		response("setData", new AuInvoke(this, "setData", this.options));
+
+		smartUpdate("options", this.options);
 	}
 
-	public String getSelectedValue() {
+	public Object getSelectedValue() {
 		return selectedValue;
 	}
 
 	public void setSelectedValue(String selectedValue) {
+		smartUpdate("selected", selectedValue);
 		this.selectedValue = selectedValue;
 	}
 
@@ -468,6 +505,7 @@ public class Select extends XulElement implements XPathSubscriber, AfterCompose 
 
 	public void setDisabled(boolean disabled) {
 		this.disabled = disabled;
+		smartUpdate("disabled", disabled);
 	}
 
 }
