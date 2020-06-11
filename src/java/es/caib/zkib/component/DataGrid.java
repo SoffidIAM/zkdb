@@ -11,6 +11,7 @@ import org.zkoss.zk.ui.UiException;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
 import org.zkoss.zk.ui.event.Events;
+import org.zkoss.zk.ui.ext.AfterCompose;
 import org.zkoss.zul.Columns;
 import org.zkoss.zul.Grid;
 import org.zkoss.zul.ListModel;
@@ -29,7 +30,7 @@ import es.caib.zkib.events.XPathEvent;
 import es.caib.zkib.events.XPathRerunEvent;
 import es.caib.zkib.events.XPathSubscriber;
 
-public class DataGrid extends Grid implements BindContext, XPathSubscriber {
+public class DataGrid extends Grid implements BindContext, XPathSubscriber, AfterCompose {
 	private final class OnApplyDatapathListener implements EventListener, Serializable {
 		private static final long serialVersionUID = 1L;
 		private final DataGrid clone;
@@ -77,6 +78,7 @@ public class DataGrid extends Grid implements BindContext, XPathSubscriber {
 
 	public DataGrid() {
 		super();
+		setFixedLayout(true);
 	}
 
 
@@ -353,6 +355,13 @@ public class DataGrid extends Grid implements BindContext, XPathSubscriber {
 
 	public void setNoSizable(boolean noSizable) {
 		this.noSizable = noSizable;
+	}
+
+
+
+	public void afterCompose() {
+		if ( getModel() == null && getSclass().equals("grid"))
+			setSclass("noBorderGrid");
 	}
 	
 }
