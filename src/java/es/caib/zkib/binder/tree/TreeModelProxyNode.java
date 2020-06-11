@@ -13,6 +13,7 @@ import org.zkoss.zk.ui.UiException;
 import org.zkoss.zul.Treeitem;
 import org.zkoss.zul.event.TreeDataEvent;
 
+import es.caib.zkib.binder.SingletonBinder;
 import es.caib.zkib.datamodel.DataModelCollection;
 import es.caib.zkib.datasource.DataSource;
 import es.caib.zkib.datasource.XPathUtils;
@@ -243,7 +244,9 @@ public class TreeModelProxyNode implements XPathSubscriber, Serializable {
 		Vector work = new Vector ();
 		try
 		{
-			JXPathContext ctx = modelProxy.getBinder().getDataSource().getJXPathContext();
+			SingletonBinder binder = modelProxy.getBinder();
+			binder.invalidate();
+			JXPathContext ctx = binder.getDataSource().getJXPathContext();
 			ctx = ctx.getRelativeContext(getPointer());
 			ChildXPathQuery queries [] = modelProxy.getChildXPathQuerys();
 			for (int i = 0 ; i < queries.length; i ++)
