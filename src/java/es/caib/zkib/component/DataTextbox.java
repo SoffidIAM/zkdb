@@ -187,7 +187,7 @@ public class DataTextbox extends org.zkoss.zul.Textbox implements XPathSubscribe
 	public void redraw(Writer out) throws IOException {
 		final SmartWriter wh = new SmartWriter(out);
 		final String uuid = getUuid();		
-
+		
 		if (isMultiline())
 		{
 			wh.write("<textarea id=\"").write(uuid).write("\" z.type=\"zul.datasource.DataTxbox\"")
@@ -202,6 +202,27 @@ public class DataTextbox extends org.zkoss.zul.Textbox implements XPathSubscribe
 			.write(getOuterAttrs()).write(getInnerAttrs())
 			.write("/>");
 		}
+	}
+
+	protected String getRealStyle() {
+		StringBuffer sb = new StringBuffer( super.getRealStyle() );
+
+		if ( getMaxlength() > 0)
+		{
+			HTMLs.appendStyle(sb, "max-width", ""+getMaxlength()+"em");
+		}
+
+		return sb.toString();
+	}
+
+	
+	@Override
+	public void setConstraint(String constr) {
+		super.setConstraint(constr);
+		if (constr.equals("no empty"))
+			setSclass(getSclass()+" required");
+		else if (getSclass().endsWith(" required"))
+			setSclass(getSclass().substring(0, getSclass().length()-9));
 	}
 
 
