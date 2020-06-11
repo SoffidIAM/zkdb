@@ -268,6 +268,12 @@
 		<component-class>es.caib.zkib.component.DataDivVisible</component-class>
 	</component>
 	
+	<component>
+		<extends>div</extends>
+		<component-name>div</component-name>
+		<component-class>es.caib.zkib.component.Div</component-class>
+	</component>
+	
 	
 
 	<component>
@@ -285,6 +291,15 @@
 		<mold>
 			<mold-name>horizontal</mold-name>
 			<mold-uri>~./zul/html/hbox.dsp</mold-uri>
+		</mold>
+	</component>
+
+	<component>
+		<component-name>form2</component-name>
+		<component-class>es.caib.zkib.component.Form2</component-class>
+		<mold>
+			<mold-name>default</mold-name>
+			<mold-uri>~./zul/html/div.dsp</mold-uri>
 		</mold>
 	</component>
 
@@ -348,5 +363,10 @@
 			<mold-name>default</mold-name>
 			<mold-uri>~./codemirror/codemirror.dsp</mold-uri>
 		</mold>
+	</component>
+
+	<component>
+		<component-name>databox</component-name>
+		<component-class>es.caib.zkib.component.Databox</component-class>
 	</component>
 </language-addon>

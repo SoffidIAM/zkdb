@@ -177,6 +177,90 @@ public class DataTree2 extends XulElement implements XPathSubscriber,
 		return model;
 	}
 
+	public void setData (JSONObject obj) {
+		StringWriter sb = new StringWriter();
+		JSONWriter writer = new JSONWriter(sb);
+		dump (obj,  writer, -1, new LinkedList<Integer>());
+		response("setData", new AuInvoke(this, "setData", sb.toString()));
+	}
+	
+	private void dump(JSONObject node, JSONWriter writer, int levels, LinkedList<Integer> pos) {
+		writer.object();
+		writer.key("position");
+		writer.array();
+		for (Integer p: pos) {
+			writer.value(p);
+		}
+		writer.endArray();
+		String type = node.optString("type");
+		if ( type != null)
+		{
+			for ( int n = 0; n < finders.length(); n++)
+			{
+				JSONObject finder = finders.optJSONObject(n);
+				if (type.equals( finder.optString("path")))
+				{
+					String icon = finder.optString("icon");
+					if (icon != null && ! icon.isEmpty())
+					{
+						writer.key("icon");
+						writer.value(getDesktop().getExecution().encodeURL(icon));
+					}
+					String value = finder.optString("value");
+					String template = finder.optString("template");
+					if (value != null && ! value.isEmpty())
+					{
+						Object v = node.opt(value);
+						writer.key("value");
+						writer.value(v);
+					} else if (template != null)
+					{
+						if (expf == null)
+							expf = Expressions.newExpressionFactory(null);
+						Object v = expf.evaluate(new JSONContext (this, node), template, String.class);
+						writer.key("html");
+						writer.value(v);
+					}
+					if (finder.optBoolean("leaf"))
+					{
+						writer.key("leaf");
+						writer.value(true);
+					}
+					if (node.has("collapsed"))
+					{
+						writer.key("collapsed");
+						writer.value(node.optBoolean("collapsed"));
+					} else if (finder.optBoolean("collapsed"))
+					{
+						writer.key("collapsed");
+						writer.value(true);
+					}
+					String tail = finder.optString("tail");
+					if (tail != null) {
+						writer.key("tail");
+						writer.value(tail);
+					}
+				}
+			}
+		}
+		
+		if (levels != 0 && node.has("children")) {
+			writer.key("children");
+			writer.array();
+			JSONArray children = node.optJSONArray("children");
+			int num = children.length();
+			for (int i = 0; i < num; i++)
+			{
+				JSONObject child = children.getJSONObject(i);
+				pos.add(i);
+				dump(child, writer, levels - 1, pos );
+				pos.removeLast();
+			}
+			writer.endArray();
+		}
+		writer.endObject();
+	}
+
 	public void setModel(FullTreeModelProxy lm) {
 		if (lm != null) {
 			if (this.model != lm) {
@@ -199,6 +283,7 @@ public class DataTree2 extends XulElement implements XPathSubscriber,
 		}
 	}
 
+	
 	private void dump(FullTreeModelProxy lm, TreeModelProxyNode node, JSONWriter writer, int levels, LinkedList<Integer> pos) {
 		writer.object();
 		writer.key("position");
@@ -248,8 +333,14 @@ public class DataTree2 extends XulElement implements XPathSubscriber,
 						writer.key("collapsed");
 						writer.value(true);
 					}
+					String tail = finder.optString("tail");
+					if (tail != null) {
+						writer.key("tail");
+						writer.value(tail);
+					}
 				}
 			}
+
 		}
 		
 		if (levels != 0) {
@@ -301,7 +392,7 @@ public class DataTree2 extends XulElement implements XPathSubscriber,
 		case TreeDataEvent.INTERVAL_REMOVED:
 			for(int i=indexTo;i>=indexFrom;i--)
 			{
-				pos2[pos.length] = indexTo;
+				pos2[pos.length] = i;
 				onTreeDataRemoved(node, pos2);
 			}
 			break;
@@ -321,8 +412,12 @@ public class DataTree2 extends XulElement implements XPathSubscriber,
         	StringWriter sb = new StringWriter();
         	LinkedList<Integer> posl = new LinkedList<Integer>();
         	for (int p: pos) posl.add(p);
-        	dump (model, node, new JSONWriter(sb), 0, posl );
-            response("insert_"+(msgNumber++), new AuInvoke(this, "addBranch", sb.toString()));
+        	dump (model, node, new JSONWriter(sb), 
+        			pos.length > openLevels? 
+        				0: 
+        				openLevels - pos.length, 
+        			posl );
+            response("insert_"+posToString(pos), new AuInvoke(this, "addBranch", sb.toString()));
         } catch (Exception e) {
             throw new UiException(e);
         }
@@ -336,7 +431,7 @@ public class DataTree2 extends XulElement implements XPathSubscriber,
         	LinkedList<Integer> posl = new LinkedList<Integer>();
         	for (int p: pos) posl.add(p);
         	dump (model, node, new JSONWriter(sb), 0, posl);
-            response("update_"+(msgNumber++), new AuInvoke(this, "updateRow", sb.toString()));
+            response("update_"+posToString(pos), new AuInvoke(this, "updateRow", sb.toString()));
         } catch (Exception e) {
             throw new UiException(e);
         }
@@ -345,12 +440,20 @@ public class DataTree2 extends XulElement implements XPathSubscriber,
 	static int msgNumber = 0 ;
 	private void onTreeDataRemoved(TreeModelProxyNode parent, int [] pos) {
         try {
-            response("remove_"+(msgNumber++), new AuInvoke(this, "deleteRow", new JSONArray(pos).toString()));
+            response("remove_"+posToString(pos), new AuInvoke(this, "deleteRow", new JSONArray(pos).toString()));
         } catch (Exception e) {
             throw new UiException(e);
         }
 	}
 	
+	private String posToString(int[] pos) {
+		StringBuffer sb = new StringBuffer();
+		for (int p: pos) {
+			if (sb.length() > 0) sb.append(".");
+			sb.append(p);
+		}
+		return sb.toString();
+	}
 	public int[] getSelectedItem() {
 		return selectedItem;
 	}
@@ -362,7 +465,7 @@ public class DataTree2 extends XulElement implements XPathSubscriber,
 	}
 
     private void updateDataSource() {
-    	if (model != null)
+    	if (model != null && dsImpl != null)
     	{
     		if (selectedItem == null)
     		{
@@ -463,7 +566,13 @@ public class DataTree2 extends XulElement implements XPathSubscriber,
 		try {
 			TreeModelProxyNode node = model.getTreeModelProxyNode(selectedItem);
 			String parentPath = node.getPointer().asPath();
-			Object coll = treeBinder.getJXPathContext().getValue(parentPath);
+			if (parentPath.endsWith("/")) 
+				parentPath = parentPath.substring(0, parentPath.length()-1);
+			if (path.startsWith("/"))
+				path = path.substring(1);
+			
+			Object coll = treeBinder.getJXPathContext().getValue(parentPath+"/"+path);
+			
 			if ( coll == null || ! (coll instanceof DataModelCollection))
 				throw new UiException("Only a data model can be added without a value");
 			DataModelCollection collection = (DataModelCollection) coll;

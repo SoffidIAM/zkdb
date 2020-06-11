@@ -22,6 +22,7 @@ zkDatatable.init = function (ed) {
 	ed.sortDirection = ed.getAttribute("sortDirection");
 	ed.enablefilter = "false" != ed.getAttribute("enablefilter");
 	ed.footer = ed.getAttribute("footer") != "false";
+	ed.reorder = ed.getAttribute("reorder") != "false";
 	ed.index = [];
 	ed.nextRowId = 0;
 	ed.maxheight = ed.getAttribute("maxheight");
@@ -31,6 +32,28 @@ zkDatatable.init = function (ed) {
 	if (!ed.pagers)
 		ed.pagers=[];
 	zkDatatable.refresh(ed);
+	
+	window.setTimeout(() => {zkDatatable.fixupColumns(ed);}, 100);
+	ed.__hidden = true;
+	// Detect visibilty
+	try {
+		var observer = new IntersectionObserver((entries, observer) => {
+			entries.forEach(entry => {
+				if (entry.intersectionRatio > 0) {
+					if (ed.__hidden) {
+						zkDatatable.fixupColumns(ed);
+						ed.__hidden = false;
+					}
+				} else {
+					ed.__hidden = true;
+				}
+			});
+		}, {root: document.documentElement});
+		
+		observer.observe(ed);
+	} catch (e) {
+		// Not available in IE
+	}
 };
 
 zkDatatable.registerPager=function(ed, pager) {
@@ -78,6 +101,8 @@ zkDatatable.refresh = function (t) {
 		var tb = document.createElement("table");
 		tb.setAttribute("id", t.id+"!tbody");
 		tb.setAttribute("class", "tbody")
+		zk.listen(tb, "dragover", zkDatatable.onDragover);
+		zk.listen(tb, "drop", zkDatatable.onDrop);
 		tbd.appendChild(tb);
 		var tf = document.createElement("div");
 		tf.setAttribute("class", "tfoot")
@@ -142,19 +167,30 @@ zkDatatable.fixupColumns=function(ed) {
 	var trh = thead.firstElementChild; 
 	if (tr && trh)
 	{
+		
+		// Shrink
+		for (var vv = trh.firstElementChild; vv != null; vv = vv.nextElementSibling)
+		{
+			vv.style.width = "0px";
+			vv.style.maxWidth = "0px";
+		}	
+		// Stretch
 		var size = 0.0;
 		var v2 = trh.firstElementChild;
 		for (var v = tr.firstElementChild; v != null && v2 != null; v = v.nextElementSibling, v2 = v2.nextElementSibling )
 		{
-			var w = v.offsetWidth ; //- v2.offsetWidth + v2.clientWidth - 2 /*border*/;
+			var w = v.offsetWidth ; // - v2.offsetWidth + v2.clientWidth - 2
+									// /*border*/;
 			if (v.nextElementSibling == null)
-				w += tbodydiv.offsetWidth - tbodydiv.clientWidth; // Add scroll bar width
+				w += tbodydiv.offsetWidth - tbodydiv.clientWidth; // Add
+																	// scroll
+																	// bar width
 			v2.style.width = "" + w + "px";
 			v2.style.maxWidth = "" + w + "px";
 			size += w;
 		}	
-		if (tfoot)
-			tfoot.style.width = "" + (size+1) + "px";
+//		if (tfoot)
+//			tfoot.style.width = "" + size + "px";
 	}
 }
 
@@ -168,7 +204,19 @@ zkDatatable.createFooter = function (ed) {
 	}
 	if (  ed.footer)
 	{
-		footer.appendChild( document.createTextNode ( "Total rows: "+ document.getElementById(ed.id+"!tbody").childNodes.length ));
+		footer.appendChild( document.createTextNode ( ed.getAttribute("msgrows")+ ": "+ ed.count ));
+		if (ed.getAttribute("msgdownload")) {
+			var a = document.createElement("a");
+			a.setAttribute("href", "#");
+			var img = document.createElement("img");
+			img.setAttribute("title", ed.getAttribute("msgdownload"));
+			img.setAttribute("class", "imageclic");
+			img.setAttribute("src", "/img/download.svg");
+			a.appendChild (img);
+			a.table = ed;
+			footer.appendChild ( a );
+			zk.listen(a, "click", zkDatatable.downloadvEvent)
+		}
 	}
 };
 
@@ -203,8 +251,8 @@ zkDatatable.createFilters = function (ed, tr) {
 };
 
 zkDatatable.onFilter=function(ev) {
-	var tr = ev.target.parentNode/*td*/.parentNode;
-	var t = tr.parentNode/*thead*/.parentNode/*table*/;
+	var tr = ev.target.parentNode/* td */.parentNode;
+	var t = tr.parentNode/* thead */.parentNode/* table */;
 	// Parse filters
 	for (var column = 0; column < t.columns.length; column ++)
 	{
@@ -232,7 +280,7 @@ zkDatatable.doFilter=function(t) {
 			if (filter) {
 				for (var f = 0; f < filter.length; f++)
 				{
-					if (row.childNodes[ t.multiselect ? column+1: column].textContent.toLowerCase().indexOf(filter) < 0)
+					if (row.childNodes[ t.multiselect ? column+1: column].textContent.toLowerCase().indexOf(filter[f]) < 0)
 					{
 						visible = false;
 						break;
@@ -249,6 +297,7 @@ zkDatatable.doFilter=function(t) {
 		else row.style.display="none";
 	}
 	zkDatatable.fixupColumns(t);
+	zkDatatable.createFooter(t);
 	zkDatatable.updatePagers(t);
 }
 
@@ -303,7 +352,6 @@ zkDatatable.setData = function(ed, data) {
 		{
 			zkDatatable.addRowInternal (ed, i, data[i] ); 
 		}
-		zkDatatable.createFooter(ed);
 		if (ed.sortColumn >= 0)
 			zkDatatable.doSort(ed);
 		zkDatatable.doFilter(ed);
@@ -354,11 +402,23 @@ zkDatatable.addRowInternal=function(ed, pos, value)
 		
 	t.appendChild(tr);
 	
-	zkDatatable.fillRow(ed, tr, value);
+	try {
+		zkDatatable.fillRow(ed, tr, value);
+	} catch (e) {
+		console.log("Warning: Error rendering row ");
+		console.log(value);
+		console.log(e);
+	}
 }
 
 zkDatatable.fillRow=function(ed,tr,value)
 {
+	if (ed.reorder) {
+		tr.table=ed;
+		tr.setAttribute("draggable", "true");
+		zk.listen(tr, "dragstart", zkDatatable.onDragStart);
+		zk.listen(tr, "dragend", zkDatatable.onDragEnd);
+	}
 	if (ed.multiselect)
 	{
 		var td = document.createElement("td");
@@ -382,7 +442,15 @@ zkDatatable.fillRow=function(ed,tr,value)
 			window[col.render](td, col, value);
 		else if (col.value)
 		{
-			if (value[col.value] == undefined)
+			if (!value.hasOwnProperty(col.value))
+			{
+				var value2 = zkDatatable.evaluateInContext (col.value, value);
+				if (value2 == undefined)
+					td.appendChild( document.createTextNode ( "" ));
+				else
+					td.appendChild( document.createTextNode ( value2 ));
+			}
+			else if (value[col.value] == null)
 				td.appendChild( document.createTextNode ( "" ));
 			else
 				td.appendChild( document.createTextNode ( value[col.value] ));
@@ -428,7 +496,7 @@ zkDatatable.sendClientAction=function(el,event,data)
 	var target = el;
 	while (target.tagName != 'TR')
 		target = target.parentNode;
-	var t = target.parentNode/*tbody*/.parentNode/*bodydiv*/.parentNode/*table*/;
+	var t = target.parentNode/* tbody */.parentNode/* bodydiv */.parentNode/* table */;
 	var position = t.index.indexOf(target.id);
 	if (position >= 0)
 	{
@@ -444,7 +512,7 @@ zkDatatable.sendClientAction=function(el,event,data)
 }
 
 zkDatatable.evaluateInContext = function (js, context) {
-    return function() { return eval(js); }.call(context);
+    return function() { with (context) {return eval(js);} }.call(context);
 }
 
 zkDatatable.replaceExpressions = function (template,value) {
@@ -478,11 +546,47 @@ zkDatatable.replaceExpressions = function (template,value) {
 }
 
 zkDatatable.escapeHTML=function(t) {
-    return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    return t == null ? "":
+    	t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
 zkDatatable.cleanup = function (ed) {
 };
+
+
+zkDatatable.refreshRows = function(ed) {
+	var v;
+	var thead = document.getElementById(ed.id+"!thead");
+	while ((v = thead.firstChild) != null )
+	{
+		v.remove();
+	}
+	var tr = document.createElement("tr");
+	thead.appendChild(tr);
+	zkDatatable.createHeaders ( ed, tr );
+	if ( ed.enablefilter)
+	{
+		tr = document.createElement("tr");
+		thead.appendChild(tr);
+		zkDatatable.createFilters( ed, tr);
+	}
+
+	var t = document.getElementById(ed.id+"!tbody");
+	for (var tr = t.firstElementChild; tr != null; tr = tr.nextElementSibilng) 
+	{
+		var selected;
+		if ( ed.multiselect)
+			selected = tr.firstChild.firstChild.checked;
+		while ((v = tr.firstChild) != null )
+		{
+			v.remove();
+		}
+		zkDatatable.fillRow(ed, tr, tr.value);
+		if ( ed.multiselect)
+			tr.firstChild.firstChild.checked = selected;
+	}
+	zkDatatable.fixupColumns(ed);
+}
 
 /** Called by the server to set the attribute. */
 zkDatatable.setAttr = function (ed, name, value) {
@@ -493,6 +597,7 @@ zkDatatable.setAttr = function (ed, name, value) {
 	case "columns":
 		try {
 			ed.columns = JSON.parse(value);
+			zkDatatable.refreshRows(ed);
 		} catch (error) {
 			alert("Error decoding table descriptor "+value+": "+error);
 		}
@@ -503,6 +608,10 @@ zkDatatable.setAttr = function (ed, name, value) {
 		return true;
 	case "multiselect":
 		ed.multiselect = (value != "false");
+		zkDatatable.refresh(ed);
+		return true;
+	case "reorder":
+		ed.reorder = (value != "false");
 		zkDatatable.refresh(ed);
 		return true;
 	case "maxheight":
@@ -533,16 +642,16 @@ zkDatatable.findSelectedPosition=function(t) {
 
 zkDatatable.onSelectRow=function(ev) {
 	var target = ev.currentTarget;
-	var t = target.parentNode/*tbody*/.parentNode/*bodydiv*/.parentNode/*table*/;
+	var t = target.parentNode/* tbody */.parentNode/* bodydiv */.parentNode/* table */;
 	if ( t.multiselect )
 	{
-		var cb = target.firstElementChild/*td*/.firstElementChild/*input*/;
+		var cb = target.firstElementChild/* td */.firstElementChild/* input */;
 		if (!cb.checked)
 		{
 			var row = zkDatatable.findSelectedOne(t);
 			if (row != null)
 			{
-				var cb2 = row.firstElementChild/*td*/.firstElementChild/*input*/;
+				var cb2 = row.firstElementChild/* td */.firstElementChild/* input */;
 				cb2.checked = false;
 				row.classList.remove("selected");
 			}
@@ -580,7 +689,7 @@ zkDatatable.findSelectedOne=function(table) {
 	var row;
 	for (row = tbody.firstElementChild; row != null; row = row.nextElementSibling)
 	{
-		var cb2 = row.firstElementChild/*td*/.firstElementChild/*input*/;
+		var cb2 = row.firstElementChild/* td */.firstElementChild/* input */;
 		if ( cb2.checked )
 		{
 			if (selected == null) selected = row;
@@ -596,7 +705,7 @@ zkDatatable.findSelectedTr=function(table) {
 	var row;
 	for (row = tbody.firstElementChild; row != null; row = row.nextElementSibling)
 	{
-		var cb2 = row.firstElementChild/*td*/.firstElementChild/*input*/;
+		var cb2 = row.firstElementChild/* td */.firstElementChild/* input */;
 		if ( cb2.checked )
 		{
 			return row;
@@ -607,17 +716,20 @@ zkDatatable.findSelectedTr=function(table) {
 
 zkDatatable.onSelectAll=function(ev) {
 	var cb = ev.currentTarget;
-	var table = cb.parentNode/*td*/.parentNode/*tr*/.parentNode/*thead*/.parentNode/*table*/;
+	var table = cb.parentNode/* td */.parentNode/* tr */.parentNode/* thead */.parentNode/* table */;
 	var tbody = document.getElementById(table.id+"!tbody");
 	var row;
 	table.selectedTr = null;
 	for (row = tbody.firstElementChild; row != null; row = row.nextElementSibling)
 	{
-		if (selectedTr == null)
-			selectedTr = row;
-		var cb2 = row.firstElementChild/*td*/.firstElementChild/*input*/;
+		if (table.selectedTr == null)
+			table.selectedTr = row;
+		var cb2 = row.firstElementChild/* td */.firstElementChild/* input */;
 		cb2.checked = cb.checked;
-		row.classList.add("selected");
+		if (cb.checked)
+			row.classList.add("selected");
+		else
+			row.classList.remove("selected");
 	}
 	zkDatatable.sendSelect(table);
 	zkDatatable.findSelectedPosition(table);
@@ -625,11 +737,11 @@ zkDatatable.onSelectAll=function(ev) {
 
 zkDatatable.onSelect=function(ev) {
 	var cb = ev.currentTarget;
-	var row = cb.parentNode/*td*/.parentNode/*tr*/;
-	var table = row.parentNode/*thead*/.parentNode/*table*/;
+	var row = cb.parentNode/* td */.parentNode/* tr */;
+	var table = row.parentNode/* thead */.parentNode/* tbody */.parentNode/* table */;
 	if (!cb.checked)
 	{
-		var cb2 = table.firstElementChild/*thead*/.firstElementChild/*tr*/.firstElementChild/*td*/.firstElementChild;
+		var cb2 = table.firstElementChild/* thead */.firstElementChild/* tr */.firstElementChild/* td */.firstElementChild;
 		cb2.checked = false;
 		row.classList.remove("selected");
 		table.selectedTr = zkDatatable.findSelectedTr(table);
@@ -640,7 +752,7 @@ zkDatatable.onSelect=function(ev) {
 	zkDatatable.sendSelect(table);
 }
 
-/** Selected by the server **/
+/** Selected by the server * */
 zkDatatable.setSelected=function(t, pos) {
 	var tbody = document.getElementById(t.id+"!tbody");
 	for (var row = tbody.firstElementChild; row != null; row = row.nextElementSibling)
@@ -648,8 +760,8 @@ zkDatatable.setSelected=function(t, pos) {
 		row.classList.remove("selected")
 		if ( t.multiselect )
 		{
-			var cb = row.firstElementChild/*td*/.firstElementChild/*input*/;
-			cb.checked =false;
+			var cb = row.firstElementChild/* td */.firstElementChild/* input */;
+			cb.checked = false;
 		}
 	}
 	t.selectedTr = null;
@@ -661,7 +773,7 @@ zkDatatable.setSelected=function(t, pos) {
 		{
 			if ( t.multiselect )
 			{
-				var cb = row.firstElementChild/*td*/.firstElementChild/*input*/;
+				var cb = row.firstElementChild/* td */.firstElementChild/* input */;
 				cb.checked = true;
 			}
 			row.classList.add("selected");
@@ -674,12 +786,63 @@ zkDatatable.setSelected=function(t, pos) {
 	}
 }
 
+/** Cleared by the server * */
+zkDatatable.clearSelection=function(t, pos) {
+	var tbody = document.getElementById(t.id+"!tbody");
+	for (var row = tbody.firstElementChild; row != null; row = row.nextElementSibling)
+	{
+		row.classList.remove("selected")
+		if ( t.multiselect )
+		{
+			var cb = row.firstElementChild/* td */.firstElementChild/* input */;
+			cb.checked = false;
+		}
+	}
+	t.selectedTr = null;
+	t.selectedPosition = 0;
+	zkDatatable.updatePagers(t);
+}
+
+zkDatatable.setSelectedMulti=function(t, pos) {
+	var tbody = document.getElementById(t.id+"!tbody");
+	if ( tbody == null ) return;
+	pos = JSON.parse(pos);
+	for (var row = tbody.firstElementChild; row != null; row = row.nextElementSibling)
+	{
+		row.classList.remove("selected")
+		if ( t.multiselect )
+		{
+			var cb = row.firstElementChild/* td */.firstElementChild/* input */;
+			cb.checked =false;
+		}
+	}
+	t.selectedTr = null;
+	for (var i = 0; i < pos.length; i++)
+	{
+		var rowid =  t.index[pos[i]];
+		var row = document.getElementById(rowid);
+		if (row)
+		{
+			if ( t.multiselect )
+			{
+				var cb = row.firstElementChild/* td */.firstElementChild/* input */;
+				cb.checked = true;
+			}
+			row.classList.add("selected");
+			t.selectedTr = row;
+		}
+		if (i == 0)
+			zkDatatable.findSelectedPosition(t);
+	} 
+	zkDatatable.updatePagers(t);
+}
+
 zkDatatable.sendSelect=function(table) {
 	var selected=[];
 	var tbody = document.getElementById(table.id+"!tbody"); 
 	for (var row = tbody.firstElementChild; row != null; row = row.nextElementSibling)
 	{
-		var cb2 = row.firstElementChild/*td*/.firstElementChild/*input*/;
+		var cb2 = row.firstElementChild/* td */.firstElementChild/* input */;
 		if (cb2.checked)
 		{
 			var position = table.index.indexOf(row.id);
@@ -700,7 +863,7 @@ zkDatatable.onSort=function(ev) {
 	var column = target.column;
 	if (column != undefined && column != null)
 	{
-		var ed = target.parentNode/*tr*/.parentNode/*thead*/.parentNode/*table*/;
+		var ed = target.parentNode/* tr */.parentNode/* thead */.parentNode/* table */;
 		if (ed.sortColumn == column)
 		{
 			ed.sortDirection = - ed.sortDirection;
@@ -725,8 +888,33 @@ zkDatatable.doSort=function(ed) {
 			(a,b) => {
 				var r;
 				if (value) {
-					var v1 = new String(a.value[value]).toLowerCase();
-					var v2 = new String(b.value[value]).toLowerCase();
+					var v1,v2;
+					if (a.value.hasOwnProperty(value)) 
+						v1 = a.value[value];
+					else {
+						with (a.value) { 
+							try {
+								v1 = zkDatatable.evaluateInContext (value, a.value)
+							} catch(e) {
+								v1=""
+							}
+						}
+					}
+					if (b.value.hasOwnProperty(value)) 
+						v2 = b.value[value];
+					else {
+						with (b.value) { 
+							try {
+								v2 = zkDatatable.evaluateInContext (value, b.value)
+							} catch(e) {
+								v2=""
+							}
+						}
+					}
+					if (isNaN(v1))
+						v1 = new String(v1).toLowerCase();
+					if (isNaN(v2))
+						v2 = new String(v2).toLowerCase();
 					if (v1 < v2) r = -1;
 					else if (v1 > v2) r = +1;
 					else r = 0; 
@@ -814,13 +1002,13 @@ zkDatatable.next=function(t)
 			if (! next.classList.contains("selected") && row.classList.contains("selected")) {
 				row.classList.remove("selected");
 				if (t.multiselect) {
-					var cb = row.firstElementChild/*td*/.firstElementChild/*input*/;
+					var cb = row.firstElementChild/* td */.firstElementChild/* input */;
 					cb.checked = false;
 				}
 				next.classList.add("selected");
 			}
 			if (t.multiselect) {
-				var cb = next.firstElementChild/*td*/.firstElementChild/*input*/;
+				var cb = next.firstElementChild/* td */.firstElementChild/* input */;
 				cb.checked = true;
 				zkDatatable.sendSelect(t);
 			} else {
@@ -849,13 +1037,13 @@ zkDatatable.previous=function(t)
 			if (! next.classList.contains("selected") && row.classList.contains("selected")) {
 				row.classList.remove("selected");
 				if (t.multiselect) {
-					var cb = row.firstElementChild/*td*/.firstElementChild/*input*/;
+					var cb = row.firstElementChild/* td */.firstElementChild/* input */;
 					cb.checked = false;
 				}
 				next.classList.add("selected");
 			}
 			if (t.multiselect) {
-				var cb = next.firstElementChild/*td*/.firstElementChild/*input*/;
+				var cb = next.firstElementChild/* td */.firstElementChild/* input */;
 				cb.checked = true;
 				zkDatatable.sendSelect(t);
 			} else {
@@ -874,3 +1062,121 @@ zkDatatable.previous=function(t)
 	}
 }
 
+zkDatatable.downloadCsvEvent=function(event) {
+	var ed = event.currentTarget.table;
+	zkDatatable.downloadCsv(ed);
+}
+zkDatatable.downloadCsv=function(ed) {
+	var s = "";
+	for (var column =  0; column < ed.columns.length; column ++)
+	{
+		if (column > 0) s+= ",";
+		s += zkDatatable.quote(ed.columns[column].name);
+	}
+	s += "\n";
+	var tbody = document.getElementById(ed.id+"!tbody");
+	for (var tr = tbody.firstElementChild; tr != null; tr = tr.nextElementSibling) {
+		var c = 0;
+		var td = tr.firstElementChild;
+		if (ed.multiselect)
+			td = td.nextElementSibling;
+		for ( ; td != null; td = td.nextElementSibling) {
+			if (c++ > 0) s += ",";
+			var t = td.textContent + zkDatatable.inputValues(td);
+			s += zkDatatable.quote(t);
+		}
+		s+="\n";
+	}
+	
+    var data = new Blob([s], {type: 'text/csv', name: 'export.csv'});
+    data.name = 'soffid.csv';
+    
+    // If we are replacing a previously generated file we need to
+    // manually revoke the object URL to avoid memory leaks.
+    if (zkDatatable.file !== null) {
+      window.URL.revokeObjectURL(zkDatatable.file);
+    }
+
+    zkDatatable.file = window.URL.createObjectURL(data);
+    window.open( zkDatatable.file );
+}
+
+zkDatatable.quote = function(t) {
+	return "\""+t.replace(/"/g, "\\\"")+"\"";
+}
+
+zkDatatable.inputValues = function(td) {
+	var s = "";
+	for ( var input = td.firstElementChild; input != null; input = input.nextElementSibling) {
+		if (input.tagName == "INPUT") {
+			if (input.type = "checkbox" && input.checked) {
+				s += "true";
+			} else if (input.value) {
+				s +=  input.value;
+			}
+		} else {
+			s += zkDatatable.inputValues ( input );
+		}
+	}
+	return s;
+}
+
+/************ DRAG & DROP SUPPORT */
+zkDatatable.onDragover=function(event) {
+	var row = zkDatatable.dragging;
+	var table = row.table;
+	var currentTable = event.currentTarget/*table*/.parentElement/*div.tbody*/.parentElement/*div.datatable*/;
+	if (table == currentTable) {
+		var tr = document.elementFromPoint(event.x, event.y);
+		while (tr != null && tr.tagName != 'TR') {
+			tr = tr.parentElement;
+		}
+		if (tr != null && tr.table == table) {
+			if  (tr != row) {
+				var cr = tr.getClientRects()[0];
+				var middle = cr.top + cr.height / 2;
+				if ( event.clientY > middle )
+					zkDatatable.draggedBefore = tr.nextElementSibling;
+				else
+					zkDatatable.draggedBefore = tr;
+				tr.parentElement.insertBefore(row, zkDatatable.draggedBefore);
+			}
+		}
+		event.preventDefault();
+	}
+}
+
+zkDatatable.onDragStart=function(event) {
+	zkDatatable.dragging = event.currentTarget;
+	zkDatatable.draggedBefore = event.currentTarget;
+	event.dataTransfer.setData("text/plain", event.currentTarget.id);
+	zkDatatable.dragging.classList.add("selected");
+}
+
+zkDatatable.onDragEnd = function(event) {
+	var src = zkDatatable.dragging;
+	var target = zkDatatable.draggedBefore;
+	var t = src.table;
+	if (t.multiselect) {
+		if (src.firstElementChild/*td*/.firstElementChild/*input*/.checked)
+			zkDatatable.dragging.classList.add("selected");
+		else
+			zkDatatable.dragging.classList.remove("selected");
+	}
+	else
+		zkDatatable.dragging.classList.remove("selected");
+	if (target != src) {
+		var targetPosition = target == null ?  
+			-1:
+			t.index.indexOf(target.id);
+		var srcPosition = t.index.indexOf(src.id);
+		if (srcPosition >= 0)
+		{
+			zkau.send ({uuid: t.id, cmd: "onReorder", data : [srcPosition, targetPosition]}, 5);		
+		}			
+	}
+}
+
+zkDatatable.onDrop = function(event) {
+	event.preventDefault();
+}

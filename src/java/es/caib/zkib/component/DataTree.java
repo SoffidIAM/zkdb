@@ -21,7 +21,6 @@ import org.zkoss.zul.Treeitem;
 import es.caib.zkib.binder.BindContext;
 import es.caib.zkib.binder.CollectionBinder;
 import es.caib.zkib.binder.SingletonBinder;
-import es.caib.zkib.binder.list.ModelProxy;
 import es.caib.zkib.binder.tree.DataTreeitemRenderer;
 import es.caib.zkib.binder.tree.FullTreeModelProxy;
 import es.caib.zkib.binder.tree.TreeModelProxy;

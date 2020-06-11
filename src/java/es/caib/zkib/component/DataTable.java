@@ -1,12 +1,30 @@
 package es.caib.zkib.component;
 
+import java.beans.PropertyDescriptor;
 import java.io.IOException;
 import java.io.Writer;
+import java.lang.reflect.InvocationTargetException;
+import java.text.DateFormat;
+import java.text.Format;
+import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.apache.commons.beanutils.DynaBean;
+import org.apache.commons.beanutils.DynaClass;
+import org.apache.commons.beanutils.DynaProperty;
+import org.apache.commons.beanutils.PropertyUtils;
+import org.apache.commons.beanutils.PropertyUtilsBean;
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
+import org.zkoss.util.Locales;
+import org.zkoss.util.TimeZones;
+import org.zkoss.util.resource.Labels;
 import org.zkoss.xml.HTMLs;
 import org.zkoss.zk.au.AuRequest;
 import org.zkoss.zk.au.Command;
@@ -31,6 +49,7 @@ import es.caib.zkib.binder.BindContext;
 import es.caib.zkib.binder.CollectionBinder;
 import es.caib.zkib.binder.SingletonBinder;
 import es.caib.zkib.binder.list.ModelProxy;
+import es.caib.zkib.datamodel.DataModelCollection;
 import es.caib.zkib.datamodel.DataModelNode;
 import es.caib.zkib.datamodel.DataNode;
 import es.caib.zkib.datasource.ChildDataSourceImpl;
@@ -64,15 +83,26 @@ public class DataTable extends XulElement implements XPathSubscriber,
 	private static final String SELECT_EVENT = "onSelect"; //$NON-NLS-1$
 	private static final String MULTI_SELECT_EVENT = "onMultiSelect"; //$NON-NLS-1$
 	private static final String CLIENT_ACTION_EVENT = "onClientAction"; //$NON-NLS-1$
+	private static final String REORDER_EVENT = "onReorder"; //$NON-NLS-1$
 	boolean enablefilter = true;
 	int sortColumn = -1;
 	int sortDirection = +1;
 	boolean footer = true;
 	boolean multiselect = false;
 	String maxheight = "";
+	String rowsMsg = "Rows";
+	String downloadMsg = "Download";
+	boolean download = false;
+	boolean updateRowEvent = true;
+	boolean reorder = false;
 	
 	public DataTable () {
 		setSclass("datatable");
+		String r = Labels.getLabel("zkdb.rows");
+		if (r != null) rowsMsg = r;
+		
+		String d = Labels.getLabel("zkdb.download");
+		if (d != null) downloadMsg = d;
 	}
     public String getDataPath() {
         return dataPath;
@@ -111,6 +141,10 @@ public class DataTable extends XulElement implements XPathSubscriber,
 		HTMLs.appendAttribute(sb, "multiselect", multiselect);
 		HTMLs.appendAttribute(sb, "footer", footer);
 		HTMLs.appendAttribute(sb, "maxheight", maxheight);
+		HTMLs.appendAttribute(sb, "msgrows", rowsMsg);
+		HTMLs.appendAttribute(sb, "reorder", reorder);
+		if (download)
+			HTMLs.appendAttribute(sb, "msgdownload", downloadMsg);
 
 		return sb.toString();
 
@@ -159,11 +193,12 @@ public class DataTable extends XulElement implements XPathSubscriber,
                 dsImpl = new ChildDataSourceImpl();
 
             dsImpl.setDataSource(collectionBinder.getDataSource());
-            dsImpl.setRootXPath(collectionBinder.getModelXPath());
             if (lm instanceof ModelProxy) {
                 selectedItemXPath = ((ModelProxy) getModel())
                         .getBind(getSelectedIndex());
-                dsImpl.setXPath(selectedItemXPath);
+                dsImpl.setRootXPath(collectionBinder.getModelXPath(), selectedItemXPath);
+            } else {
+                dsImpl.setRootXPath(collectionBinder.getModelXPath());
             }
         }
 	}
@@ -244,7 +279,7 @@ public class DataTable extends XulElement implements XPathSubscriber,
 		        }
 			}
 		}
-        if (event.getType() == XPathCollectionEvent.UPDATED) {
+        if (event.getType() == XPathCollectionEvent.UPDATED && updateRowEvent) {
         	ModelProxy dm = (ModelProxy) getModel();
         	for (int i = event.getIndex0(); i <= event.getIndex1(); i++)
         	{
@@ -259,8 +294,11 @@ public class DataTable extends XulElement implements XPathSubscriber,
 		return selectedIndex;
 	}
 
-	public List<Integer> getSelectedIndexes() {
-		return selectedIndexList;
+	public int[] getSelectedIndexes() {
+		int[] r = new int[selectedIndexList.size()];
+		for (int i = 0; i < selectedIndexList.size(); i++)
+			r[i] = selectedIndexList.get(i).intValue();
+		return r;
 	}
 
 	public void setSelectedIndex(int selectedIndex) {
@@ -277,7 +315,25 @@ public class DataTable extends XulElement implements XPathSubscriber,
 		updateDataSource();
 	}
 
-    public JXPathContext getJXPathContext() {
+	public void setSelectedIndex(int[] selectedIndex) {
+		if ( !multiselect)
+		{
+			throw new UiException("Only multiselect table can select more than one item");
+		}
+		selectedIndexList.clear();
+		JSONArray array = new JSONArray();
+		for (int i: selectedIndex)
+		{
+			array.put(i);
+			selectedIndexList.add(i);
+		}
+
+		response("setSelected", new AuInvoke(this, "setSelectedMulti", array.toString()));
+
+		updateDataSource();
+	}
+
+	public JXPathContext getJXPathContext() {
         if (dsImpl == null)
             return null;
         else
@@ -382,15 +438,51 @@ public class DataTable extends XulElement implements XPathSubscriber,
         }
     }
 
-    private String getClientValue(int pos) {
+    protected String getClientValue(int pos) {
     	if (getModel() == null)
     		return "{}";
     	Object element = getModel().getElementAt(pos);
-    	if (element instanceof DataNode)
-    		element = ((DataNode) element).getInstance();
-    	JSONObject o = new JSONObject(element);
+    	JSONObject o = getClientValue(element);
     	return o.toString();
 	}
+    
+	protected JSONObject getClientValue(Object element) throws JSONException {
+		JSONObject o;
+		if (element instanceof DynaBean) {
+			DynaBean dynaBean = (DynaBean) element;
+			DynaClass cl = dynaBean.getDynaClass();
+			o  = new JSONObject();
+			for ( DynaProperty p: cl.getDynaProperties()) {
+				if (!p.getName().equals("class") && 
+					! DataModelCollection.class.isAssignableFrom( p.getType()) ) 
+				{
+					Object value = dynaBean.get(p.getName());
+					if (value instanceof Date) {
+						DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-DD'T'HH:mm:ss");
+						dateFormat.setTimeZone(TimeZones.getCurrent());
+						value =  dateFormat.format((Date)value);
+						o.put(p.getName(), JSONObject.wrap(value));
+						o.put(p.getName()+"_date", DateFormats.getDateFormat().format(value));
+						o.put(p.getName()+"_datetime", DateFormats.getDateTimeFormat().format(value));
+					} else if (value instanceof Calendar) {
+						Date d = ((Calendar) value).getTime();
+						DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-DD'T'HH:mm:ss");
+						dateFormat.setTimeZone(TimeZones.getCurrent());
+						value =  dateFormat.format(d);
+						o.put(p.getName()+"_date", DateFormats.getDateFormat().format(d));
+						o.put(p.getName()+"_datetime", DateFormats.getDateTimeFormat().format(d));
+					} else {
+						o.put(p.getName(), JSONObject.wrap(value));
+					}
+				}
+			}
+		} else {
+			if (element instanceof DataNode) element = ((DataNode) element).getInstance();
+			o = new JSONObject(element);
+		}
+		return o;
+	}
+    
 
 	public void delete() {
         ListModel lm = getModel();
@@ -530,9 +622,28 @@ public class DataTable extends XulElement implements XPathSubscriber,
 			return _onMultiSelectCommand;
 		if (CLIENT_ACTION_EVENT.equals(cmdId))
 			return _onClientActionCommand;
-		
+		if (REORDER_EVENT.equals(cmdId))
+			return _onDragCommand;
+			
 		return super.getCommand(cmdId);
 	}
+
+	private static Command _onDragCommand  = new ComponentCommand (REORDER_EVENT, 0) {
+		protected void process(AuRequest request) {
+			final DataTable table = (DataTable) request.getComponent();
+			ReorderEvent ev  = new ReorderEvent("onReorder", table);
+			ev.setSrcPosition( Integer.parseInt( request.getData()[0] ) );
+			int insertBefore = Integer.parseInt( request.getData()[1]) ;
+			if (insertBefore >= 0)
+				ev.setInsertBeforePosition( insertBefore );
+			if (table.getModel() != null) {
+				ev.setSrcObject( table.getModel().getElementAt(ev.getSrcPosition()) );
+				if ( insertBefore >= 0)
+					ev.setInsertBeforeObject( table.getModel().getElementAt( insertBefore ) );
+			}
+			Events.postEvent(ev);
+		}
+	};
 
 	private static Command _onSelectCommand  = new ComponentCommand (SELECT_EVENT, 0) {
 		protected void process(AuRequest request) {
@@ -568,8 +679,8 @@ public class DataTable extends XulElement implements XPathSubscriber,
 			final DataTable table = (DataTable) request.getComponent();
 			String[] data = request.getData();
 			String event = data[0];
-			Object[] newData = new Object [data.length-1];
-			for (int i = 1; i < newData.length; i++)
+			String[] newData = new String [data.length-1];
+			for (int i = 0; i < newData.length; i++)
 				newData[i] = data[i+1];
 			Events.postEvent(new Event(event, table, newData));
 		}
@@ -633,5 +744,48 @@ public class DataTable extends XulElement implements XPathSubscriber,
 	public void setMaxheight(String maxheight) {
 		this.maxheight = maxheight;
 		smartUpdate("maxheight", maxheight);
+	}
+	public String getRowsMsg() {
+		return rowsMsg;
+	}
+	public void setRowsMsg(String rowsMsg) {
+		this.rowsMsg = rowsMsg;
+	}
+	public String getDownloadMsg() {
+		return downloadMsg;
+	}
+	public void setDownloadMsg(String downloadMsg) {
+		this.downloadMsg = downloadMsg;
+	}
+	
+	public void setData (String data) {
+		response("setData", new AuInvoke(this, "setData", data));
+	}
+
+	public void setData (JSONArray data) {
+		response("setData", new AuInvoke(this, "setData", data.toString()));
+	}
+	
+	public void download () {
+		response("download", new AuInvoke(this, "downloadCsv", ""));
+	}
+	public boolean isDownload() {
+		return download;
+	}
+	public void setDownload(boolean download) {
+		this.download = download;
+	}
+	public boolean isUpdateRowEvent() {
+		return updateRowEvent;
+	}
+	public void setUpdateRowEvent(boolean updateRowEvent) {
+		this.updateRowEvent = updateRowEvent;
+	}
+	public boolean isReorder() {
+		return reorder;
+	}
+	public void setReorder(boolean reorder) {
+		this.reorder = reorder;
+		smartUpdate("reorder", reorder);
 	}
 }
