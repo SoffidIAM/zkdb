@@ -5,6 +5,7 @@ import java.io.Writer;
 
 import org.zkoss.xml.HTMLs;
 import org.zkoss.xml.XMLs;
+import org.zkoss.zk.au.out.AuScript;
 import org.zkoss.zk.ui.Component;
 import org.zkoss.zk.ui.Executions;
 import org.zkoss.zk.ui.Path;
@@ -23,6 +24,7 @@ public class DatasourceButton extends Button  {
 	private static final long serialVersionUID = -530199585286130616L;
 	private String dataModel;
 	private boolean _created = false;
+	private boolean onlyIcon = false;
 	
 	public DatasourceButton ()
 	{
@@ -93,11 +95,18 @@ public class DatasourceButton extends Button  {
 		Component c = Path.getComponent(getSpaceOwner(), dataModel);
 		if (c != null && c instanceof DataSource)
 		{
+			DataSource dataSource = (DataSource) c;
 			setVisible(true);
-			setDisabled(! ( (DataSource) c).isCommitPending() );
+			if (dataSource.isCommitPending())
+				Executions.getCurrent().addAuResponse("unableExit", new AuScript(this , "zkau.confirmClose=true;"));
+			else
+				Executions.getCurrent().addAuResponse("unableExit", new AuScript(this , "zkau.confirmClose=false;"));
+			setDisabled(! dataSource.isCommitPending() );
 		}
 		else
+		{
 			setVisible(false);
+		}
 	}
 
 	@Override
@@ -122,15 +131,19 @@ public class DatasourceButton extends Button  {
 			.write(">");
 			if ("reverse".equals(getDir()))
 			{
-				wh.write(XMLs.encodeText(getLabel()));
-				if("vertical".equals(getOrient()))
-					wh.write("<br/>");
+				if ( !onlyIcon) {
+					wh.write(XMLs.encodeText(getLabel()));
+					if("vertical".equals(getOrient()))
+						wh.write("<br/>");
+				}
 				wh.write(getImgTag());
 			} else {
 				wh.write(getImgTag());
-				if("vertical".equals(getOrient()))
-					wh.write("<br/>");
-				wh.write(XMLs.encodeText(getLabel()));
+				if ( !onlyIcon) {
+					if("vertical".equals(getOrient()))
+						wh.write("<br/>");
+					wh.write(XMLs.encodeText(getLabel()));
+				}
 			}
 			wh.write("</button>");
 		}
@@ -146,6 +159,9 @@ public class DatasourceButton extends Button  {
 				HTMLs.appendAttribute(sb, "dsid", ((Component)ds).getUuid());
 				
 		}
+		if (onlyIcon) {
+			HTMLs.appendAttribute(sb, "title", getLabel());
+		}
 		return sb.toString();
 	}
 
@@ -155,6 +171,16 @@ public class DatasourceButton extends Button  {
 		    path = "//"+getPage().getId()+path;
 		Component ds = Path.getComponent(getSpaceOwner(), path);
 		return ds;
+	}
+
+	public boolean isOnlyIcon() {
+		return onlyIcon;
+	}
+
+	public void setOnlyIcon(boolean onlyIcon) {
+		if (onlyIcon)
+			setSclass("icon-button");
+		this.onlyIcon = onlyIcon;
 	}
 
 
