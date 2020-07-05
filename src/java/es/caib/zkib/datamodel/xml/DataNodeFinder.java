@@ -6,6 +6,7 @@ import java.util.Collection;
 import es.caib.zkib.datamodel.DataContext;
 import es.caib.zkib.datamodel.xml.definition.FinderDefinition;
 import es.caib.zkib.datamodel.xml.handler.FinderHandler;
+import es.caib.zkib.datamodel.xml.handler.LoadParentHandler;
 import es.caib.zkib.datamodel.xml.handler.NewInstanceHandler;
 
 public class DataNodeFinder implements es.caib.zkib.datamodel.ExtendedFinder, Serializable {
@@ -23,6 +24,7 @@ public class DataNodeFinder implements es.caib.zkib.datamodel.ExtendedFinder, Se
 
 	public Collection find() throws Exception {
 		FinderHandler handlers [] = definition.getFinderHandlers();
+		
 		Collection c = null;
 		for (int i = 0; i< handlers.length; i++)
 		{
@@ -62,4 +64,25 @@ public class DataNodeFinder implements es.caib.zkib.datamodel.ExtendedFinder, Se
 		return ! definition.isUpdateAfterParent();
 	}
 
+	
+	public String getParentProperty() {
+		return definition.getParentProperty();
+	}
+	
+	public String getIdProperty () {
+		return definition.getIdProperty();
+	}
+	
+	public String getChildProperty() {
+		return definition.getChildProperty();
+	}
+	
+	public Object loadParentObject(DataContext ctx) throws Exception {
+		for (LoadParentHandler handler: definition.getLoadParentHandlers()) {
+			Object parent = handler.loadParent(ctx);
+			if (parent != null)
+				return parent;
+		}
+		return null;
+	}
 }

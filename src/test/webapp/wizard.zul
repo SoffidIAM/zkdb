@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<zk>
+	<style>
+div.wizard-bar {
+    margin-left: -16px;
+    margin-right: -16px;
+    margin-top: -16px;
+    margin-bottom: 16px;
+    height: 52px;
+    width: calc( 100% + 32px );
+    background: #f0f0f0;
+    border-bottom: solid black 1px;
+}
+
+div.wizard-bar div.active-step {
+    background-color: {GREEN};
+    display: inline-block;
+    padding: 16px;
+    vertical-align: bottom;
+}
+
+div.wizard-bar div.active-step span {
+    color: {GREENTEXT};
+}
+
+div.wizard-bar div.previous-step {
+    display: inline-block;
+    padding: 16px;
+    vertical-align: bottom;
+}
+
+div.wizard-bar div.next-step {
+    display: inline-block;
+    padding: 16px;
+    color: #808080;
+    vertical-align: bottom;
+}
+
+div.wizard-bar div.separator-p {
+	height: 100%;
+	width: 26px;
+	display: inline-block;
+	background-image: url(/img/wizard-p.svg);
+	background-position: center;
+	background-repeat: no-repeat;
+	background-size: cover;
+}
+
+div.wizard-bar div.separator-n {
+	display: inline-block;
+	height: 100%;
+	width: 26px;
+	background-image: url(/img/wizard-n.svg);
+	background-position: center;
+	background-repeat: no-repeat;
+	background-size: cover;
+}
+
+div.wizard-bar div.separator-d {
+	display: inline-block;
+	height: 100%;
+	width: 26px;
+	background-image: url(/img/wizard-d.svg);
+	background-position: center;
+	background-repeat: no-repeat;
+	background-size: cover;
+}
+</style>
+
+<wizard id="wizard" steps='["UNO", "DOS", "TRES"]'>
+	<div>
+		step 1
+		<button label="next" onClick="wizard.next()"/>
+	</div>
+	<div>
+		step 2
+		<button label="previous" onClick="wizard.previous()"/>
+		<button label="next" onClick="wizard.next()"/>
+	</div>
+	<div>
+		step 3
+		<button label="previous" onClick="wizard.previous()"/>
+		<button label="loop" onClick="wizard.setSelected(0)"/>
+	</div>
+</wizard>	
+	
+	
+
+</zk>

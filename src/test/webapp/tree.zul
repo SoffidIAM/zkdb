@@ -254,109 +254,201 @@
 }
 		
 /****************** DATATREE ******************/
-		div.datatree div.sortable-column div.sort-indicator {
-			display: inline-block;
-			margin-left: 5px;
-			margin-right: 5px;
-		}
-		div.datatree div.sortable-column div.sort-indicator div {
-			font-size: 50%;
-		}
-		div.datatree div.sort-indicator-disabled {
-			visibility: hidden;
-		}
-		
-		div.datatree {
-			border: 1px solid blue;
-		}
-		
-		div.datatree div.thead {
-			box-sizing: border-box;
-			background-color: #f0f0f0;
-		    overflow: hidden;
-		    text-overflow: ellipsis;
-		    white-space: nowrap;		
-    	}
-		div.datatree div.thead input {
-			width:100%;
-		}
-		
-		div.datatable div.tfoot {
-			background-color: white;
-			text-align: right;
-			box-sizing: border-box;
-			border: none;
-		}
-		div.datatree div.thead div.filter-cell {
-			padding-left:10px;
-			padding-right: 10px;
-			padding-bottom: 2px;
-		    text-overflow: clip;
-	        border-bottom: 1px solid #c0c0c0;
-		}
-		
-		div.datatree {
-			display: block;
-			border-spacing: 0;
-  		}
-		
-		div.datatree div.thead div.sortable-column {
-			cursor: pointer;
-		}
-		div.datatree div.tfoot {
-		  width:100%;
-		  box-sizing: border-box;
-		}
-				
-		div.datatree div.tbody {
-		  background-color: white;
-		  box-sizing: border-box;
-		  width:100%; 
-		  overflow-y:auto;
-		  overflow-x:clip;
-		  border-bottom: 1px solid #c0c0c0;
-		}
-		
-		div.datatree div.tbody div.tree-itemholder span.tree-collapse {
-			background-image: url(img/collapse.png); background-size: 16px 16px;
-			width: 16px;
-			height: 16px;
-			display: inline-block; 
-		    transition: transform 0.2s ease-in-out;
-		    cursor: pointer;
-		    vertical-align: top;
-		}
-		
-		div.datatree div.tbody div.tree-item {
-			width: calc( 100% - 20px );
-			overflow-x: hidden;
-			display: inline-block; 
-			padding-left: 4px;
-		}
+div.datatree div.sortable-column div.sort-indicator {
+	display: inline-block;
+	margin-left: 10px;
+	margin-right: 5px;
+}
+div.datatree div.sortable-column div.sort-indicator div {
+	font-size: 50%;
+}
+div.datatree div.sort-indicator-disabled {
+	visibility: hidden;
+}
 
-		div.tree-children.waiting {
-			background-image: url(img/wait.gif); 
-			background-size: 16px 16px;
-			width: 16px;
-			height: 16px;
-		}
+div.datatree div.tbody {
+	border: 1px solid lightgreen;
+}
 
-		div.datatree div.tree-itemholder img.tree-icon {
-			width: 1em;
-			height: 1em;
-			margin-right: 4px;			
-		}
+div.datatree div.thead {
+	box-sizing: border-box;
+	background-color: lightgreen;
+	color: white;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;		
+  	}
+div.datatree div.thead input {
+	width:100%;
+}
+
+div.datatree div.thead div.filter-cell {
+	padding-left:10px;
+	padding-right: 10px;
+	padding-bottom: 2px;
+    text-overflow: clip;
+       border-bottom: 1px solid #c0c0c0;
+}
+
+div.datatree {
+	display: block;
+	border-spacing: 0;
+}
+
+div.datatree div.thead div.sortable-column {
+	cursor: pointer;
+}
+div.datatree div.tfoot {
+	width:100%;
+	box-sizing: border-box;
+	margin-top: 5px;
+	background-color: white;
+	text-align: right;
+	box-sizing: border-box;
+	border: none;
+}
+
+div.datatree div.tree-collapse {
+    background-image: url(/zk/img/foldBackground.svg);
+    background-size: cover;
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    vertical-align: top;
+    padding: 0px;
+    margin-top: 3px;
+	margin-left: 6px;
+	margin-right: 6px;   
+	cursor: pointer;
+}
+
+div.datatree div.tree-collapse img {
+	transition: transform 0.3s ease-in-out;
+    transform: rotate(-90deg) scale(1, 1);
+    width: 18px;
+    height: 18px;
+}
+
+div.datatree div.tree-collapse.open img {
+   	transform: rotate(0deg) scale(1, 1);		
+}
+
+div.datatree div.tbody {
+  background-color: white;
+  box-sizing: border-box;
+  width:100%; 
+  overflow-y:auto;
+  overflow-x:clip;
+  border-bottom: 1px solid #c0c0c0;
+  padding: 6px 0px 6px 0px;
+}
+
+div.tree-collapse {
+	padding-top: 3px;
+	padding-right: 6px;
+}
+
+
+svg.tree-collapse, div.tree-collapse svg{
+	width: 16px;
+	height: 16px;
+	display: inline-block; 
+    transition: transform 0.2s ease-in-out;
+    cursor: pointer;
+    vertical-align: top;
+	transform: scale(0.8, 0.8);		    
+	color: blue;
+	position: relative;
+	top: 3px;
+	margin-left: 6px;
+	margin-right: 6px;   
+}
+
+svg.tree-collapse.open, div.tree-collapse.open svg {
+	transition: transform 0.2s ease-in-out;
+    transform: rotate(90deg) scale(1, 1);	
+	color: bluelight;
+}
+
+div.datatree div.tbody div.tree-item {
+	width: calc( 100% - 34px );
+	overflow-x: hidden;
+	display: inline-block; 
+	padding-left: 4px;
+}
+
+div.tree-children.waiting {
+	background-image: url(img/wait.gif); 
+	background-size: 16px 16px;
+	width: 100%;
+	height: 16px;
+	background-repeat: no-repeat;
+}
+
+div.tree-children div.tree-tail {
+	border-bottom: 1px solid black;
+}
+
+div.tree-children.waiting div.tree-tail {
+	display: none;
+}
 		
-		div.datatree div.tree-label {
-			cursor: pointer;		
-		}
-		div.datatree div.tree-label:hover {
-			background-color: #e0e0ff;
-		}
+div.datatree div.tree-itemholder img.tree-icon {
+	width: 1em;
+	height: 1em;
+	margin-right: 4px;			
+}
 
-		div.datatree div.tree-label.selected {
-			background-color: #c0c0ff;
-		}
+div.datatree div.tree-label {
+	cursor: pointer;		
+	height: 24px;
+	padding-top: 0px;
+	overflow:none;
+}
+div.datatree div.tree-label:hover {
+	background-color: bluelight;
+}
+
+div.datatree div.tree-label.selected {
+	background-color: blue;
+	color: black;
+}
+
+div.datatree. div.tfoot {
+	background-color: white;
+	text-align: right;
+	box-sizing: border-box;
+	border: none;
+}
+
+/****** NEW STYLES *********/
+div.datatree div.thead div.column ,
+div.datatree div.thead div.filter-cell ,
+div.datatree div.tbody div.tree-label div.tree-cell {
+	box-sizing: border-box;
+	display: inline-block;
+	padding-right: 4px;
+	border: 1px solid #808080;
+	overflow: hidden;
+	height: 24px;
+	white-space: nowrap;
+	text-overflow: clip;
+}
+div.datatree div.tbody div.tree-label div.tree-cell {
+	padding-left: 20px;
+	padding-right: 4px;
+}
+
+div.datatree div.thead div.filter-cell input.filter {
+	width: calc( 100% - 28px );
+	margin-left: 18px;
+	margin-right: 10px;
+}
+
+div.datatree div.tbody div.tree-children,
+div.datatree div.tbody div.tree-label {
+	width: 100%;
+}
 	</style>
 	
 	
@@ -365,14 +457,28 @@
 	<datatree2 id="countries"
 		width="100%" dataPath="/mydata:/"
 		header="Objects" 
-		openLevels="10"
+		openLevels="1"
 		enablefilter="true"
-		maxheight="120px">
+		maxheight="500px">
+		<attribute name="columns">
+		<![CDATA[
+		[
+		 {"name":"column1", "width":"80px"},
+		 {"name":"column2", "width":"25%"},
+		 {"name":"column3"},
+		 {"name":"", "width":"25%"}
+		]
+		]]>
+		</attribute>
 		<attribute name="finders">
 		<![CDATA[
 		[
-		 {"path":"/country", "value":"name", "icon": "/img/remove.gif", "collapsed": true},
-		 {"path":"/city", "template":"##<b>${"${name }"}</b>##", "leaf": true},
+		 {"path":"/country", "value":"name", "icon": "/img/remove.gif", "collapsed": true, "tail":"HOLA CARACOLA"},
+		 {"path":"/city", "template":"##<b>${"${name }"}</b>##", "leaf": true, "columns": 
+			 [
+		        {"template":"Hola ${"$"}{name}." },
+		        {"value":"name"}
+			]},
 		]
 		]]>
 		</attribute>
@@ -397,6 +503,12 @@
 	<button label="Delete Country">
 		<attribute name="onClick"><![CDATA[
 			countries.delete();
+		]]>
+		</attribute>
+	</button>
+	<button label="Refresh">
+		<attribute name="onClick"><![CDATA[
+			mydata.refresh();
 		]]>
 		</attribute>
 	</button>

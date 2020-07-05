@@ -15,26 +15,17 @@ import es.caib.zkib.datamodel.xml.ParseException;
 import es.caib.zkib.datamodel.xml.definition.DefinitionInterface;
 import es.caib.zkib.datamodel.xml.definition.FinderScriptDefinition;
 
-public class ScriptFinderHandler extends AbstractHandler implements FinderHandler, DefinitionInterface {
+public class ScriptParentLoader extends AbstractHandler implements LoadParentHandler, DefinitionInterface {
 	// FinderScriptDefinition script;
 	String value;
 	
-	public ScriptFinderHandler() {
+	public ScriptParentLoader() {
 		super();
 	}
 
-	public Collection find(DataContext ctx) {
+	public Object loadParent(DataContext ctx) {
 		try {
-			Object obj = Interpreter.interpret(ctx, value);
-			if (obj == null)
-				return null;
-			else if (obj instanceof Collection)
-				return (Collection) obj;
-			else {
-				Vector v = new Vector (1);
-				v.add (obj);
-				return v;
-			}
+			return Interpreter.interpret(ctx, value);
 		} catch (EvalError e) {
 			throw new UiException(e);
 		}

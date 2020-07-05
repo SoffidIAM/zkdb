@@ -1,7 +1,7 @@
 package es.caib.zkib.component;
 
 import java.io.IOException;
-import java.io.Writer;
+import java.io.Writer;import javax.xml.xpath.XPathConstants;
 
 import org.zkoss.xml.HTMLs;
 import org.zkoss.xml.XMLs;
@@ -15,6 +15,7 @@ import org.zkoss.zk.ui.event.Events;
 import org.zkoss.zk.ui.render.SmartWriter;
 import org.zkoss.zul.Button;
 
+import es.caib.zkib.binder.BindContext;
 import es.caib.zkib.datasource.DataSource;
 
 public class DatasourceButton extends Button  {
@@ -170,6 +171,11 @@ public class DatasourceButton extends Button  {
 		if (path.startsWith("/") && ! path.startsWith("//"))
 		    path = "//"+getPage().getId()+path;
 		Component ds = Path.getComponent(getSpaceOwner(), path);
+		while (ds instanceof BindContext) {
+			DataSource parent = ((BindContext)ds).getDataSource();
+			if (parent == null) return ds;
+			ds = (Component) parent;
+		}
 		return ds;
 	}
 

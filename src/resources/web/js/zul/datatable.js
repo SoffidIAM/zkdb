@@ -56,6 +56,10 @@ zkDatatable.init = function (ed) {
 	}
 };
 
+zkDatatable.onVisi=function(ed) {
+	zkDatatable.fixupColumns(ed);
+}
+
 zkDatatable.registerPager=function(ed, pager) {
 	if (! ed.pagers) 
 		ed.pagers = [];
@@ -363,11 +367,11 @@ zkDatatable.addRow=function(ed, pos, value)
 {
 	pos = parseInt(pos);
 	zkDatatable.addRowInternal (ed, pos, JSON.parse(value));
-	zkDatatable.createFooter(ed);
 	if (ed.sortColumn >= 0)
 		zkDatatable.doSort(ed);
 	zkDatatable.fixupColumns(ed);
 	ed.count ++;
+	zkDatatable.createFooter(ed);
 	zkDatatable.findSelectedPosition(ed);
 }
 
@@ -377,8 +381,8 @@ zkDatatable.addRows=function(ed, pos, values)
 	var values = JSON.parse(values);
 	for (var i = 0; i < values.length; i++)
 		zkDatatable.addRowInternal (ed, pos+i, values[i]);
-	zkDatatable.createFooter(ed);
 	ed.count += values.length;
+	zkDatatable.createFooter(ed);
 	if (ed.sortColumn >= 0)
 		zkDatatable.doSort(ed);
 	zkDatatable.fixupColumns(ed);
@@ -431,6 +435,7 @@ zkDatatable.fillRow=function(ed,tr,value)
 		td.appendChild(cb);
 	}
 	tr.value = value;
+	if (value['$class']) tr.setAttribute("class", value['$class']);
 	for (var column =  0; column < ed.columns.length; column ++)
 	{
 		var td = document.createElement("td");
@@ -512,7 +517,12 @@ zkDatatable.sendClientAction=function(el,event,data)
 }
 
 zkDatatable.evaluateInContext = function (js, context) {
-    return function() { with (context) {return eval(js);} }.call(context);
+	try {
+		return function() { with (context) {return eval(js);} }.call(context);		
+	} catch (e) {
+		console.log(e);
+		return "";
+	}
 }
 
 zkDatatable.replaceExpressions = function (template,value) {

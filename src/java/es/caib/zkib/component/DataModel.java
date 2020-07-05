@@ -2,9 +2,11 @@ package es.caib.zkib.component;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Map;
 
 import org.apache.commons.beanutils.ConstructorUtils;
 import org.zkoss.zk.ui.UiException;
+import org.zkoss.zk.ui.ext.AfterCompose;
 
 import es.caib.zkib.datamodel.AbstractDataModel;
 import es.caib.zkib.datamodel.DataContext;
@@ -16,7 +18,7 @@ import es.caib.zkib.datamodel.xml.XmlDataNode;
 import es.caib.zkib.datamodel.xml.definition.ModelDefinition;
 
 
-public class DataModel extends AbstractDataModel {
+public class DataModel extends AbstractDataModel implements AfterCompose {
 	/**
 	 * 
 	 */
@@ -140,5 +142,11 @@ public class DataModel extends AbstractDataModel {
 		return "/";
 	}
 
-
+	public void afterCompose() {
+		Map atts = getAttributes();
+		for (Object att: atts.keySet()) {
+			Object value = atts.get(atts);
+			getJXPathContext().getVariables().declareVariable((String)att, value);
+		}
+	}
 }

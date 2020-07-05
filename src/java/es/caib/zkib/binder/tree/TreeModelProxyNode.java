@@ -15,6 +15,7 @@ import org.zkoss.zul.event.TreeDataEvent;
 
 import es.caib.zkib.binder.SingletonBinder;
 import es.caib.zkib.datamodel.DataModelCollection;
+import es.caib.zkib.datamodel.DataNodeCollection;
 import es.caib.zkib.datasource.DataSource;
 import es.caib.zkib.datasource.XPathUtils;
 import es.caib.zkib.events.XPathCollectionEvent;
@@ -293,7 +294,7 @@ public class TreeModelProxyNode implements XPathSubscriber, Serializable {
 		ChildXPathQuery queries [] = modelProxy.getChildXPathQuerys();
 
 		String thisPath = XPathUtils.concat (modelProxy.getBinder().getDataSource().getRootPath(),getXPathPrefix());
-		
+
 		for (int i = 0 ; i < queries.length; i ++)
 		{
 			ChildXPathQuery query = queries[i];
@@ -304,10 +305,14 @@ public class TreeModelProxyNode implements XPathSubscriber, Serializable {
 				String newPath  = XPathUtils.concat(thisPath,pointer.asPath());
 				if (path.equals(newPath))
 				{
+					Object newObject = pointer.getValue();
 					int size = children!=null ? children.length : 0;
 					TreeModelProxyNode[] work = new TreeModelProxyNode[size+1];
 					for (int j = 0 ; j < size; j++)
 					{
+						Object obj = children[j].getValue();
+						if (obj.equals(newObject)) // Already added
+							return;
 						work[j] = children[j];
 					}
 					TreeModelProxyNode child = new TreeModelProxyNode(this, 
@@ -495,5 +500,31 @@ public class TreeModelProxyNode implements XPathSubscriber, Serializable {
 	public String getLocalPath() {
 		return localPath;
 	}
-	
+
+	public boolean areChildrenPreloaded() {
+		if (children != null) return true;
+		try
+		{
+			SingletonBinder binder = modelProxy.getBinder();
+			binder.invalidate();
+			JXPathContext ctx = binder.getDataSource().getJXPathContext();
+			ctx = ctx.getRelativeContext(getPointer());
+			ChildXPathQuery queries [] = modelProxy.getChildXPathQuerys();
+			for (int i = 0 ; i < queries.length; i ++)
+			{
+				ChildXPathQuery query = queries[i];
+				Object collCandidate = ctx.getValue(query.getXPath());
+				if (collCandidate instanceof DataNodeCollection) {
+					DataNodeCollection coll = (DataNodeCollection) collCandidate;
+					if (coll.isDirty() || coll.isEmpty())
+						return false;
+				}
+				else
+					return false;
+			}
+			return true;
+		} catch (JXPathNotFoundException e) {
+		}
+		return false;
+	}
 }

@@ -52,7 +52,6 @@ public class DataTree extends Tree implements XPathSubscriber, BindContext, Data
 	boolean autocommit = true;
 	boolean composed = false;
 	Vector<MasterTreeitem> masterTreeItems = new Vector<MasterTreeitem>();
-
 	HashMap imagesBinding;
 	private String selectedItemXPath;
 	// Per a les icones del binding de l'arbre

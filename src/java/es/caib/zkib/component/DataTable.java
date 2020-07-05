@@ -95,6 +95,7 @@ public class DataTable extends XulElement implements XPathSubscriber,
 	boolean download = false;
 	boolean updateRowEvent = true;
 	boolean reorder = false;
+	private boolean initialized = false;
 	
 	public DataTable () {
 		setSclass("datatable");
@@ -127,6 +128,9 @@ public class DataTable extends XulElement implements XPathSubscriber,
 		.write(self.getOuterAttrs()).write(self.getInnerAttrs())
 		.write(">")
 		.write("</div>");
+		
+		if (getModel() != null && columns != null)
+			sendModelData();
 	}
 
 	
@@ -164,6 +168,8 @@ public class DataTable extends XulElement implements XPathSubscriber,
 		}
 		
 		smartUpdate("columns", this.columns);
+		if (model != null)
+			sendModelData();
 	}
 
     /**
@@ -215,16 +221,8 @@ public class DataTable extends XulElement implements XPathSubscriber,
 				}
 				this.model = model;
 
-				StringBuffer sb = new StringBuffer("[");
-				for (int i = 0; i < model.getSize();  i++)
-				{
-					String s = getClientValue(i);
-					if ( sb.length() > 1)
-						sb.append(",");
-					sb.append(s);
-				}
-				sb.append("]");
-				response("setData", new AuInvoke(this, "setData", sb.toString()));
+				if (columns != null)
+					sendModelData();
 				initDataListener();
 			}
 
@@ -233,6 +231,19 @@ public class DataTable extends XulElement implements XPathSubscriber,
 			this.model = null;
 			response("setData", new AuInvoke(this, "setData", "[]"));
 		}
+	}
+	
+	public void sendModelData() {
+		StringBuffer sb = new StringBuffer("[");
+		for (int i = 0; i < model.getSize();  i++)
+		{
+			String s = getClientValue(i);
+			if ( sb.length() > 1)
+				sb.append(",");
+			sb.append(s);
+		}
+		sb.append("]");
+		response("setData", new AuInvoke(this, "setData", sb.toString()));
 	}
 
 	/** Initializes _dataListener and register the listener to the model
@@ -460,15 +471,16 @@ public class DataTable extends XulElement implements XPathSubscriber,
 					if (value instanceof Date) {
 						DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-DD'T'HH:mm:ss");
 						dateFormat.setTimeZone(TimeZones.getCurrent());
-						value =  dateFormat.format((Date)value);
-						o.put(p.getName(), JSONObject.wrap(value));
+						String v =  dateFormat.format((Date)value);
+						o.put(p.getName(), JSONObject.wrap(v));
 						o.put(p.getName()+"_date", DateFormats.getDateFormat().format(value));
 						o.put(p.getName()+"_datetime", DateFormats.getDateTimeFormat().format(value));
 					} else if (value instanceof Calendar) {
 						Date d = ((Calendar) value).getTime();
 						DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-DD'T'HH:mm:ss");
 						dateFormat.setTimeZone(TimeZones.getCurrent());
-						value =  dateFormat.format(d);
+						String v =  dateFormat.format(d);
+						o.put(p.getName(), JSONObject.wrap(v));
 						o.put(p.getName()+"_date", DateFormats.getDateFormat().format(d));
 						o.put(p.getName()+"_datetime", DateFormats.getDateTimeFormat().format(d));
 					} else {

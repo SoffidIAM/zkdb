@@ -4,7 +4,10 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.LinkedList;
+import java.util.List;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -75,7 +78,12 @@ public class DataTree2 extends XulElement implements XPathSubscriber,
 	String maxheight = "";
 	String objects = null;
 	int openLevels = -1;
+	String foldbar = "/img/foldBar.svg";
+	String foldbackgroud = "/img/foldBackground.svg";
+	String foldunfold = "/img/foldUnfold.svg";
+
 	private ExpressionFactory expf;
+	private String columns;
 	
 	public DataTree2 () {
 		setSclass("datatree");
@@ -110,17 +118,30 @@ public class DataTree2 extends XulElement implements XPathSubscriber,
 	public String getInnerAttrs() {
 		StringBuffer sb = new StringBuffer ( super.getInnerAttrs() );
 		
+		HTMLs.appendAttribute(sb, "columns", columns);
 		HTMLs.appendAttribute(sb, "header", header);
 		HTMLs.appendAttribute(sb, "enablefilter", enablefilter);
 		HTMLs.appendAttribute(sb, "sortable", sortable);
 		HTMLs.appendAttribute(sb, "sortDirection", sortDirection);
 		HTMLs.appendAttribute(sb, "footer", footer);
 		HTMLs.appendAttribute(sb, "maxheight", maxheight);
+		HTMLs.appendAttribute(sb, "foldBar", getDesktop().getExecution().encodeURL(foldbar));
+		HTMLs.appendAttribute(sb, "foldBackground", getDesktop().getExecution().encodeURL(foldbackgroud));
+		HTMLs.appendAttribute(sb, "foldUnfold", getDesktop().getExecution().encodeURL(foldunfold));
 
 		return sb.toString();
 
 	}
 
+	public void setColumns(String columns) {
+		try {
+			this.columns = new Yaml2Json().transform(columns);
+		} catch (IOException e) {
+			throw new UiException("Unable to parse JSON descriptor "+columns);
+		}
+		
+		smartUpdate("columns", this.columns);
+	}
 
 	public void setFinders(String columns) throws Exception {
 		try {
@@ -128,7 +149,7 @@ public class DataTree2 extends XulElement implements XPathSubscriber,
 			finders = new JSONArray(f);
 			applyModel();
 		} catch (IOException e) {
-			throw new UiException("Unable to parse JSON descriptor "+columns);
+			throw new UiException("Unable to parse JSON descriptor "+columns, e);
 		}
 	}
 
@@ -198,7 +219,7 @@ public class DataTree2 extends XulElement implements XPathSubscriber,
 			for ( int n = 0; n < finders.length(); n++)
 			{
 				JSONObject finder = finders.optJSONObject(n);
-				if (type.equals( finder.optString("path")))
+				if (isFinder(finder, type))
 				{
 					String icon = finder.optString("icon");
 					if (icon != null && ! icon.isEmpty())
@@ -206,20 +227,31 @@ public class DataTree2 extends XulElement implements XPathSubscriber,
 						writer.key("icon");
 						writer.value(getDesktop().getExecution().encodeURL(icon));
 					}
+					Object cl = getRowClass(node);
+					if (cl != null) {
+						writer.key("$class");
+						writer.value(cl);
+					}
 					String value = finder.optString("value");
 					String template = finder.optString("template");
-					if (value != null && ! value.isEmpty())
-					{
-						Object v = node.opt(value);
-						writer.key("value");
-						writer.value(v);
-					} else if (template != null)
-					{
-						if (expf == null)
-							expf = Expressions.newExpressionFactory(null);
-						Object v = expf.evaluate(new JSONContext (this, node), template, String.class);
-						writer.key("html");
-						writer.value(v);
+					JSONArray columnsArray = finder.optJSONArray("columns");
+					if (columnsArray != null && !columnsArray.isEmpty()) {
+						writer.key("columns");
+						writer.array();
+						writer.object();
+						renderValue(node, writer, value, template);
+						writer.endObject();
+						for (int i = 0; i < columnsArray.length(); i++) {
+							writer.object();
+							JSONObject column = columnsArray.getJSONObject(i);
+							String value2 = column.optString("value");
+							String template2 = column.optString("template");
+							renderValue(node, writer, value2, template2);
+							writer.endObject();
+						}
+						writer.endArray();
+					} else {
+						renderValue(node, writer, value, template);
 					}
 					if (finder.optBoolean("leaf"))
 					{
@@ -260,6 +292,32 @@ public class DataTree2 extends XulElement implements XPathSubscriber,
 		}
 		writer.endObject();
 	}
+	
+	protected String getRowClass(JSONObject node) {
+		return null;
+	}
+	
+	public Object renderValue(JSONObject node, JSONWriter writer, String value, String template) {
+		Object v = JSONObject.NULL;
+		if (value != null && ! value.isEmpty())
+		{
+			if (expf == null)
+				expf = Expressions.newExpressionFactory(null);
+			v = expf.evaluate(new JSONContext (this, node), "${"+value+"}", String.class);
+			v = formatObject(v);
+			writer.key("value");
+			writer.value(v);
+		} else if (template != null)
+		{
+			if (expf == null)
+				expf = Expressions.newExpressionFactory(null);
+			v = expf.evaluate(new JSONContext (this, node), template, String.class);
+			v = formatObject(v);
+			writer.key("html");
+			writer.value(v);
+		}
+		return v;
+	}
 
 	public void setModel(FullTreeModelProxy lm) {
 		if (lm != null) {
@@ -294,56 +352,57 @@ public class DataTree2 extends XulElement implements XPathSubscriber,
 		writer.endArray();
 		if ( ! node.getLocalPath().equals("."))
 		{
-			String path = node.getLocalPath();
-			int l = path.lastIndexOf("[");
-			if (l > 0) path = path.substring(0, l);
-			for ( int n = 0; n < finders.length(); n++)
+			JSONObject finder = (JSONObject) node.getHint();
+			String icon = finder.optString("icon");
+			if (icon != null && ! icon.isEmpty())
 			{
-				JSONObject finder = finders.optJSONObject(n);
-				if (path.equals( finder.optString("path")))
-				{
-					String icon = finder.optString("icon");
-					if (icon != null && ! icon.isEmpty())
-					{
-						writer.key("icon");
-						writer.value(getDesktop().getExecution().encodeURL(icon));
-					}
-					String value = finder.optString("value");
-					String template = finder.optString("template");
-					if (value != null && ! value.isEmpty())
-					{
-						Object v = JXPContext.newContext(node.getValue()).getValue(value);
-						writer.key("value");
-						writer.value(v);
-					} else if (template != null)
-					{
-						if (expf == null)
-							expf = Expressions.newExpressionFactory(null);
-						Object v = expf.evaluate(new TreeNodeContext (this, node.getValue()), template, String.class);
-						writer.key("html");
-						writer.value(v);
-					}
-					if (finder.optBoolean("leaf"))
-					{
-						writer.key("leaf");
-						writer.value(true);
-					}
-					if (finder.optBoolean("collapsed"))
-					{
-						writer.key("collapsed");
-						writer.value(true);
-					}
-					String tail = finder.optString("tail");
-					if (tail != null) {
-						writer.key("tail");
-						writer.value(tail);
-					}
-				}
+				writer.key("icon");
+				writer.value(getDesktop().getExecution().encodeURL(icon));
 			}
-
+			Object cl = getRowClass(node);
+			if (cl != null) {
+				writer.key("class");
+				writer.value(cl);
+			}
+			String value = finder.optString("value");
+			String template = finder.optString("template");
+			JSONArray columnsArray = finder.optJSONArray("columns");
+			if (columnsArray != null && !columnsArray.isEmpty()) {
+				writer.key("columns");
+				writer.array();
+				writer.object();
+				renderValue(node, writer, value, template);
+				writer.endObject();
+				for (int i = 0; i < columnsArray.length(); i++) {
+					writer.object();
+					JSONObject column = columnsArray.getJSONObject(i);
+					String value2 = column.optString("value");
+					String template2 = column.optString("template");
+					renderValue(node, writer, value2, template2);
+					writer.endObject();
+				}
+				writer.endArray();
+			} else {
+				renderValue(node, writer, value, template);
+			}
+			if (finder.optBoolean("leaf"))
+			{
+				writer.key("leaf");
+				writer.value(true);
+			}
+			if (finder.optBoolean("collapsed"))
+			{
+				writer.key("collapsed");
+				writer.value(true);
+			}
+			String tail = finder.optString("tail");
+			if (tail != null) {
+				writer.key("tail");
+				writer.value(tail);
+			}
 		}
 		
-		if (levels != 0) {
+		if (levels > 0 || node.areChildrenPreloaded()) {
 			writer.key("children");
 			writer.array();
 			int num = lm.getChildCount(node);
@@ -357,6 +416,56 @@ public class DataTree2 extends XulElement implements XPathSubscriber,
 			writer.endArray();
 		}
 		writer.endObject();
+	}
+	
+	protected String getRowClass(TreeModelProxyNode node) {
+		return null;
+	}
+	
+	protected boolean isFinder(JSONObject finder, String path) {
+		String s1 = finder.optString("path");
+		if (s1 == null) return false;
+		String[] p1 = s1.split("/");
+		String[] p2 = path.split("/");
+		if (p2.length < p1.length) return false;
+		for ( int i = 0; i < p1.length; i++) {
+			String part1 = p1[p1.length - 1 - i];
+			int j = part1.indexOf('[');
+			if (j > 0) part1 = part1.substring(0, j);
+			String part2 = p2[p2.length - 1 - i];
+			j = part2.indexOf('[');
+			if (j > 0) part2 = part2.substring(0, j);
+			if ( !part2.equals(part1))
+				return false;
+		}
+		return true;
+	}
+
+	public void renderValue(TreeModelProxyNode node, JSONWriter writer, String value, String template) {
+		if (value != null && ! value.isEmpty())
+		{
+			JXPathContext ctx = treeBinder.getJXPathContext();
+			Object v = ctx.getValue(node.getPointer().asPath()+"/"+value);
+			v = formatObject(v);
+			writer.key("value");
+			writer.value(v);
+		} else if (template != null)
+		{
+			if (expf == null)
+				expf = Expressions.newExpressionFactory(null);
+			Object v = expf.evaluate(new TreeNodeContext (this, node.getValue()), template, String.class);
+			v = formatObject(v);
+			writer.key("html");
+			writer.value(v);
+		}
+	}
+
+	public Object formatObject(Object v) {
+		if (v != null && v instanceof Calendar)
+			v = DateFormats.getDateTimeFormat().format(((Calendar)v).getTime());
+		else if (v != null && v instanceof Date)
+			v = DateFormats.getDateTimeFormat().format((Date)v);
+		return v;
 	}
 	
 	/** Initializes _dataListener and register the listener to the model
@@ -462,6 +571,35 @@ public class DataTree2 extends XulElement implements XPathSubscriber,
 		response("setSelected", new AuInvoke(this, "setSelected", new JSONArray(selectedIndex).toString()));
 		this.selectedItem = selectedIndex;
 		updateDataSource();
+	}
+
+	public void setSelectedIndexByXPath(String selectedXPath) {
+		List<Integer> l = new LinkedList<Integer>();
+		
+		TreeModelProxyNode root = (TreeModelProxyNode) model.getRoot();
+		String current = "";
+		
+		while (! current.equals(selectedXPath))
+		{
+			boolean any = false;
+			TreeModelProxyNode[] children = root.getChildren();
+			for (int i = 0; i < children.length; i++) {
+				TreeModelProxyNode child = children[i];
+				String path = child.getLocalPath();
+				if (selectedXPath.startsWith(current+path)) {
+					l.add(i);
+					current = current+path;
+					any = true;
+					root = child;
+					break;
+				}
+			}
+			if (!any) return;
+		}
+		int r[] = new int[l.size()];
+		for (int i = 0; i < l.size(); i++)
+			r[i] = l.get(i).intValue();
+		setSelectedIndex(r);
 	}
 
     private void updateDataSource() {

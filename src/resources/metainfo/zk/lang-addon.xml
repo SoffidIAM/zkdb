@@ -369,4 +369,15 @@
 		<component-name>databox</component-name>
 		<component-class>es.caib.zkib.component.Databox</component-class>
 	</component>
+	
+	<component>
+		<component-name>datadiv</component-name>
+		<component-class>es.caib.zkib.component.DataDiv</component-class>
+	</component>
+	
+	<component>
+		<component-name>wizard</component-name>
+		<component-class>es.caib.zkib.component.Wizard</component-class>
+	</component>
+
 </language-addon>

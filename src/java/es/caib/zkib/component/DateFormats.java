@@ -45,4 +45,19 @@ public class DateFormats {
 		return df;
 	}
 	
+	public static String getDateFormatString () {
+		DateFormat df = getDateFormat();
+		if (df instanceof SimpleDateFormat)
+			return ((SimpleDateFormat) df).toPattern();
+		else
+			return "yyyy/MM/dd";
+	}
+	
+	public static String getDateTimeFormatString () {
+		DateFormat df = getDateTimeFormat();
+		if (df instanceof SimpleDateFormat)
+			return ((SimpleDateFormat) df).toPattern();
+		else
+			return "yyyy/MM/dd HH:mm";
+	}
 }

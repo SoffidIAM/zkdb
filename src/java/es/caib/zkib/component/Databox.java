@@ -20,6 +20,7 @@ import org.zkoss.zk.au.ComponentCommand;
 import org.zkoss.zk.au.out.AuInvoke;
 import org.zkoss.zk.ui.Component;
 import org.zkoss.zk.ui.Page;
+import org.zkoss.zk.ui.UiException;
 import org.zkoss.zk.ui.WrongValueException;
 import org.zkoss.zk.ui.event.Events;
 import org.zkoss.zk.ui.ext.AfterCompose;
@@ -35,19 +36,20 @@ import es.caib.zkib.events.XPathSubscriber;
 
 public class Databox extends InputElement implements XPathSubscriber, AfterCompose {
 	private static final long serialVersionUID = -6447081728620764693L;
-	private SingletonBinder binder = new SingletonBinder (this);
+	protected SingletonBinder binder = new SingletonBinder (this);
 	private boolean duringOnUpdate = false;
 	private String placeholder;
 	private List<String> values;
 	private List<String> descriptions;
-	private List collectionValue;
+	protected List collectionValue;
 	boolean multiValue;
 	boolean required;
-	boolean readOnly;
+	boolean readonly;
 	boolean disabled;
+	boolean multiline;
 	Integer maxlength;
 	boolean composed = false;
-	enum Type {
+	public enum Type {
 		STRING,
 		NAME_DESCRIPTION,
 		DESCRIPTION,
@@ -55,7 +57,9 @@ public class Databox extends InputElement implements XPathSubscriber, AfterCompo
 		BOOLEAN,
 		LIST,
 		IMAGE,
-		HTML
+		HTML,
+		PASSWORD, 
+		SEPARATOR
 	};
 
 	String label;
@@ -153,7 +157,7 @@ public class Databox extends InputElement implements XPathSubscriber, AfterCompo
 		refreshValue ();
 	}
 
-	private void refreshValue ()
+	protected void refreshValue ()
 	{
 		if ( !composed )
 			return;
@@ -233,11 +237,15 @@ public class Databox extends InputElement implements XPathSubscriber, AfterCompo
 			stringValue = wrapValue();
 			HTMLs.appendAttribute(sb, "value", stringValue);
 		}
-		HTMLs.appendAttribute(sb, "label", label);		
-		HTMLs.appendAttribute(sb, "disabled", disabled);
-		HTMLs.appendAttribute(sb, "readonly", readOnly);
+		HTMLs.appendAttribute(sb, "label", label);
+		if (disabled)
+			HTMLs.appendAttribute(sb, "disabled", disabled);
+		if (readonly)
+			HTMLs.appendAttribute(sb, "readonly", readonly);
+		HTMLs.appendAttribute(sb, "multiline", multiline);
 		HTMLs.appendAttribute(sb, "multivalue", multiValue);
-		HTMLs.appendAttribute(sb, "required", required);
+		if (required)
+			HTMLs.appendAttribute(sb, "required", required);
 		if (maxlength != null)
 			HTMLs.appendAttribute(sb, "maxlength", maxlength);
 		HTMLs.appendAttribute(sb, "removeicon", getDesktop().getExecution().encodeURL(removeIcon));
@@ -255,7 +263,16 @@ public class Databox extends InputElement implements XPathSubscriber, AfterCompo
 
 		if (values != null && type == Type.LIST)
 		{
-			HTMLs.appendAttribute(sb, "values", new JSONArray(values).toString());
+			JSONArray jsonValues = new JSONArray(values);
+			if ( isMultiValue() ||
+					isRequired() && (value == null || "".equals(value))) {
+				JSONArray array2 = new JSONArray();
+				array2.put(":"+"- Select value -");
+				for (int i = 0; i < jsonValues.length(); i++)
+					array2.put(jsonValues.get(i));
+				jsonValues = array2;
+			}
+			HTMLs.appendAttribute(sb, "values", jsonValues.toString());
 		}
 		
 		if (descriptions != null) {
@@ -305,9 +322,19 @@ public class Databox extends InputElement implements XPathSubscriber, AfterCompo
 	}
 
 	private Object normalize(Object name) {
-		if ( type == Type.NAME_DESCRIPTION || type == Type.DESCRIPTION) {
-			String description = getDescription((String)name);
-			return new JSONArray(new String[] {(String)name, description, description == null? "Wrong value": ""});
+		if (type == Type.PASSWORD) {
+			return "********";
+		} else if ( type == Type.NAME_DESCRIPTION || type == Type.DESCRIPTION) {
+			try {
+				if (name == null || name.toString().trim().isEmpty())
+					return new JSONArray(new String[] {"", "", ""});
+				else {
+					String description = getDescription((String)name);
+					return new JSONArray(new String[] {(String)name, description, description == null? "Wrong value": ""});
+				}
+			} catch (Exception e) {
+				return new JSONArray(new String[] {(String)name, null, e.toString()});
+			}
 		} else if (type == Type.DATE) {
 			if (name instanceof Date)
 				return new SimpleDateFormat( format ).format((Date)name);
@@ -315,8 +342,10 @@ public class Databox extends InputElement implements XPathSubscriber, AfterCompo
 				return new SimpleDateFormat( format ).format(((Calendar)name).getTime());
 			else
 				return name;
+		} else if (name != null) {
+			return name.toString();
 		} else {
-			return name;
+			return null;
 		}
 	}
 
@@ -373,15 +402,27 @@ public class Databox extends InputElement implements XPathSubscriber, AfterCompo
 			.write(getOuterAttrs()).write(getInnerAttrs())
 			.write("></div>");
 		}
+		else if (type == Type.PASSWORD)
+		{
+			wh.write("<div id=\"").write(uuid).write("\" z.type=\"zul.databox.DataPassword\"")
+			.write(getOuterAttrs()).write(getInnerAttrs())
+			.write("></div>");
+		}
+		else if (type == Type.SEPARATOR)
+		{
+			wh.write("<div id=\"").write(uuid).write("\" z.type=\"zul.databox.DataSeparator\"")
+			.write(getOuterAttrs()).write(getInnerAttrs())
+			.write("></div>");
+		}
 	}
 
 	protected String getRealStyle() {
 		StringBuffer sb = new StringBuffer( super.getRealStyle() );
 
-		if ( getMaxlength() > 0)
-		{
-			HTMLs.appendStyle(sb, "max-width", ""+getMaxlength()+"em");
-		}
+//		if ( getMaxlength() > 0)
+//		{
+//			HTMLs.appendStyle(sb, "max-width", ""+getMaxlength()+"em");
+//		}
 
 		return sb.toString();
 	}
@@ -412,14 +453,6 @@ public class Databox extends InputElement implements XPathSubscriber, AfterCompo
 		return value;
 	}
 
-	public boolean isMultivalue() {
-		return multiValue;
-	}
-
-	public void setMultivalue(boolean multiValue) {
-		this.multiValue = multiValue;
-	}
-
 	public boolean isRequired() {
 		return required;
 	}
@@ -430,10 +463,6 @@ public class Databox extends InputElement implements XPathSubscriber, AfterCompo
 
 	public int getMaxlength() {
 		return maxlength == null ? Integer.MAX_VALUE: maxlength.intValue();
-	}
-
-	public void setMaxlength(int maxlength) {
-		this.maxlength = maxlength;
 	}
 
 	@Override
@@ -536,6 +565,8 @@ public class Databox extends InputElement implements XPathSubscriber, AfterCompo
 	};
 
 	protected void onItemChange(Object value, Integer pos) {
+		value = parseUiValue(value);
+		
 		if (pos != null && multiValue) {
 			while (pos.intValue() >= collectionValue.size())
 				collectionValue.add(null);
@@ -555,10 +586,28 @@ public class Databox extends InputElement implements XPathSubscriber, AfterCompo
 
 		
 		if (type == type.NAME_DESCRIPTION) {
-			String description = getDescription(value);
-			response("set_description_"+pos, new AuInvoke(this, "setDescription", pos.toString(), description, description == null? "Wrong value": ""));
+			try {
+				String description = getDescription(value);
+				setWarning(pos, description == null? "Wrong value": "");
+				response("set_description_"+pos, new AuInvoke(this, "setDescription", pos.toString(), description));
+			} catch (UiException e) {
+				response("set_description_"+pos, new AuInvoke(this, "setDescription", pos.toString(), ""));
+				setWarning(pos, e.getMessage());
+			} catch (Exception e) {
+				response("set_description_"+pos, new AuInvoke(this, "setDescription", pos.toString(), ""));
+				setWarning(pos, e.toString());
+			}
+		}
+		
+		if (required && !multiValue && 
+				(value == null || value.toString().trim().isEmpty())) {
+			setWarning(pos, "Value is required");
 		}
 		Events.postEvent("onChange", this, this.value);
+	}
+
+	protected Object parseUiValue(Object value) {
+		return value;
 	}
 
 	protected void onCancelSearch(String cmpId) {
@@ -567,23 +616,32 @@ public class Databox extends InputElement implements XPathSubscriber, AfterCompo
 
 	protected void onContinueSearch(String cmpId) {
 		if (cmpId.equals(currentSearch)) {
-			List<String[]> l = findNextObjects();
-			if (l == null)
-			{
-				response("continue-search", new AuInvoke(this, "onEndSearchResponse", cmpId));
-				currentSearch = null;
-			} else {
-				JSONArray array = new JSONArray(l);
-				response("continue-search", new AuInvoke(this, "onContinueSearchResponse", cmpId, array.toString()));			
+			List<String[]> l;
+			try {
+				l = findNextObjects();
+				if (l == null)
+				{
+					response("continue-search", new AuInvoke(this, "onEndSearchResponse", cmpId));
+					currentSearch = null;
+				} else {
+					JSONArray array = new JSONArray(l);
+					response("continue-search", new AuInvoke(this, "onContinueSearchResponse", cmpId, array.toString()));			
+				}
+			} catch (Throwable e) {
+				throw new UiException(e);
 			}
 		}
 	}
 
 	protected void onStartSearch(String text, String cmpId) {
 		this.currentSearch = cmpId;
-		List<String[]> l = findObjects(text);
-		JSONArray array = new JSONArray(l);
-		response("start-search", new AuInvoke(this, "onStartSearchResponse", cmpId, array.toString()));
+		try {
+			List<String[]> l = findObjects(text);
+			JSONArray array = new JSONArray(l);
+			response("start-search", new AuInvoke(this, "onStartSearchResponse", cmpId, array.toString()));
+		} catch (Throwable e) {
+			throw new UiException(e);
+		}
 	}
 
 	public void afterCompose() {
@@ -599,7 +657,7 @@ public class Databox extends InputElement implements XPathSubscriber, AfterCompo
 		this.format = format;
 	}
 
-	public String getDescription (Object name) {
+	public String getDescription (Object name) throws Exception {
 		if (name == null)
 			return null;
 		if ( values != null) {
@@ -618,7 +676,7 @@ public class Databox extends InputElement implements XPathSubscriber, AfterCompo
 		}
 	}
 
-	public List<String[]> findObjects(String text) {
+	public List<String[]> findObjects(String text) throws Throwable {
 		String t [] = text.replaceAll("[-,.]", " ").split(" +");
 		List<String[]> data = new LinkedList<String[]>();
 		if ( values != null) {
@@ -648,7 +706,7 @@ public class Databox extends InputElement implements XPathSubscriber, AfterCompo
 		return true;
 	}
 
-	public List<String[]> findNextObjects() {
+	public List<String[]> findNextObjects() throws Throwable {
 		return null;
 	}
 	
@@ -658,6 +716,10 @@ public class Databox extends InputElement implements XPathSubscriber, AfterCompo
 	public void openSelectWindow(Integer position) {
 	}
 
+	public void setWarning (Integer position, String message) {
+		smartUpdate("warning_"+position, message);
+	}
+	
 	public boolean isMultiValue() {
 		return multiValue;
 	}
@@ -698,6 +760,7 @@ public class Databox extends InputElement implements XPathSubscriber, AfterCompo
 		this.warningIcon = warningIcon;
 	}
 
+	
 	public void setMaxlength(Integer maxlength) {
 		this.maxlength = maxlength;
 	}
@@ -710,16 +773,24 @@ public class Databox extends InputElement implements XPathSubscriber, AfterCompo
 		this.label = label;
 	}
 
-	public boolean isReadOnly() {
-		return readOnly;
+	public boolean isReadonly() {
+		return readonly;
 	}
 
-	public void setReadOnly(boolean readOnly) {
-		this.readOnly = readOnly;
+	public void setReadonly(boolean readOnly) {
+		this.readonly = readOnly;
 	}
 
 	public boolean isDisabled() {
 		return disabled;
+	}
+
+	public boolean isMultiline() {
+		return multiline;
+	}
+
+	public void setMultiline(boolean multiline) {
+		this.multiline = multiline;
 	}
 }
 

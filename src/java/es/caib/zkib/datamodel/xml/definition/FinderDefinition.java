@@ -7,6 +7,7 @@ import org.w3c.dom.Element;
 
 import es.caib.zkib.datamodel.xml.ParseException;
 import es.caib.zkib.datamodel.xml.handler.FinderHandler;
+import es.caib.zkib.datamodel.xml.handler.LoadParentHandler;
 import es.caib.zkib.datamodel.xml.handler.NewInstanceHandler;
 
 public class FinderDefinition implements DefinitionInterface, Serializable {
@@ -19,10 +20,13 @@ public class FinderDefinition implements DefinitionInterface, Serializable {
 	boolean refreshAfterCommit = false;
 	boolean executeOnNewObjects = false;
 	boolean updateAfterParent = true;
+	String parentProperty;
+	String idProperty;
+	String childProperty;
 
 	Vector finderHandlers = new Vector ();
 	Vector instanceHandler = new Vector ();
-	
+	Vector loadParentHandlers = new Vector();
 	
 	public FinderDefinition() {
 		super();
@@ -64,6 +68,16 @@ public class FinderDefinition implements DefinitionInterface, Serializable {
 	public FinderHandler[] getFinderHandlers ()
 	{
 		return (FinderHandler []) finderHandlers.toArray(new FinderHandler [0]);
+	}
+	
+	public void add (LoadParentHandler handler)
+	{
+		loadParentHandlers.add (handler);
+	}
+	
+	public LoadParentHandler[] getLoadParentHandlers ()
+	{
+		return (LoadParentHandler []) loadParentHandlers.toArray(new LoadParentHandler [0]);
 	}
 	
 	public void add (NewInstanceHandler handler)
@@ -110,6 +124,30 @@ public class FinderDefinition implements DefinitionInterface, Serializable {
 
 	public void setUpdateAfterParent(boolean updateAfterParent) {
 		this.updateAfterParent = updateAfterParent;
+	}
+
+	public String getParentProperty() {
+		return parentProperty;
+	}
+
+	public void setParentProperty(String parentProperty) {
+		this.parentProperty = parentProperty;
+	}
+
+	public String getIdProperty() {
+		return idProperty;
+	}
+
+	public void setIdProperty(String idProperty) {
+		this.idProperty = idProperty;
+	}
+
+	public String getChildProperty() {
+		return childProperty;
+	}
+
+	public void setChildProperty(String childProperty) {
+		this.childProperty = childProperty;
 	}
 
 

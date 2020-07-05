@@ -5,14 +5,18 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Map;
 import java.util.Vector;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 import org.apache.commons.beanutils.ConstructorUtils;
+import org.apache.commons.beanutils.PropertyUtils;
 import org.zkoss.zk.ui.Component;
 import org.zkoss.zk.ui.UiException;
 import org.zkoss.zk.ui.event.Events;
@@ -32,7 +36,8 @@ public class DataNodeCollection implements List, DataModelCollection, Serializab
 	private static final long serialVersionUID = 1L;
 	
 	Class clazz;
-	Vector elements = new Vector ();
+	LinkedList<DataNode> elements = new LinkedList<DataNode>();
+	Map<Object,DataNode> treeElements = new HashMap<Object, DataNode>();
 	DataContext ctx;
 	Future<?> delayedList = null;
 	int lastDelayedListMember;
@@ -87,7 +92,7 @@ public class DataNodeCollection implements List, DataModelCollection, Serializab
 		{
 			cancel();
 			// Purgar las tablas
-			elements.removeAllElements();
+			elements.clear();
 			
 			// Repopular las tablas
 			Collection coll = null;
@@ -103,13 +108,14 @@ public class DataNodeCollection implements List, DataModelCollection, Serializab
 			
 			if (coll != null)
 			{
+				treeElements.clear();
 				delayedList = coll instanceof Future ? (Future) coll: null;
 				lastDelayedListMember = 0;
 				Iterator it = coll.iterator();
 				while (it.hasNext())
 				{
 				    Object obj = it.next();
-				    populate (obj);
+				    populate (obj, false);
 					lastDelayedListMember++;
 				}
 			}
@@ -193,10 +199,67 @@ public class DataNodeCollection implements List, DataModelCollection, Serializab
 		
 	}
 
-	private void populate (Object data)
+	private void populate (Object data, boolean sendEvents) throws Exception
 	{
-		DataNode dataModel = encapsulateData(data);
-		internalAdd(dataModel);
+		if (finder instanceof ExtendedFinder && ((ExtendedFinder)finder).getParentProperty() != null) {
+			addTreeElement( (ExtendedFinder) finder, data, sendEvents);
+		} else {
+			DataNode dataModel = encapsulateData(data);
+			internalAdd(dataModel);
+			if (sendEvents)
+				getDataSource().sendEvent(new XPathCollectionEvent(getDataSource(), getXPath(), XPathCollectionEvent.ADDED, elements.size()-1));
+		}
+	}
+
+	private void addTreeElement(ExtendedFinder finder, Object data, boolean sendEvents) throws Exception {
+		List<XPathCollectionEvent> events = new LinkedList<XPathCollectionEvent>();
+		Object parentId = PropertyUtils.getProperty(data, finder.getParentProperty());
+		placeElement(finder, parentId, data, events);
+		if (sendEvents)
+			for (XPathCollectionEvent event: events)
+				getDataSource().sendEvent(event);
+	}
+
+	private DataNode placeElement(ExtendedFinder finder, Object parentId, Object child, List<XPathCollectionEvent> events) throws Exception {
+		Object id = PropertyUtils.getProperty(child, finder.getIdProperty());
+		if (treeElements.containsKey(id))
+			return treeElements.get(id);
+		
+		DataNode parentNode = null;
+		if (parentId != null) {
+			parentNode = treeElements.get(parentId);
+			if (parentNode == null) {
+				DataContext ctx2 = encapsulateData(child).getDataContext();
+				Object parentValueObject = finder.loadParentObject(ctx2);
+				if (parentValueObject != null) {
+					Object grandpaId = PropertyUtils.getProperty(parentValueObject, finder.getParentProperty());
+					parentNode = placeElement(finder, grandpaId, parentValueObject, events);
+				}
+			}
+		}
+		
+		DataNode childNode;
+		if (parentNode == null) // no parent
+		{
+			childNode = encapsulateData(child);
+			internalAdd(childNode);
+			treeElements.put(id, childNode);
+			events.add(new XPathCollectionEvent(getDataSource(), 
+					getXPath(), 
+					XPathCollectionEvent.ADDED, 
+					elements.size()-1));
+		} else {
+			DataNodeCollection children = (DataNodeCollection) parentNode.getListModel(finder.getChildProperty());
+			children._dirty = false;
+			childNode = children.encapsulateData(child);
+			children.internalAdd( childNode);
+			treeElements.put(id, childNode);
+			events.add(new XPathCollectionEvent(getDataSource(), 
+					children.getXPath(), 
+					XPathCollectionEvent.ADDED, 
+					children.elements.size()-1));
+		}
+		return childNode;
 	}
 
 	/* (non-Javadoc)
@@ -594,7 +657,7 @@ public class DataNodeCollection implements List, DataModelCollection, Serializab
 		return true;
 	}
 
-	public void updateProgressStatus() {
+	public void updateProgressStatus() throws Exception {
 		if (delayedList != null)
 		{
 			if (delayedList.isCancelled())
@@ -616,9 +679,8 @@ public class DataNodeCollection implements List, DataModelCollection, Serializab
 				    Object obj = it.next();
 					if ( i >= lastDelayedListMember)
 					{
-					    populate (obj);
+					    populate (obj, true);
 						lastDelayedListMember++;
-						getDataSource().sendEvent(new XPathCollectionEvent(getDataSource(), getXPath(), XPathCollectionEvent.ADDED, elements.size()-1));
 					}
 					i++;
 				}

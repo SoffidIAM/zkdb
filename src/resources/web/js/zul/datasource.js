@@ -78,6 +78,11 @@ zkDataTxbox.setAttr = function (ed, name, value) {
 			zkDatasource.registerInput(ds, e);
 		}
 		return true;
+	} else if ("disabled" == name || "readOnly" == name) {
+	    var i = $real(ed)
+	        , a = i.type ? i.type.toUpperCase() : "";
+        "PASSWORD" != a && "TEXT" != a && "TEXTAREA" != a || zk["true" == value ? "addClass" : "rmClass"](i, "disabled" == name ? "text-disd" : "readonly")
+	    return false;
 	} else {
 		return zkTxbox.setAttr(ed,name,value);
 	}

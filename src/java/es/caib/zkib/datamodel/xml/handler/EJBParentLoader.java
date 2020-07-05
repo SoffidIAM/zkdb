@@ -10,29 +10,17 @@ import es.caib.zkib.datamodel.xml.ParseException;
 import es.caib.zkib.datamodel.xml.definition.MethodDefinition;
 import es.caib.zkib.datamodel.xml.definition.ParameterDefinition;
 
-public class EJBFinder extends AbstractEJBHandler implements FinderHandler {
+public class EJBParentLoader extends AbstractEJBHandler implements LoadParentHandler {
 	public String method;
 	private MethodDefinition finderMethod = new MethodDefinition ();
 	
-	public EJBFinder() {
+	public EJBParentLoader() {
 		super();
+		// TODO Auto-generated constructor stub
 	}
-
-	public Collection find(DataContext ctx) throws Exception {
-		Object obj = invokeMethod(ctx, finderMethod);
-		if (obj == null)
-			return null;
-		else if (obj instanceof Collection)
-			return (Collection) obj;
-		else
-		{
-			Vector v = new Vector (1);
-			v.add (obj);
-			return v;
-		}
+	public Object loadParent(DataContext ctx) throws Exception {
+		return invokeMethod(ctx, finderMethod);
 	}
-
-
 	public void test(Element element) throws ParseException {
 		finderMethod.test(element);
 	}

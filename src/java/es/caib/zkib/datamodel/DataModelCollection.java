@@ -36,7 +36,7 @@ public interface DataModelCollection {
 	
 	public boolean isInProgress ();
 	
-	public void updateProgressStatus();
+	public void updateProgressStatus() throws Exception;
 
 	public void cancel ();
 
