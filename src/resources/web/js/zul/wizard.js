@@ -26,25 +26,36 @@ zkWizard.cleanup = function (e) {
 
 zkWizard.updateHeader =function(e)
 {
+	var width = e.offsetWidth;
+	var totalwidth = 0;
+	var stepposition = 0;
 	var header = $e($uuid(e)+"!header");
 	while (header.firstElementChild != null)
 		header.firstElementChild.remove();
 	for (var pos = 0; pos < e.steps.length; pos++ ) {
-		if (pos > 0) {
-			var s = document.createElement("div");
-			if (pos == e.selected)
-				s.setAttribute("class", "separator-p");
-			else if (pos == e.selected + 1)
-				s.setAttribute("class", "separator-n");
-			else
-				s.setAttribute("class", "separator-d");
-			header.appendChild(s);
-		}
 		var part = document.createElement ("div");
 		part.setAttribute("class", pos == e.selected ? "active-step" :
 				pos < e.selected ? "previous-step": "next-step");
 		part.innerText = e.steps[pos];
 		header.appendChild(part);
+		totalwidth += part.offsetWidth;
+		if (pos < e.selected) stepposition += part.offsetWidth;
+		// Add arrow
+		var s = document.createElement("div");
+		if (pos+1 == e.selected)
+			s.setAttribute("class", "separator-p");
+		else if (pos == e.selected)
+			s.setAttribute("class", "separator-n");
+		else
+			s.setAttribute("class", "separator-d");
+		header.appendChild(s);
+		totalwidth += s.offsetWidth;
+		if (pos < e.selected) stepposition += s.offsetWidth;
+	}
+	if (totalwidth > width) {
+		var maxpos = totalwidth - width;
+		if (stepposition > maxpos) stepposition = maxpos;
+		header.style.left = "-" + stepposition + "px";
 	}
 }
 

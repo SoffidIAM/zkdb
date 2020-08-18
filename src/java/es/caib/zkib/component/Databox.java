@@ -2,6 +2,7 @@ package es.caib.zkib.component;
 
 import java.io.IOException;
 import java.io.Writer;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Collection;
@@ -45,7 +46,6 @@ public class Databox extends InputElement implements XPathSubscriber, AfterCompo
 	boolean multiValue;
 	boolean required;
 	boolean readonly;
-	boolean disabled;
 	boolean multiline;
 	Integer maxlength;
 	boolean composed = false;
@@ -238,8 +238,8 @@ public class Databox extends InputElement implements XPathSubscriber, AfterCompo
 			HTMLs.appendAttribute(sb, "value", stringValue);
 		}
 		HTMLs.appendAttribute(sb, "label", label);
-		if (disabled)
-			HTMLs.appendAttribute(sb, "disabled", disabled);
+		if (isDisabled())
+			HTMLs.appendAttribute(sb, "disabled", isDisabled());
 		if (readonly)
 			HTMLs.appendAttribute(sb, "readonly", readonly);
 		HTMLs.appendAttribute(sb, "multiline", multiline);
@@ -582,7 +582,7 @@ public class Databox extends InputElement implements XPathSubscriber, AfterCompo
 		}
 		
 		if (binder.getDataPath() != null)
-			binder.setValue(value);
+			binder.setValue(this.value);
 
 		
 		if (type == type.NAME_DESCRIPTION) {
@@ -607,6 +607,16 @@ public class Databox extends InputElement implements XPathSubscriber, AfterCompo
 	}
 
 	protected Object parseUiValue(Object value) {
+		if (type == Type.DATE && value != null && value instanceof String) {
+			if (value.toString().trim().isEmpty())
+				value = null;
+			else
+				try {
+					value = new SimpleDateFormat(format).parse(value.toString());
+				} catch (ParseException e) {
+					throw new UiException(e);
+				}
+		}
 		return value;
 	}
 
@@ -779,10 +789,6 @@ public class Databox extends InputElement implements XPathSubscriber, AfterCompo
 
 	public void setReadonly(boolean readOnly) {
 		this.readonly = readOnly;
-	}
-
-	public boolean isDisabled() {
-		return disabled;
 	}
 
 	public boolean isMultiline() {

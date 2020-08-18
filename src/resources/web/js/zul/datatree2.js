@@ -16,6 +16,9 @@
  *      - tree-collapse
  *      - tree-item
  *        - tree-label -> value
+ *          - tree-cell
+ *          - tree-cell
+ *          - tree-cell
  *        - tree-children
  */
 
@@ -24,7 +27,7 @@ zk.load("zul.zul");
 zkDatatree2 = {};
 
 zkDatatree2.init = function (ed) {
-	ed.sortable = ed.getAttribute("sortable");
+	ed.sortable = "true" == ed.getAttribute("sortable");
 	ed.sortDirection = ed.getAttribute("sortDirection") == null ? 0: parseInt(ed.getAttribute("sortDirection"));
 	ed.sortColumn = 0;
 	ed.enablefilter = "false" != ed.getAttribute("enablefilter");
@@ -76,7 +79,7 @@ zkDatatree2.fixupColumns=function(ed) {
 	var thead = document.getElementById(ed.id+"!thead");
 	var tfilter = document.getElementById(ed.id+"!tfilter");
 	if (ed.columns) {
-		var w = ed.offsetWidth ; // Total width
+		var w = ed.getBoundingClientRect().width ; // Total width
 		var aw = 0; // Reserved width
 		var uw = 0; // Components with unsetted width
 		
@@ -128,13 +131,22 @@ zkDatatree2.fixupColumns=function(ed) {
 		while ((label = iterator.iterateNext()) != null) {
 			zkDatatree2.fixupLabelColumns(ed, label);
 		}
+	} else {
+		var head = thead.firstElementChild;
+		head.style.width = "100%";
+		var filter = null;
+		if (tfilter != null) {
+			filter = tfilter.firstElementChild;
+			if (filter != null)
+				filter.style.width = "100%";
+		}
 	}
 }
 
 zkDatatree2.fixupLabelColumns=function(tree, label) {
 	var div0 = label.firstElementChild;
 	
-	var total = label.offsetWidth;
+	var total = label.getBoundingClientRect().width;
 	var div = div0;
 	if (div.tagName == "DIV") { // Labels with columns only
 		div0.style.width = "0px"; 		
@@ -333,8 +345,8 @@ zkDatatree2.doFilterLoop=function(t, div, filter, parentMatch) {
 				label = label.firstElementChild;
 			}
 			if (filter && !parentMatch) {
-				var div = label.firstElementChild;
-				if (div.tagName == "DIV") {
+				if (! label.classList.contains("no-columns")) {
+					var div = label.firstElementChild;
 					for (var i = 0; i < filter.length; i++) {
 						if (filter[i].length > 0) {
 							if (div == null) {
@@ -449,8 +461,10 @@ zkDatatree2.setData = function(ed, data) {
 		// Generate rows
 		ed.index = [] ;
 		data = JSON.parse(data);
-		for ( var i = 0; i < data.children.length; i++) {
-			zkDatatree2.addBranchInternal (ed, data.children[i]);
+		if (data.children) {
+			for ( var i = 0; i < data.children.length; i++) {
+				zkDatatree2.addBranchInternal (ed, data.children[i]);
+			}	
 		}
 		zkDatatree2.createFooter(ed);
 		if (ed.sortDirection != 0)
@@ -568,7 +582,8 @@ zkDatatree2.renderRow=function(tree, container, value) {
 		div0.setAttribute("class", "tree-cell");
 		label.appendChild(div0);
 		zkDatatree2.renderValue(tree, div0, value.columns[0], value.icon);
-		var total = label.offsetWidth;
+		var total = label.getBoundingClientRect().width; 
+			
 		for (var i = 0; i < tree.columns.length; i++) {
 			var div = document.createElement("div");
 			div.setAttribute("class", "tree-cell");
@@ -736,11 +751,19 @@ zkDatatree2.evaluateInContext = function (js, context) {
     return function() { return eval(js); }.call(context);
 }
 
+zkDatatree2.findExpression=function(v, j) {
+	var i1 = v.indexOf("${", j);
+	var i2 = v.indexOf("#{", j);
+	if (i2 < 0) return i1;
+	if (i1 < 0) return i2;
+	if (i1 < i2) return i1;
+	return i2;
+}
 zkDatatree2.replaceExpressions = function (template,value) {
 	var v = "";
 	var j = 0;
 	do {
-		var i = template.indexOf("${", j); 
+		var i = zkDatatree2.findExpression(template, j); 
 		if (i < 0)
 		{
 			v = v + template.substring(j);
@@ -944,6 +967,15 @@ zkDatatree2.doSortRecursive=function(ed, container) {
 	}
 }
 
+zkDatatree2.extractValue = function (ed, a) {
+	if (a.value.columns && ed.sortColumn+1 < a.value.columns.length)
+		return a.value.columns[ed.sortColumn+1];
+	if (a.value.columns == null && ed.sortColumn == -1)
+		return a.value;
+	else 
+		return {value:""}; 
+}
+
 zkDatatree2.doSort=function(ed, container) {
 	var direction = ed.sortDirection;
 	var children = [...container.children];
@@ -952,25 +984,23 @@ zkDatatree2.doSort=function(ed, container) {
 				if (a.isTail) return +1;
 				if (b.isTail) return -1;
 				var r;
-				var v1;
-				var v2;
-				if (ed.sortColumn == -1) {
-					v1 = a.value.value != null ? a.value.value : a.value.html;
-					v2 = b.value.value != null ? b.value.value : b.value.html;
-				} else {
-					v1 = a.children.length > ed.sortColumn ? a.children.item(0).innerText: "";
-					v2 = b.children.length > ed.sortColumn ? b.children.item(0).innerText: "";
-				}
-				if (v1 < v2) r = -1;
-				else if (v1 > v2) r = +1;
+				
+				var v1 = zkDatatree2.extractValue(ed, a);
+				var v2 = zkDatatree2.extractValue(ed, b);
+				
+				v1 = v1.value != null ? v1.value : v1.html;
+				v2 = v2.value != null ? v2.value : v2.html;
+				
+				if (v1 < v2) r = -direction;
+				else if (v1 > v2) r = +direction;
 				else {
-					v1 = a.value.value != null ? a.value.value : a.value.html;
-					v2 = b.value.value != null ? b.value.value : b.value.html;
+					v1 = a.value.position[ a.value.position.length - 1];
+					v2 = b.value.position[ b.value.position.length - 1];
 					if (v1 < v2) r = -1;
 					else if (v1 > v2) r = +1;
 					else r = 0; 
 				}
-				return r*direction;
+				return r;
 			}
 		);
 	for (var i = 0; i < children.length; i++)
@@ -1037,8 +1067,10 @@ zkDatatree2.renameIds=function (ed, oldId, newId, index) {
 	{
 		children.id = ed.id+"!children"+newId;
 		for (var child = children.firstElementChild; child != null; child = child.nextElementSibling) {
-			var lastStep = child.id.substring(child.id.lastIndexOf("."));
-			zkDatatree2.renameIds (ed, oldId + lastStep, newId + lastStep);
+			if (child.id) {
+				var lastStep = child.id.substring(child.id.lastIndexOf("."));
+				zkDatatree2.renameIds (ed, oldId + lastStep, newId + lastStep);
+			}
 		}
 	}
 }
@@ -1090,17 +1122,21 @@ zkDatatree2.next=function(t)
 	label.classList.remove("selected");
 	
 	if (row) {
+		if (row.classList.contains("tree-item"))
+			row = row.parentElement; /* tree-item-container */
 		var found = false;
 		while (! found) {
 			var next = null;
 			if (!row.value.leaf) {
 				var container = row.lastElementChild.lastElementChild;
-				if (container.style.display != 'none')
+				if (container.style.display != 'none' && 
+						container.firstElementChild != null &&
+						! container.firstElementChild.isTail) 
 					next = container.firstElementChild;
 			}
 			if (next == null) {
 				next = row;
-				while (next.nextElementSibling == null)
+				while (next.nextElementSibling == null || next.nextElementSibling.isTail)
 					next = next.parentElement/* tree-children */.parentElement/* tree-item */.parentElement/* tree-item */;
 				next = next.nextSibling;
 			}
@@ -1136,16 +1172,22 @@ zkDatatree2.previous=function(t)
 		var found = false;
 		while (! found) {
 			var next = row;
+			if (next.classList.contains("tree-item"))
+				next = next.parentElement; /* tree-container */
 			if (next.previousElementSibling == null) {
 				next = next.parentElement/* tree-children */.parentElement/* tree-item */.parentElement/* tree-item */;
 			} else {
-				next = next.previousSibling;
-				while (!next.value.leaf) {
+				next = next.previousElementSibling;
+				while ( next.value == null ||  !next.value.leaf) {
 					var container = next.lastElementChild.lastElementChild;
 					if (container.style.display == 'none')
 						break;
-					else
-						next = container.lastElementChild;
+					else {
+						var next2 = container.lastElementChild;
+						if (next2 != null && next2.isTail) next2 = next2.previousElementSibling;
+						if (next2 != null) next = next2;
+						else break;
+					}
 				}
 			}
 			row = next;
@@ -1167,5 +1209,87 @@ zkDatatree2.previous=function(t)
 		}	
 		zkDatatree2.updatePagers(t);
 	}
+}
+
+
+
+zkDatatree2.inputValues = function(td) {
+	var s = "";
+	for ( var input = td.firstElementChild; input != null; input = input.nextElementSibling) {
+		if (input.tagName == "INPUT") {
+			if (input.type = "checkbox" && input.checked) {
+				s += "true";
+			} else if (input.value) {
+				s +=  input.value;
+			}
+		} else {
+			s += zkDatatree2.inputValues ( input );
+		}
+	}
+	return s;
+}
+
+zkDatatree2.downloadTreeLabel = function (ed, level, label) {
+	var s = "";
+	s += level;
+	if (ed.columns) {
+		for (var child = label.firstElementChild; child != null; child = child.nextElementSibling) {
+			s += ",";
+			var t = child.textContent + zkDatatree2.inputValues(child);
+			s += zkDatatree2.quote(t);
+		}		
+	}
+	s += "\n";
+	return s;
+}
+
+
+zkDatatree2.downloadTreeItemHolder = function (ed, level, treeitemHolder) {
+	var s = "";
+	if (treeitemHolder.getAttribute("class") == "tree-tail")
+		return s;
+	var item = treeitemHolder.lastElementChild;
+	if (item.getAttribute("class") == "tree-item") {
+		s += zkDatatree2.downloadTreeLabel (ed, level, item.firstElementChild);
+		var treeChildren = item.lastElementChild;
+		for (var child = treeChildren.firstElementChild; child != null; child = child.nextElementSibling) {
+			s += zkDatatree2.downloadTreeItemHolder (ed, level+1, child);
+		}
+	} else {
+		s += zkDatatree2.downloadTreeLabel (ed, level, item);
+	}
+	return s;
+}
+
+zkDatatree2.downloadCsv=function(ed) {
+	var s = "\"level\",";
+	s += zkDatatree2.quote(ed.getAttribute("header") );
+	if (ed.columns) {
+		for (var i = 0; i < ed.columns.length; i++) {
+			s += ","+zkDatatree2.quote ( ed.columns[i].name );
+		}
+	}
+
+	s += "\n";
+	var tbody = document.getElementById(ed.id+"!tbody");
+	for (var tr = tbody.firstElementChild; tr != null; tr = tr.nextElementSibling) {
+		s += zkDatatree2.downloadTreeItemHolder(ed, 1, tr);
+	}
+	
+    var data = new Blob([s], {type: 'text/csv', name: 'export.csv'});
+    data.name = 'soffid.csv';
+    
+    // If we are replacing a previously generated file we need to
+    // manually revoke the object URL to avoid memory leaks.
+    if (zkDatatree2.file !== null) {
+      window.URL.revokeObjectURL(zkDatatree2.file);
+    }
+
+    zkDatatree2.file = window.URL.createObjectURL(data);
+    window.open( zkDatatree2.file );
+}
+
+zkDatatree2.quote = function(t) {
+	return "\""+t.replace(/"/g, "\\\"")+"\"";
 }
 

@@ -63,26 +63,4 @@ public class DataNodeFinder implements es.caib.zkib.datamodel.ExtendedFinder, Se
 	public boolean updateBeforeParents() {
 		return ! definition.isUpdateAfterParent();
 	}
-
-	
-	public String getParentProperty() {
-		return definition.getParentProperty();
-	}
-	
-	public String getIdProperty () {
-		return definition.getIdProperty();
-	}
-	
-	public String getChildProperty() {
-		return definition.getChildProperty();
-	}
-	
-	public Object loadParentObject(DataContext ctx) throws Exception {
-		for (LoadParentHandler handler: definition.getLoadParentHandlers()) {
-			Object parent = handler.loadParent(ctx);
-			if (parent != null)
-				return parent;
-		}
-		return null;
-	}
 }

@@ -790,5 +790,23 @@ class DataNodeDynaClass implements DynaClass, Serializable
 	public DynaBean newInstance() throws IllegalAccessException, InstantiationException {
 		throw new InstantiationException();
 	}
+	
+
+	public String getParentProperty() {
+		return null;
+	}
+	
+	public String getIdProperty () {
+		return null;	
+	}
+	
+	public String getChildProperty() {
+		return null;
+	}
+	
+	public Object loadParentObject() throws Exception {
+		return null;
+	}
+
 }
 

@@ -1,5 +1,6 @@
 zk.load("zul.datasource"); 
 zk.load("zul.switch"); 
+zk.load("zul.db"); 
 
 zkDataText={};
 zkDataPassword={};
@@ -41,23 +42,27 @@ zkDataText.addElement = function(e, parent, pos) {
 		i.setAttribute("class", "text required");
 	else
 		i.setAttribute("class", "text");
-	if (e.getAttribute("placeholder") != null)
-		i.setAttribute("placeholder", e.getAttribute("placeholder"));
+	
+	if (e.getAttribute("maxlength"))
+		i.setAttribute("maxlength", e.getAttribute("maxlength"));
 	if (e.getAttribute("readonly") != null) {
 		i.setAttribute("readonly", e.getAttribute("readonly"));
-		i.classList.add("readonly");
-	}
-	if (e.getAttribute("disabled") != null) {
+        zk.addClass(i, "readonly");
+	} else if (e.getAttribute("disabled") != null) {
 		i.setAttribute("disabled", e.getAttribute("disabled"));
-		i.classList.add("disabled");		
+        zk.addClass(i, "text-disd");
+        zk.addClass(i, "disabled");
 	}
+	else if (e.getAttribute("placeholder") != null)
+		i.setAttribute("placeholder", e.getAttribute("placeholder"));
 	else if (e.getAttribute("label") != null)
 		i.setAttribute("placeholder", e.getAttribute("label"));
+
 	i.setAttribute("id", parent.id+"!input");
 	if (e.getAttribute("maxlength"))
 		i.maxlen=e.getAttribute("maxlength");
 	if (e.getAttribute("maxlength")) {
-		i.style.maxWidth = e.getAttribute("maxlength")+"em";
+		i.style.maxWidth = (Number(e.getAttribute("maxlength"))+2)+"ch";
 	}
 	i.position = pos;
 	i.databox = e;
@@ -77,7 +82,7 @@ zkDataText.addElement = function(e, parent, pos) {
     zk.listen(i, "input", zkDataCommon.oninput);
     
     /* set css class */
-    if (e.readOnly) {
+    if (e.readOnly || e.disabled) {
         zk.addClass(i, "readonly")
         i.setAttribute("readonly","readonly")
     }
@@ -114,25 +119,27 @@ zkDataPassword.addElement = function(e, parent, pos) {
 		i.setAttribute("class", "text required");
 	else
 		i.setAttribute("class", "text");
-	if (e.getAttribute("placeholder") != null)
+	i.setAttribute("type", "password");
+	
+	if (e.getAttribute("readonly") != null) {
+		i.setAttribute("readonly", e.getAttribute("readonly"));
+        zk.addClass(i, "readonly");
+	} else if (e.getAttribute("disabled") != null) {
+		i.setAttribute("disabled", e.getAttribute("disabled"));
+        zk.addClass(i, "text-disd");
+        zk.addClass(i, "disabled");
+	}
+	else if (e.getAttribute("placeholder") != null)
 		i.setAttribute("placeholder", e.getAttribute("placeholder"));
 	else if (e.getAttribute("label") != null)
 		i.setAttribute("placeholder", e.getAttribute("label"));
-	i.setAttribute("type", "password");
-	if (e.getAttribute("readonly") != null) {
-		i.setAttribute("readonly", e.getAttribute("readonly"));
-		i.classList.add("readonly");
-	}
-	if (e.getAttribute("disabled") != null) {
-		i.setAttribute("disabled", e.getAttribute("disabled"));
-		i.classList.add("disabled");		
-	}
+
 	i.setAttribute("autocomplete", "new-password");
 	i.setAttribute("id", parent.id+"!input");
 	if (e.getAttribute("maxlength"))
 		i.maxlen=e.getAttribute("maxlength");
 	if (e.getAttribute("maxlength")) {
-		i.style.maxWidth = e.getAttribute("maxlength")+"em";
+		i.style.maxWidth = (Number(e.getAttribute("maxlength"))+2)+"ch";
 	}
 	i.position = pos;
 	i.databox = e;
@@ -221,12 +228,8 @@ zkDataList.addElement = function(e, parent, pos) {
     zk.listen(sel, "input", zkDataList.onselect);
     
     /* set css class */
-    if (e.readOnly) {
+    if (e.readOnly || e.disabled) {
         zk.addClass(sel, "readonly")
-        sel.setAttribute("readonly","readonly")
-    }
-    if (e.disabled) {
-        zk.addClass(sel, "text-disd")
         sel.setAttribute("disabled","disabled")
     }
 }
@@ -294,7 +297,7 @@ zkDataSwitch.addElement = function(e, parent, pos) {
 		parent.checked = e.value  && e.value != "false";
 	}
 	zkDataSwitch.syncSlider(parent);
-
+	zkDataCommon.registerInput (e, parent);
 }
 
 zkDataSwitch.syncSlider = function (s) {
@@ -333,6 +336,7 @@ zkDataSwitch.onClick = function (ev) {
 	        data: [s.checked, false, s.checked, s.position]
 	    }, zk.delayTime_onChange ? zk.delayTime_onChange : 150)
 		zkDataSwitch.syncSlider(s);
+		zkDatasource.updatedElement(s);
 	}
 }
 
@@ -364,6 +368,7 @@ zkDataSwitch.onSliderMousemove=function (ev) {
 	if (x > slider.clientWidth) x = slider.clientWidth;
 	slider.style.left = new String(x) + "px";
 	s.checked = x > slider.clientWidth / 2;
+	zkDatasource.updatedElement(s);
 }
 
 zkDataSwitch.onSliderMouseup=function (ev) {
@@ -401,15 +406,13 @@ zkDataNameDescription.addElement = function(e, parent, pos) {
 		i.setAttribute("class", "name required");
 	else
 		i.setAttribute("class", "name");
-	if (e.getAttribute("placeholder") != null)
-		i.setAttribute("placeholder", e.getAttribute("placeholder"));
-	else if (e.getAttribute("label") != null)
-		i.setAttribute("placeholder", e.getAttribute("label"));
+
+
 	i.setAttribute("id", parent.id+"!input");
 	if (e.getAttribute("maxlength"))
 		i.maxlen=e.getAttribute("maxlength");
 	if (e.getAttribute("maxlength")) {
-		i.style.maxWidth = e.getAttribute("maxlength")+"em";
+		i.style.maxWidth = (Number(e.getAttribute("maxlength"))+2)+"ch";
 	}
 	i.position = pos;
 	i.databox = e;
@@ -532,15 +535,25 @@ zkDataDescription.addElement = function(e, parent, pos) {
 		i.setAttribute("class", "description required");
 	else
 		i.setAttribute("class", "description");
-	if (e.getAttribute("placeholder") != null)
+	
+	if (e.getAttribute("readonly") != null) {
+		i.setAttribute("readonly", e.getAttribute("readonly"));
+        zk.addClass(i, "readonly");
+	} else if (e.getAttribute("disabled") != null) {
+		i.setAttribute("disabled", e.getAttribute("disabled"));
+        zk.addClass(i, "text-disd");
+        zk.addClass(i, "disabled");
+	}
+	else if (e.getAttribute("placeholder") != null)
 		i.setAttribute("placeholder", e.getAttribute("placeholder"));
 	else if (e.getAttribute("label") != null)
 		i.setAttribute("placeholder", e.getAttribute("label"));
+
 	i.setAttribute("id", parent.id+"!input");
 	if (e.getAttribute("maxlength"))
 		i.maxlen=e.getAttribute("maxlength");
 	if (e.getAttribute("maxlength")) {
-		i.style.maxWidth = e.getAttribute("maxlength")+"em";
+		i.style.maxWidth = (Number(e.getAttribute("maxlength"))+2)+"ch";
 	}
 	i.position = pos;
 	i.databox = e;
@@ -639,10 +652,20 @@ zkDataDate.addElement = function(e, parent, pos) {
 	i.setAttribute("class", "dateboxinp");
 	i.position = pos;
 	i.databox = e;
-	if (e.getAttribute("placeholder") != null)
+
+	if (e.getAttribute("readonly") != null) {
+		i.setAttribute("readonly", e.getAttribute("readonly"));
+        zk.addClass(i, "readonly");
+	} else if (e.getAttribute("disabled") != null) {
+		i.setAttribute("disabled", e.getAttribute("disabled"));
+        zk.addClass(i, "text-disd");
+        zk.addClass(i, "disabled");
+	}
+	else if (e.getAttribute("placeholder") != null)
 		i.setAttribute("placeholder", e.getAttribute("placeholder"));
 	else if (e.getAttribute("label") != null)
 		i.setAttribute("placeholder", e.getAttribute("label"));
+
 	i.setAttribute("id", parent.id+"!real");
 	if (e.multivalue) {
 		if (pos < e.value.length) i.defaultValue = i.value = e.value[pos];
@@ -683,15 +706,6 @@ zkDataDate.addElement = function(e, parent, pos) {
     zk.listen(i, "keydown", zkDataCommon.onkeydown);
     zk.listen(i, "input", zkDataCommon.oninput);
     
-    /* set css class */
-    if (e.readOnly) {
-        zk.addClass(i, "readonly")
-        i.setAttribute("readonly","readonly")
-    }
-    if (e.disabled) {
-        zk.addClass(i, "text-disd")
-        i.setAttribute("disabled","disabled")
-    }
 }
 
 zkDataDate.cleanup = zkDataDate.onHide = function(B) {
@@ -753,7 +767,7 @@ zkDataDate.setAttr = function (cmp, nm, val) {
 		if (btn) btn.style.display = val == "true" ? "": "none";
 		return true;
 	}
-	return zkDataCommon.setAttr(ed,name,value);
+	return zkDataCommon.setAttr(cmp,name,value);
 };
 zkDataDate.rmAttr = function (cmp, nm) {
 	if ("style" == nm) {
@@ -919,6 +933,14 @@ zkDataDate.close = function (pp, focus) {
 
 	if (focus)
 		zk.asyncFocus(uuid + "!real");
+	
+	var el = $e(uuid);
+	var databox = $e(el.databoxid);
+	var input = $e(uuid+'!real');
+	zkDatasource.updatedElement(input);
+	zkDataCommon.updatedElement(input);
+	zkDataCommon.onupdate(input, databox);
+	
 };
 zkDataDate.closepp = function (evt) {
 	if (!evt) evt = window.event;
@@ -1031,13 +1053,15 @@ zkDataHtml.setAttr = function (ed, name, value) {
 }
 /************* Common methods ******************/
 zkDataCommon.createRemoveIcon=function(databox, parent, pos) {
+	if (databox.readOnly || databox.disabled) return;
+	
 	if (databox.multivalue && databox.getAttribute("removeicon")) {
 		img = document.createElement("img");
 		img.src = databox.getAttribute("removeicon");
 		img.databox = databox;
 		img.position = pos;
 		img.id = parent.id+"!remove";
-		if (pos == databox.value.length - 1 )
+		if (pos >= databox.value.length  )
 			img.style.display = "none";
 		img.setAttribute("class", "remove-icon");
 		zk.listen(img, "click", zkDataCommon.onremovevalue);
@@ -1073,7 +1097,7 @@ zkDataCommon.registerInput=function(databox, input) {
 
 zkDataCommon.init = function (databox) {
 	databox.multivalue = "true" == databox.getAttribute("multivalue");
-	databox.required = "false" != databox.getAttribute("required");
+	databox.required = "false" != databox.getAttribute("required")  && databox.getAttribute("required") != null;
 	databox.disabled = "false" != databox.getAttribute("disabled")  && databox.getAttribute("disabled") != null;
 	databox.readOnly = "false" != databox.getAttribute("readonly")  && databox.getAttribute("readonly") != null;
 	databox.multiline = "true" == databox.getAttribute("multiline");
@@ -1093,24 +1117,37 @@ zkDataCommon.refresh=function(databox, value) {
 		
 		container = document.createElement("div");
 		container.setAttribute("class", "container");
-		container.setAttribute("id", $uuid(databox)+"_0");
+		container.setAttribute("id", $uuid(databox)+"!container");
 		databox.appendChild(container);
 	}
 	if (databox.multivalue) {
 		if (value == null)
 			value = [];
 		databox.value = value;
-		databox.value[value.length] =  databox.useDescription || databox.useNameDescription ? [null, null] : null;
+		var lastEmpty = false;
 		for (var i = 0; i < value.length; i++) {
 			var div = document.createElement("div");
 			div.setAttribute("id", $uuid(databox)+"_"+i)
 			div.databoxid = $uuid(databox);
 			container.appendChild(div);
 			databox.addInputElement(databox, div, i);
+			var v = value[i];
+			if (databox.useDescription || databox.useNameDescription) {
+				lastEmpty = (v == null || v[0] == null || v[0] == "");
+			} else {
+				lastEmpty = (v == null || v == "");
+			}
+		}
+		if ( ! databox.readonly && !lastEmpty ) {
+			var div = document.createElement("div");
+			div.setAttribute("id", $uuid(databox)+"_"+value.length)
+			div.databoxid = $uuid(databox);
+			container.appendChild(div);
+			databox.addInputElement(databox, div, value.length);
 		}
 	} else {
 		databox.value = value;
-		databox.databoxid = $uuid(databox);
+		container.databoxid = $uuid(databox);
 		databox.addInputElement(databox, container, 0);
 	}
 }
@@ -1302,23 +1339,40 @@ zkDataCommon.onkeydown = function(A) {
 ;
 zkDataCommon.oninput = function(A) {
     var el = Event.element(A);
+    zkDataCommon.updatedElement(el);
+}
+
+zkDataCommon.updatedElement = function(el) {
     var D = el.databox
       , B = $uuid(D)
       , C = $e(B);
-    if (D.multivalue && el.position == D.value.length - 1) {
-    	var ri = $e($uuid(el)+"!remove");
-    	if (ri)
-    		ri.style.display = "";
-    	var pos = el.position + 1;
-    	if (D.useDescription || D.useNameDescription) 
-    		D.value[pos] = ["", ""];
-    	else
-    		D.value[pos] = null;
-		var div = document.createElement("div");
-		div.setAttribute("id", D.getAttribute("id")+"_"+pos)
-		D.appendChild(div);
-		div.databoxid = D.getAttribute("id");
-		D.addInputElement(D, div, pos);
+    console.log("Updated elment value = "+D.value);
+    console.log("--------> length     = "+D.value.length);
+    console.log("--------> multivalue = "+D.multivalue);
+    console.log("--------> position   = "+el.position);
+    if (D.multivalue) {
+    	var container = document.getElementById(D.id+"!container");
+    	if (container == null)
+    		container = D;
+    	var div0 = document.getElementById(B+"_"+el.position);
+    	if (div0.nextElementSibling == null) {
+    		console.log("Adding textbox");
+    		var ri = $e($uuid(el)+"!remove");
+    		if (ri)
+    			ri.style.display = "";
+    		var pos = el.position + 1;
+//    		if (D.useDescription || D.useNameDescription) 
+//    			D.value[pos] = ["", ""];
+//    		else
+//    			D.value[pos] = null;
+    		
+    		
+    		var div = document.createElement("div");
+    		div.setAttribute("id", D.getAttribute("id")+"_"+pos)
+    		container.appendChild(div);
+    		div.databoxid = D.getAttribute("id");
+    		D.addInputElement(D, div, pos);    		
+    	}
     }
 }
 ;
@@ -1402,25 +1456,25 @@ zkDataCommon.openSearchPopup = function (input, databox) {
 	var req = {uuid: databox.id, cmd: "onStartSearch", 
 			data: [input.value, input.popup.getAttribute("id") ], ignorable:true};
 	zkau.send (req, 0);		
+	zkDataCommon.inSearchPopup = true;
 }
+
 zkDataCommon.onFocusSearchPopup = function(evt) {
-	var opt = evt.currentTarget;
-	var menu = opt.parentElement;
-	console.log("on focus search popup");
-	console.log(evt);
-	zkDataCommon.inSearchPopup = false;
-	zkDataCommon.onSelectValue2(opt);
-	setTimeout(()=>{try{menu.remove(); menu.input.popup=null;} catch(e) {}}, 150);
 }
 zkDataCommon.onBlurSearchPopup = function(evt) {
-	console.log("on blur search popup");
-	console.log(evt);
+//	console.log("on blur search popup");
+//	console.log(evt);
 	zkDataCommon.inSearchPopup = false;
 	var menu = evt.currentTarget.parentElement;
 	menu.remove(); 
 	menu.input.popup=null;
 }
 zkDataCommon.onSelectValue=function(evt) {
+	var opt = evt.currentTarget;
+	var menu = opt.parentElement;
+	zkDataCommon.inSearchPopup = false;
+	zkDataCommon.onSelectValue2(opt);
+	setTimeout(()=>{try{menu.remove(); menu.input.popup=null;} catch(e) {}}, 150);		
 }
 
 zkDataCommon.onSelectValue2=function(opt) {	
@@ -1448,6 +1502,34 @@ zkDataCommon.onSelectValue2=function(opt) {
     zkDataCommon.updateChange(input, databox, false);
 }
 
+zkDataCommon.highlightSearchResult=function(child, text, criteria) {
+	var textlc = text.toLowerCase();
+	var pos =  0;
+	while ( pos < text.length) {
+		var next = text.length;
+		var tag = null;
+		for (var j = 0; j < criteria.length; j++) {
+			var pos2 = textlc.indexOf(criteria[j], pos);
+			if (criteria[j].length > 0 && pos2 >= 0 && pos2 < next) {
+				next = pos2;
+				tag = text.substring(pos2, pos2+criteria[j].length);
+			}
+		}
+		if (next > pos) {
+			var span = document.createElement("span");
+			span.innerText = text.substring(pos, next);
+			child.appendChild(span);
+			pos = next;
+		}
+		if (tag) {
+			var span = document.createElement("span");
+			span.setAttribute("class", "search-match")
+			span.innerText = tag;
+			child.appendChild(span);
+			pos = pos + tag.length;
+		}
+	}
+} 
 zkDataCommon.addSearchResult=function(div, data) {
 	var criteria = div.searchCriteria.toLowerCase().replace(/.,-/, " ").split(" ");
 	for (var i = 0; i < data.length; i++) {
@@ -1455,42 +1537,25 @@ zkDataCommon.addSearchResult=function(div, data) {
 		var name = row[0];
 		var description = row[1];
 		var text = row[2];
-		if ( text == undefined ) text = row[0] + " " + row [1];
-
+		var nameLength = 0;
 		var child = document.createElement ("div");
+		if ( text == undefined ) {
+			var span1 = document.createElement("span");
+			span1.setAttribute("class", "name");
+			child.appendChild(span1);
+			zkDataCommon.highlightSearchResult(span1, row[0], criteria)
+			zkDataCommon.highlightSearchResult(child, " : " + row[1], criteria)
+		} else {
+			zkDataCommon.highlightSearchResult(child, text, criteria)
+		}
+
 		child.setAttribute("tabindex", "-1");
-		zk.listen(child, 'click', zkDataCommon.onSelectValue);
+		zk.listen(child, 'mousedown', zkDataCommon.onSelectValue);
 		zk.listen(child, "focus", zkDataCommon.onFocusSearchPopup);
 		zk.listen(child, "blur", zkDataCommon.onBlurSearchPopup);
 		child.value = row;
 		div.insertBefore(child, div.lastElementChild);
 
-		var textlc = text.toLowerCase();
-		var pos =  0;
-		while ( pos < text.length) {
-			var next = text.length;
-			var tag = null;
-			for (var j = 0; j < criteria.length; j++) {
-				var pos2 = textlc.indexOf(criteria[j], pos);
-				if (criteria[j].length > 0 && pos2 >= 0 && pos2 < next) {
-					next = pos2;
-					tag = text.substring(pos2, pos2+criteria[j].length);
-				}
-			}
-			if (next > pos) {
-				var span = document.createElement("span");
-				span.innerText = text.substring(pos, next);
-				child.appendChild(span);
-				pos = next;
-			}
-			if (tag) {
-				var span = document.createElement("span");
-				span.setAttribute("class", "search-match")
-				span.innerText = tag;
-				child.appendChild(span);
-				pos = pos + tag.length;
-			}
-		}
 	}
 	var databox = div.input.databox;
 	setTimeout( () => {
@@ -1591,3 +1656,12 @@ zk.formatDate = function(val, fmt) {
     }
     return txt
 };
+
+zkDataText.focus = zkDataPassword.focus = zkDataSeparator.focus = zkDataList.focus = 
+zkDataCommon.focus = zkDataDate.focus = zkDataNameDescription.focus = zkDataDescription.focus = 
+zkDataSwitch.focus = zkDataImage.focus = zkDataHtml.focus = function (ed) {
+	var d = document.getElementById( $uuid(ed)+"_0!input");
+	if (!d) d = document.getElementById( $uuid(ed)+"_0!real");
+	if (!d) d = document.getElementById( $uuid(ed)+"_0!slider");
+	if (d) d.focus();
+}

@@ -1,5 +1,8 @@
 package es.caib.zkib.datamodel;
 
+import java.lang.reflect.InvocationTargetException;
+
+import es.caib.zkib.datamodel.xml.XmlDataNode;
 import es.caib.zkib.datasource.CommitException;
 import es.caib.zkib.datasource.DataSource;
 
@@ -43,4 +46,6 @@ public interface DataModelCollection {
 	public Finder getFinder();
 
 	public boolean updateBeforeParent();
+
+	public void reorderOnTree(XmlDataNode current) throws Exception;
 }

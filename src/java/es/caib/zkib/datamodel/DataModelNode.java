@@ -1,5 +1,7 @@
 package es.caib.zkib.datamodel;
 
+import java.lang.reflect.InvocationTargetException;
+
 import es.caib.zkib.datasource.CommitException;
 import es.caib.zkib.datasource.DataSource;
 
@@ -37,5 +39,12 @@ public interface DataModelNode {
 	public String getXPath ();
 	
 	public DataSource getDataSource ();
+
+	public Object getParentId() throws IllegalAccessException, InvocationTargetException, NoSuchMethodException;
 	
+	public Object getCurrentId () throws IllegalAccessException, InvocationTargetException, NoSuchMethodException;
+	
+	public String getChildProperty();
+	
+	public Object loadParentObject() throws Exception ;
 }

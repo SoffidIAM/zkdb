@@ -32,6 +32,10 @@ zkDatasource.unregisterInput = function (e,i) {
 zkDatasource.onInput=function(ev)
 {
 	var input = ev.currentTarget;
+	zkDatasource.updatedElement(input);
+}
+
+zkDatasource.updatedElement=function(input) {
 	var ds = input.zDatasource;
 	if (ds && ds.buttons) {
 		for (var i = 0; i < ds.buttons.length; i++) {
@@ -40,7 +44,7 @@ zkDatasource.onInput=function(ev)
 		}
 		zkau.confirmClose=true;
 	}
-}
+} 
 
 zkDatasource.registerButton = function (e,i) {
 	if (e.buttons == null)

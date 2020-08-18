@@ -80,9 +80,22 @@ public class Yaml2Json {
 			first = false;
 			if (! line.contains(":"))
 			{
-				String value = quoteValue( line.substring(prefix.length()).trim());
-				writer.append(value);
+				String value = line.substring(prefix.length()).trim();
 				readLine();
+				if (value.equals( ">")) {
+					value = readMultiLine(prefix.replaceAll("-", " "), true, false);
+				}
+				else if (value.equals( "|")) {
+					value = readMultiLine(prefix.replaceAll("-", " "), true, true);
+				}
+				else if (value.equals( ">-")) {
+					value = readMultiLine(prefix.replaceAll("-", " "), false, false);
+				}
+				else if (value.equals( "|-")) {
+					value = readMultiLine(prefix.replaceAll("-", " "), false, true);
+				}
+
+				writer.append(quoteValue( value ));
 			}
 			else
 			{
@@ -107,8 +120,7 @@ public class Yaml2Json {
 			else
 				writer.append(",");
 			first = false;
-			String[] v = readTagValue (line.substring(prefix.length()));
-			readLine();
+			String[] v = readTagValue (line.substring(prefix.length()), prefix);
 			writer.append(v[0]).append(":");
 			if (v.length > 1)
 			{
@@ -127,7 +139,7 @@ public class Yaml2Json {
 		writer.append("}");
 	}
 
-	private String[] readTagValue(String substring) throws IOException {
+	private String[] readTagValue(String substring, String prefix) throws IOException {
 		int i = substring.indexOf(":");
 		if ( i < 0)
 			throw new IOException("Expecting ':' at line "+lines+": "+line);
@@ -135,15 +147,49 @@ public class Yaml2Json {
 		if (tag.startsWith(" ") || tag.startsWith("\t"))
 			throw new IOException("Expecting less identation at line "+lines+": "+line);
 		String value = substring.substring(i+1).trim();
+		readLine();
 		if (value.isEmpty())
 		{
 			return new String[] { quote(tag) };
 		}
+		else if (value.equals( ">")) {
+			value = readMultiLine(prefix, true, false);
+			return new String[] { quote(tag), quoteValue(value) };
+		}
+		else if (value.equals( "|")) {
+			value = readMultiLine(prefix, true, true);
+			return new String[] { quote(tag), quoteValue(value) };
+		}
+		else if (value.equals( ">-")) {
+			value = readMultiLine(prefix, false, false);
+			return new String[] { quote(tag), quoteValue(value) };
+		}
+		else if (value.equals( "|-")) {
+			value = readMultiLine(prefix, false, true);
+			return new String[] { quote(tag), quoteValue(value) };
+		}
 		else
 		{
 			return new String[] { quote(tag), quoteValue(value) };
-			
 		}
+	}
+
+	private String readMultiLine(String prefix, boolean trailNl, boolean keepNl) throws IOException {
+		StringBuffer sb = new StringBuffer();
+		while (line != null && (
+				line.startsWith(prefix + " ") ||
+					line.startsWith(prefix+"\t")))
+		{
+			if (sb.length() > 0 && keepNl)
+				sb.append('\n');
+			else
+				sb.append(' ');
+			sb.append(line.substring(prefix.length()).trim());
+			readLine();
+		}
+		if (trailNl)
+			sb.append('\n');
+		return sb.toString();
 	}
 
 	private String quote(String value) {

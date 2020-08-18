@@ -1,6 +1,7 @@
 package es.caib.zkib.datasource;
 
 import java.io.Serializable;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
@@ -59,6 +60,7 @@ public class ChildDataSourceImpl implements DataSource, Serializable {
 
 			// Reregistrar todos los hijos
 			String keys[] = (String []) registry.keySet().toArray(new String[0]);
+			Arrays.sort(keys);
 			XPathRerunEvent event = new XPathRerunEvent(this, "/");
 			HashSet<Object> components = new HashSet<Object>();
 			for (int i = 0; i < keys.length; i++)

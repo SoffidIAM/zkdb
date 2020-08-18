@@ -1,5 +1,6 @@
 package es.caib.zkib.sample;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.Vector;
 
 import es.caib.zkib.datamodel.DataContext;
@@ -68,6 +69,26 @@ public class CountryNode extends DataNode {
 	protected void doDelete() throws Exception {
 		// TODO Auto-generated method stub
 
+	}
+
+	public Object getParentId() throws IllegalAccessException, InvocationTargetException, NoSuchMethodException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public Object getCurrentId() throws IllegalAccessException, InvocationTargetException, NoSuchMethodException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public String getChildProperty() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public Object loadParentObject() throws Exception {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

@@ -326,7 +326,7 @@
 	<databutton label="Commit" datamodel="mydata"/>
 	
 	<databox type="STRING" maxlength="50" bind="/countries:/@name" multiline="true"></databox>
-	<databox type="STRING" maxlength="50" value="abc123" multivalue="true" multiline="true">
+	<databox type="STRING" maxlength="50" value="abc123" multiValue="true" multiline="true">
 		<attribute name="onChange">
 			StringBuffer sb = new StringBuffer("[");
 			for (String s: self.value) {
@@ -340,7 +340,7 @@
 	
 	<label id="value"/>
 	<databox type="DATE"></databox>
-	<databox type="DATE" multivalue="true"></databox>
+	<databox type="DATE" multiValue="true"></databox>
 
 	<zscript>
 		List values = new LinkedList();
@@ -353,7 +353,7 @@
 		v.add("B");
 	</zscript>
 	<databox type="NAME_DESCRIPTION" values="${values }" value="B" onChange=""></databox>
-	<databox type="NAME_DESCRIPTION" values="${values }"  multivalue="true"  value="${v }" onChange="">
+	<databox type="NAME_DESCRIPTION" values="${values }"  multiValue="true"  value="${v }" onChange="">
 		<attribute name="onChange">
 			StringBuffer sb = new StringBuffer("[");
 			for (String s: self.value) {
@@ -367,7 +367,7 @@
 	<label id="value2"/>
 
 	<databox type="DESCRIPTION" values="${values }" value="B" onChange=""></databox>
-	<databox type="DESCRIPTION" values="${values }" multivalue="true" onChange="">
+	<databox type="DESCRIPTION" values="${values }" multiValue="true" onChange="">
 		<attribute name="onChange">
 			StringBuffer sb = new StringBuffer("[");
 			for (String s: self.value) {
@@ -385,7 +385,7 @@
 		</attribute>
 	</databox>
 	<label id="value4"/>
-	<databox type="LIST" label="Values:" values="${values }" multivalue="true" onChange="">
+	<databox type="LIST" label="Values:" values="${values }" multiValue="true" onChange="">
 		<attribute name="onChange">
 			StringBuffer sb = new StringBuffer("[");
 			for (String s: self.value) {
@@ -403,4 +403,6 @@
 		</attribute>
 	</databox>
 	<label id="value6"/>
+	<databox type="STRING" onChange="" sclass="XX" multiValue="true" label="PROVA">
+	</databox>
 </zk>

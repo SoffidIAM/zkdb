@@ -157,7 +157,7 @@ public class FullTreeModelProxy implements TreeModelProxy, Serializable {
 
 	public TreeModelProxyNode getTreeModelProxyNode(int[] treeitem) {
 		TreeModelProxyNode node = root;
-		for (int i = 0; i < treeitem.length; i++)
+		for (int i = 0; treeitem != null && i < treeitem.length; i++)
 		{
 			TreeModelProxyNode[] nodes = node.getChildren();
 			if (nodes.length <= treeitem[i])

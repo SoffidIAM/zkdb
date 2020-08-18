@@ -209,7 +209,7 @@ public class DataTextbox extends org.zkoss.zul.Textbox implements XPathSubscribe
 
 		if ( getMaxlength() > 0)
 		{
-			HTMLs.appendStyle(sb, "max-width", ""+getMaxlength()+"em");
+			HTMLs.appendStyle(sb, "max-width", ""+(getMaxlength()+4)+"ch");
 		}
 
 		return sb.toString();

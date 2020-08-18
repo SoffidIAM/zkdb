@@ -1,7 +1,6 @@
 package es.caib.zkib.datamodel;
 
-
-
+import java.lang.reflect.InvocationTargetException;
 
 public class SimpleDataNode extends DataNode {
 
@@ -23,6 +22,26 @@ public class SimpleDataNode extends DataNode {
 	protected void doDelete () throws Exception
 	{
 		throw new Exception ("Delete not allowed");
+	}
+
+	public Object getParentId() throws IllegalAccessException, InvocationTargetException, NoSuchMethodException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public Object getCurrentId() throws IllegalAccessException, InvocationTargetException, NoSuchMethodException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public String getChildProperty() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public Object loadParentObject() throws Exception {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

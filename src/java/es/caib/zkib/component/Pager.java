@@ -6,6 +6,7 @@ import java.io.Writer;
 import org.zkoss.xml.HTMLs;
 import org.zkoss.zk.ui.Component;
 import org.zkoss.zk.ui.Path;
+import org.zkoss.zk.ui.UiException;
 import org.zkoss.zk.ui.render.SmartWriter;
 import org.zkoss.zul.impl.XulElement;
 
@@ -50,8 +51,10 @@ public class Pager extends XulElement  {
 			Component c = Path.getComponent(getSpaceOwner(), datatable);
 			if (c == null)
 				return null;
-			else
+			else if (c instanceof DataTable)
 				return c.getUuid();
+			else
+				throw new UiException("Error rendering pager. Object "+datatable+" is not a datatable");
 		}
 	}
 
@@ -63,8 +66,10 @@ public class Pager extends XulElement  {
 			Component c = Path.getComponent(getSpaceOwner(), datatree2);
 			if (c == null)
 				return null;
-			else
+			else if (c instanceof DataTree2)
 				return c.getUuid();
+			else
+				throw new UiException("Error rendering pager. Object "+datatable+" is not a datatree2");
 		}
 	}
 

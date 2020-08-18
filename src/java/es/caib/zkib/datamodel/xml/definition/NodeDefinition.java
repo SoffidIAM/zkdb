@@ -9,6 +9,7 @@ import java.util.Vector;
 import org.w3c.dom.Element;
 
 import es.caib.zkib.datamodel.xml.ParseException;
+import es.caib.zkib.datamodel.xml.handler.LoadParentHandler;
 import es.caib.zkib.datamodel.xml.handler.PersistenceHandler;
 import es.caib.zkib.datamodel.xml.validation.ValidationDefinition;
 
@@ -22,7 +23,11 @@ public class NodeDefinition implements DefinitionInterface, Serializable {
 	Vector persistencers = new Vector (3);
 	LinkedList<CustomAttributeDefinition> customAttributes = new LinkedList<CustomAttributeDefinition>();
 	LinkedList<ValidationDefinition> validations = new LinkedList<ValidationDefinition>();
-	
+	String parentProperty;
+	String idProperty;
+	String childProperty;
+	Vector loadParentHandlers = new Vector();
+
 	public LinkedList<ValidationDefinition> getValidations() {
 		return validations;
 	}
@@ -44,6 +49,16 @@ public class NodeDefinition implements DefinitionInterface, Serializable {
 
 	public NodeDefinition() {
 		super();
+	}
+	
+	public void add (LoadParentHandler handler)
+	{
+		loadParentHandlers.add (handler);
+	}
+	
+	public LoadParentHandler[] getLoadParentHandlers ()
+	{
+		return (LoadParentHandler []) loadParentHandlers.toArray(new LoadParentHandler [0]);
 	}
 	
 	public PersistenceHandler [] getPersistenceHandlers ()
@@ -116,4 +131,29 @@ public class NodeDefinition implements DefinitionInterface, Serializable {
 	{
 		validations.add(validation);
 	}
+
+	public String getParentProperty() {
+		return parentProperty;
+	}
+
+	public void setParentProperty(String parentProperty) {
+		this.parentProperty = parentProperty;
+	}
+
+	public String getIdProperty() {
+		return idProperty;
+	}
+
+	public void setIdProperty(String idProperty) {
+		this.idProperty = idProperty;
+	}
+
+	public String getChildProperty() {
+		return childProperty;
+	}
+
+	public void setChildProperty(String childProperty) {
+		this.childProperty = childProperty;
+	}
+
 }

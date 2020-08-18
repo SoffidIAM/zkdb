@@ -356,9 +356,8 @@ zkDatatable.setData = function(ed, data) {
 		{
 			zkDatatable.addRowInternal (ed, i, data[i] ); 
 		}
-		if (ed.sortColumn >= 0)
-			zkDatatable.doSort(ed);
 		zkDatatable.doFilter(ed);
+		zkDatatable.prepareSort(ed);
 	}
 }
 
@@ -367,9 +366,7 @@ zkDatatable.addRow=function(ed, pos, value)
 {
 	pos = parseInt(pos);
 	zkDatatable.addRowInternal (ed, pos, JSON.parse(value));
-	if (ed.sortColumn >= 0)
-		zkDatatable.doSort(ed);
-	zkDatatable.fixupColumns(ed);
+	zkDatatable.prepareSort(ed);
 	ed.count ++;
 	zkDatatable.createFooter(ed);
 	zkDatatable.findSelectedPosition(ed);
@@ -383,9 +380,7 @@ zkDatatable.addRows=function(ed, pos, values)
 		zkDatatable.addRowInternal (ed, pos+i, values[i]);
 	ed.count += values.length;
 	zkDatatable.createFooter(ed);
-	if (ed.sortColumn >= 0)
-		zkDatatable.doSort(ed);
-	zkDatatable.fixupColumns(ed);
+	zkDatatable.prepareSort(ed);
 	zkDatatable.findSelectedPosition(ed);
 }
 
@@ -525,11 +520,19 @@ zkDatatable.evaluateInContext = function (js, context) {
 	}
 }
 
+zkDatatable.findExpression=function(v, j) {
+	var i1 = v.indexOf("${", j);
+	var i2 = v.indexOf("#{", j);
+	if (i2 < 0) return i1;
+	if (i1 < 0) return i2;
+	if (i1 < i2) return i1;
+	return i2;
+}
 zkDatatable.replaceExpressions = function (template,value) {
 	var v = "";
 	var j = 0;
 	do {
-		var i = template.indexOf("${", j); 
+		var i = zkDatatable.findExpression(template, j); 
 		if (i < 0)
 		{
 			v = v + template.substring(j);
@@ -888,7 +891,27 @@ zkDatatable.onSort=function(ev) {
 	}
 }
 
+zkDatatable.prepareSort=function(ed) {
+	if (! ed.sortPending) {
+		var tbody = document.getElementById(ed.id+"!tbody");
+		var rows = tbody.children.length;
+		if (rows < 50) {
+			if (ed.sortColumn >= 0)
+				zkDatatable.doSort(ed);
+			zkDatatable.fixupColumns(ed);
+		}
+		else {
+			ed.sortPending = true;
+			window.setTimeout(() => {
+				if (ed.sortColumn >= 0)
+					zkDatatable.doSort(ed);
+				zkDatatable.fixupColumns(ed);
+			}, 100);
+		}
+	}
+}
 zkDatatable.doSort=function(ed) {
+	ed.sortPending = false;
 	var sortColumn = ed.sortColumn;
 	var value = ed.columns[ed.sortColumn].value;
 	var direction = ed.sortDirection;

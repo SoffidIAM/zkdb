@@ -1,5 +1,6 @@
 package es.caib.zkib.datamodel.xml;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
@@ -8,6 +9,7 @@ import java.util.Vector;
 import javax.servlet.jsp.el.ELException;
 
 import org.apache.commons.beanutils.DynaProperty;
+import org.apache.commons.beanutils.PropertyUtils;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -15,12 +17,14 @@ import org.w3c.dom.NodeList;
 import bsh.EvalError;
 
 import es.caib.zkib.datamodel.DataContext;
+import es.caib.zkib.datamodel.DataModelNode;
 import es.caib.zkib.datamodel.DataNode;
 import es.caib.zkib.datamodel.DataNodeCollection;
 import es.caib.zkib.datamodel.xml.definition.CustomAttributeDefinition;
 import es.caib.zkib.datamodel.xml.definition.FinderDefinition;
 import es.caib.zkib.datamodel.xml.definition.ModelDefinition;
 import es.caib.zkib.datamodel.xml.definition.NodeDefinition;
+import es.caib.zkib.datamodel.xml.handler.LoadParentHandler;
 import es.caib.zkib.datamodel.xml.handler.PersistenceHandler;
 import es.caib.zkib.datamodel.xml.validation.ValidationDefinition;
 import es.caib.zkib.events.XPathEvent;
@@ -143,6 +147,9 @@ public class XmlDataNode extends DataNode {
 		}
 		if (!found)
 			throw new RuntimeException ("Insert not allowed on "+getXPath());
+		if (getChildProperty() != null) {
+			getContainer().reorderOnTree(this);
+		}
 	}
 
 	protected void doUpdate() throws Exception {
@@ -159,6 +166,9 @@ public class XmlDataNode extends DataNode {
 		}
 		if (!found)
 			throw new RuntimeException ("Update not allowed for object "+getXPath());
+		if (getChildProperty() != null) {
+			getContainer().reorderOnTree(this);
+		}
 	}
 
 	protected void validate() throws Exception {
@@ -181,6 +191,41 @@ public class XmlDataNode extends DataNode {
 		}
 		if (!found)
 			throw new RuntimeException ("Delete not allowed from "+getXPath());
+	}
+
+	public String getParentProperty() {
+		return definition.getParentProperty();
+	}
+	
+	public String getIdProperty () {
+		return definition.getIdProperty();
+	}
+	
+	public String getChildProperty() {
+		return definition.getChildProperty();
+	}
+	
+	public Object loadParentObject() throws Exception {
+		if (getParentId() != null) {
+			for (LoadParentHandler handler: definition.getLoadParentHandlers()) {
+				Object parent = handler.loadParent(ctx);
+				if (parent != null)
+					return parent;
+			}
+		}
+		return null;
+	}
+
+	public Object getParentId() throws IllegalAccessException, InvocationTargetException, NoSuchMethodException {
+		if (definition.getParentProperty() == null)
+			return null;
+		return PropertyUtils.getProperty(ctx.getData(), definition.getParentProperty());
+	}
+
+	public Object getCurrentId() throws IllegalAccessException, InvocationTargetException, NoSuchMethodException {
+		if (definition.getIdProperty() == null)
+			return null;
+		return PropertyUtils.getProperty(ctx.getData(), definition.getIdProperty());
 	}
 
 }

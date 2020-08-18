@@ -10,9 +10,11 @@ import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.beanutils.DynaBean;
 import org.apache.commons.beanutils.DynaClass;
@@ -453,6 +455,8 @@ public class DataTable extends XulElement implements XPathSubscriber,
     	if (getModel() == null)
     		return "{}";
     	Object element = getModel().getElementAt(pos);
+    	if (element == null)
+    		return "{}";
     	JSONObject o = getClientValue(element);
     	return o.toString();
 	}
@@ -464,28 +468,12 @@ public class DataTable extends XulElement implements XPathSubscriber,
 			DynaClass cl = dynaBean.getDynaClass();
 			o  = new JSONObject();
 			for ( DynaProperty p: cl.getDynaProperties()) {
-				if (!p.getName().equals("class") && 
+				String name = p.getName();
+				if (!name.equals("class") && 
 					! DataModelCollection.class.isAssignableFrom( p.getType()) ) 
 				{
-					Object value = dynaBean.get(p.getName());
-					if (value instanceof Date) {
-						DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-DD'T'HH:mm:ss");
-						dateFormat.setTimeZone(TimeZones.getCurrent());
-						String v =  dateFormat.format((Date)value);
-						o.put(p.getName(), JSONObject.wrap(v));
-						o.put(p.getName()+"_date", DateFormats.getDateFormat().format(value));
-						o.put(p.getName()+"_datetime", DateFormats.getDateTimeFormat().format(value));
-					} else if (value instanceof Calendar) {
-						Date d = ((Calendar) value).getTime();
-						DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-DD'T'HH:mm:ss");
-						dateFormat.setTimeZone(TimeZones.getCurrent());
-						String v =  dateFormat.format(d);
-						o.put(p.getName(), JSONObject.wrap(v));
-						o.put(p.getName()+"_date", DateFormats.getDateFormat().format(d));
-						o.put(p.getName()+"_datetime", DateFormats.getDateTimeFormat().format(d));
-					} else {
-						o.put(p.getName(), JSONObject.wrap(value));
-					}
+					Object value = dynaBean.get(name);
+					wrapClientValue(o, name, value);
 				}
 			}
 		} else {
@@ -493,6 +481,33 @@ public class DataTable extends XulElement implements XPathSubscriber,
 			o = new JSONObject(element);
 		}
 		return o;
+	}
+	public void wrapClientValue(JSONObject o, String name, Object value) {
+		if (value instanceof Date) {
+			DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-DD'T'HH:mm:ss");
+			dateFormat.setTimeZone(TimeZones.getCurrent());
+			String v =  dateFormat.format((Date)value);
+			o.put(name, JSONObject.wrap(v));
+			o.put(name+"_date", DateFormats.getDateFormat().format(value));
+			o.put(name+"_datetime", DateFormats.getDateTimeFormat().format(value));
+		} else if (value instanceof Calendar) {
+			Date d = ((Calendar) value).getTime();
+			DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-DD'T'HH:mm:ss");
+			dateFormat.setTimeZone(TimeZones.getCurrent());
+			String v =  dateFormat.format(d);
+			o.put(name, JSONObject.wrap(v));
+			o.put(name+"_date", DateFormats.getDateFormat().format(d));
+			o.put(name+"_datetime", DateFormats.getDateTimeFormat().format(d));
+		} else if (value instanceof Map) {
+			Map m = (Map) value;
+			JSONObject o2 = new JSONObject();
+			o.put(name, o2);
+			for (Object name2: m.keySet()) {
+				wrapClientValue(o2, name2.toString(), m.get(name2));
+			}
+		} else {
+			o.put(name, JSONObject.wrap(value));
+		}
 	}
     
 
@@ -504,10 +519,22 @@ public class DataTable extends XulElement implements XPathSubscriber,
 
         if (getSelectedIndex() >= 0) {
             Object obj = lm.getElementAt(getSelectedIndex());
-            if (!(obj instanceof DataModelNode))
-                throw new UiException("Unable to delete object " + obj);
+            if (obj instanceof DataModelNode) {
+            	((DataModelNode) obj).delete();
+            } else {
+            	DataSource dataSource = collectionBinder.getDataSource();
+				JXPathContext ctx = dataSource.getJXPathContext();
+				Object c = ctx.getValue(collectionBinder.getXPath());
+            	if (c instanceof Collection) {
+            		((Collection) c).remove(obj);
+            		ctx.setValue(collectionBinder.getXPath(), c);
+            		dataSource.sendEvent(new XPathRerunEvent(dataSource, collectionBinder.getXPath()));
+            	} else {
+            		throw new UiException( "Unable to delete object "+obj.toString());
+            	}
+            }
+
             // response("remove_"+getSelectedIndex(), new AuInvoke(this, "removeRow", Integer.toString(getSelectedIndex())));
-            ((DataModelNode) obj).delete();
             if (autocommit)
                 commit();
             setSelectedIndex(-1);

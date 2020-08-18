@@ -21,6 +21,8 @@ import org.zkoss.zk.ui.Component;
 import org.zkoss.zk.ui.UiException;
 import org.zkoss.zk.ui.event.Events;
 
+import es.caib.zkib.component.DataModel;
+import es.caib.zkib.datamodel.xml.XmlDataNode;
 import es.caib.zkib.datasource.CommitException;
 import es.caib.zkib.datasource.DataSource;
 import es.caib.zkib.events.XPathCollectionEvent;
@@ -29,7 +31,6 @@ import es.caib.zkib.events.XPathRerunEvent;
 
 
 public class DataNodeCollection implements List, DataModelCollection, Serializable {
-	
 	/**
 	 * 
 	 */
@@ -37,7 +38,7 @@ public class DataNodeCollection implements List, DataModelCollection, Serializab
 	
 	Class clazz;
 	LinkedList<DataNode> elements = new LinkedList<DataNode>();
-	Map<Object,DataNode> treeElements = new HashMap<Object, DataNode>();
+	Map<Object,DataNode> treeElements = null;
 	DataContext ctx;
 	Future<?> delayedList = null;
 	int lastDelayedListMember;
@@ -108,7 +109,8 @@ public class DataNodeCollection implements List, DataModelCollection, Serializab
 			
 			if (coll != null)
 			{
-				treeElements.clear();
+				if (treeElements != null)
+					treeElements.clear();
 				delayedList = coll instanceof Future ? (Future) coll: null;
 				lastDelayedListMember = 0;
 				Iterator it = coll.iterator();
@@ -155,7 +157,7 @@ public class DataNodeCollection implements List, DataModelCollection, Serializab
 		}
 		
 		// Después se actualiza e inserta
-		it = elements.iterator();
+		it = new LinkedList<DataNode> (elements).iterator();
 		while (it.hasNext())
 		{
 			DataModelNode model = (DataModelNode) it.next ();
@@ -201,65 +203,118 @@ public class DataNodeCollection implements List, DataModelCollection, Serializab
 
 	private void populate (Object data, boolean sendEvents) throws Exception
 	{
-		if (finder instanceof ExtendedFinder && ((ExtendedFinder)finder).getParentProperty() != null) {
-			addTreeElement( (ExtendedFinder) finder, data, sendEvents);
+		DataNode dataModel = encapsulateData(data);
+		if (dataModel.getCurrentId() != null && dataModel.getChildProperty() != null) {
+			addTreeElement(dataModel, sendEvents, false);
 		} else {
-			DataNode dataModel = encapsulateData(data);
 			internalAdd(dataModel);
 			if (sendEvents)
 				getDataSource().sendEvent(new XPathCollectionEvent(getDataSource(), getXPath(), XPathCollectionEvent.ADDED, elements.size()-1));
 		}
 	}
 
-	private void addTreeElement(ExtendedFinder finder, Object data, boolean sendEvents) throws Exception {
+	private void addTreeElement(DataNode node, boolean sendEvents, boolean openChildren) throws Exception {
 		List<XPathCollectionEvent> events = new LinkedList<XPathCollectionEvent>();
-		Object parentId = PropertyUtils.getProperty(data, finder.getParentProperty());
-		placeElement(finder, parentId, data, events);
+		Object parentId = node.getParentId();
+		placeElement(node, events, openChildren);
 		if (sendEvents)
 			for (XPathCollectionEvent event: events)
 				getDataSource().sendEvent(event);
 	}
 
-	private DataNode placeElement(ExtendedFinder finder, Object parentId, Object child, List<XPathCollectionEvent> events) throws Exception {
-		Object id = PropertyUtils.getProperty(child, finder.getIdProperty());
-		if (treeElements.containsKey(id))
-			return treeElements.get(id);
+	private PlaceElementResponse placeElement(DataNode node, List<XPathCollectionEvent> events, boolean openChildren) throws Exception {
+		Object id = node.getCurrentId();
+		DataNodeCollection rootCol = findTreeRoot(node);
 		
-		DataNode parentNode = null;
-		if (parentId != null) {
-			parentNode = treeElements.get(parentId);
-			if (parentNode == null) {
-				DataContext ctx2 = encapsulateData(child).getDataContext();
-				Object parentValueObject = finder.loadParentObject(ctx2);
-				if (parentValueObject != null) {
-					Object grandpaId = PropertyUtils.getProperty(parentValueObject, finder.getParentProperty());
-					parentNode = placeElement(finder, grandpaId, parentValueObject, events);
+		if (rootCol.treeElements.containsKey(id))
+			return new PlaceElementResponse(rootCol.treeElements.get(id), false);
+
+		if (rootCol == this) {
+			Object parentId = node.getParentId();
+			
+			DataNode parentNode = null;
+			boolean addedParentNode = false;
+			
+			if (parentId != null) {
+				parentNode = rootCol.treeElements.get(parentId);
+				if (parentNode == null) {
+					Object parentValueObject = node.loadParentObject();
+					if (parentValueObject != null) {
+						parentNode = encapsulateData(parentValueObject);
+						PlaceElementResponse r = placeElement(parentNode, events, openChildren);
+						parentNode = r.node;
+						addedParentNode = r.added;
+					}
 				}
 			}
-		}
-		
-		DataNode childNode;
-		if (parentNode == null) // no parent
-		{
-			childNode = encapsulateData(child);
-			internalAdd(childNode);
-			treeElements.put(id, childNode);
-			events.add(new XPathCollectionEvent(getDataSource(), 
-					getXPath(), 
-					XPathCollectionEvent.ADDED, 
-					elements.size()-1));
+			
+			DataNode childNode;
+			if (parentNode == null) // no parent
+			{
+				childNode = rootCol.encapsulateData(node.getDataContext().getData());
+				rootCol.internalAdd(childNode);
+				rootCol.treeElements.put(id, childNode);
+				events.add(new XPathCollectionEvent(getDataSource(), 
+						rootCol.getXPath(), 
+						XPathCollectionEvent.ADDED, 
+						rootCol.elements.size()-1));
+				return new PlaceElementResponse(childNode, true);
+			} else {
+				DataNodeCollection children = (DataNodeCollection) parentNode.getListModel(node.getChildProperty());
+				if (openChildren && !addedParentNode && children._dirty) {
+					children.refresh();
+					while ( children.isInProgress()) {
+						children.updateProgressStatus();
+						Thread.sleep(100);
+					}
+					DataNode sibling = rootCol.treeElements.get(id);
+					return new PlaceElementResponse(sibling, false);
+				}
+				children._dirty = false;
+				childNode = children.encapsulateData(node.getDataContext().getData());
+				children.internalAdd( childNode);
+				rootCol.treeElements.put(id, childNode);
+				events.add(new XPathCollectionEvent(getDataSource(), 
+						children.getXPath(), 
+						XPathCollectionEvent.ADDED, 
+						children.elements.size()-1));
+				return new PlaceElementResponse(childNode, true);
+			}
 		} else {
-			DataNodeCollection children = (DataNodeCollection) parentNode.getListModel(finder.getChildProperty());
+			DataNode parentNode = (DataNode) getParentDataNode();
+
+			DataNodeCollection children = (DataNodeCollection) parentNode.getListModel(node.getChildProperty());
+			if (openChildren && children._dirty) {
+				children.refresh();
+				while ( children.isInProgress()) {
+					children.updateProgressStatus();
+					Thread.sleep(100);
+				}
+				DataNode sibling = rootCol.treeElements.get(id);
+				return new PlaceElementResponse(sibling, false);
+			}
 			children._dirty = false;
-			childNode = children.encapsulateData(child);
+			DataNode childNode = children.encapsulateData(node.getDataContext().getData());
 			children.internalAdd( childNode);
-			treeElements.put(id, childNode);
+			rootCol.treeElements.put(id, childNode);
 			events.add(new XPathCollectionEvent(getDataSource(), 
 					children.getXPath(), 
 					XPathCollectionEvent.ADDED, 
 					children.elements.size()-1));
+			return new PlaceElementResponse(childNode, true);
 		}
-		return childNode;
+	}
+
+	private boolean sameParent(DataNode node) throws IllegalAccessException, InvocationTargetException, NoSuchMethodException {
+		Object parentId = node.getParentId();
+		DataModelNode parent = node.getParent();
+		if (parent == null)
+			return parentId == null;
+		
+		if (parent.getChildProperty() != null && parent.getChildProperty().equals(node.getChildProperty())) { // Same class
+			return parentId.equals(parent.getCurrentId());
+		}
+		return false;
 	}
 
 	/* (non-Javadoc)
@@ -717,6 +772,34 @@ public class DataNodeCollection implements List, DataModelCollection, Serializab
 		Collections.sort(elements, helper);
 		getDataSource().sendEvent(new XPathRerunEvent(getDataSource(), getXPath()));		
 	}
+
+	public void reorderOnTree(XmlDataNode node) throws IllegalAccessException, InvocationTargetException, NoSuchMethodException, Exception {
+		
+		if (! sameParent(node)) {
+			onDelete(node);
+			node.setTransient(true);
+			DataNodeCollection coll = findTreeRoot(node);
+			coll.treeElements.remove(node.getCurrentId());
+			coll.addTreeElement(node, true, true);
+		}
+		
+	}
+	
+	DataNodeCollection findTreeRoot(DataNode node) {
+		DataModelNode current = node;
+		while ( current.getParent() != null && current.getChildProperty().equals( current.getParent().getChildProperty())) {
+			current = current.getParent();
+		}
+		DataModelCollection nc = current.getContainer();
+		if (nc instanceof DataNodeCollection) {
+			DataNodeCollection dnc = (DataNodeCollection) nc;
+			if (dnc.treeElements == null)
+				dnc.treeElements = new HashMap<Object, DataNode>();
+			return dnc;
+		}
+		else
+			return null;
+	}
 }
 
 class ComparatorHelper implements Comparator<DataNode> {
@@ -726,4 +809,13 @@ class ComparatorHelper implements Comparator<DataNode> {
 		return superComparator.compare(o1.getInstance(), o2.getInstance());
 	}
 	
+}
+
+class PlaceElementResponse {
+	PlaceElementResponse(DataNode node, boolean added) {
+		this.node = node;
+		this.added = added;
+	}
+	DataNode node;
+	boolean added;
 }

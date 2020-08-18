@@ -6,7 +6,9 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Entity;
 
+import es.caib.zkib.datamodel.DataContext;
 import es.caib.zkib.datamodel.xml.definition.ModelDefinition;
+import es.caib.zkib.datamodel.xml.handler.LoadParentHandler;
 
 public class CustomData implements Serializable {
 	/**
@@ -39,4 +41,5 @@ public class CustomData implements Serializable {
 	public void setType(String type) {
 		this.type = type;
 	}
+
 }

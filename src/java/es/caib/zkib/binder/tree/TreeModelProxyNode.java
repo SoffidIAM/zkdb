@@ -41,6 +41,7 @@ public class TreeModelProxyNode implements XPathSubscriber, Serializable {
 	FullTreeModelProxy modelProxy;
 	private String fullXPath = null;
 	boolean detached = false;
+	boolean fetchingChildren = false;
 	private String localPath;
 	
 	public TreeModelProxyNode(FullTreeModelProxy proxy) {
@@ -148,6 +149,7 @@ public class TreeModelProxyNode implements XPathSubscriber, Serializable {
 					String baseEventPath = ((XPathRerunEvent) event).getBaseXPath();
 					if (parent == null  || parent.children == null)
 					{
+						modelProxy.binder.invalidate();
 						refresh ();
 					}
 					else if (getXPath().equals(baseEventPath))
@@ -156,7 +158,7 @@ public class TreeModelProxyNode implements XPathSubscriber, Serializable {
 						{
 							if (parent.children[i] == this)
 							{
-								parent.modelProxy.sendEvent ( new TreeDataEvent (modelProxy, TreeDataEvent.INTERVAL_ADDED, parent, i, i));
+								parent.modelProxy.sendEvent ( new TreeDataEvent (modelProxy, TreeDataEvent.INTERVAL_REMOVED, parent, i, i));
 								if (children != null)
 								{
 									for (int j = 0; j < children.length; j++)
@@ -166,7 +168,7 @@ public class TreeModelProxyNode implements XPathSubscriber, Serializable {
 								}
 									
 								searchChildren();
-								parent.modelProxy.sendEvent ( new TreeDataEvent (modelProxy, TreeDataEvent.INTERVAL_REMOVED, parent, i, i));
+								parent.modelProxy.sendEvent ( new TreeDataEvent (modelProxy, TreeDataEvent.INTERVAL_ADDED, parent, i, i));
 							}
 						}
 					}
@@ -174,9 +176,11 @@ public class TreeModelProxyNode implements XPathSubscriber, Serializable {
 					{
 						ChildXPathQuery queries[] = modelProxy.getChildXPathQuerys();
 						
+						String thisPath = XPathUtils.concat(modelProxy.getBinder().getDataSource().getRootPath(),getXPathPrefix());
+
 						for (int i = 0; i < queries.length; i++)
 						{
-							String path = XPathUtils.concat(getXPathPrefix(),queries[i].getXPath());
+							String path = XPathUtils.concat(thisPath,queries[i].getXPath());
 							if (path.equals(baseEventPath))
 							{
 								refresh();
@@ -243,10 +247,11 @@ public class TreeModelProxyNode implements XPathSubscriber, Serializable {
 	 */
 	protected TreeModelProxyNode[] searchChildren() {
 		Vector work = new Vector ();
+		fetchingChildren = true;
 		try
 		{
 			SingletonBinder binder = modelProxy.getBinder();
-			binder.invalidate();
+//			binder.invalidate();
 			JXPathContext ctx = binder.getDataSource().getJXPathContext();
 			ctx = ctx.getRelativeContext(getPointer());
 			ChildXPathQuery queries [] = modelProxy.getChildXPathQuerys();
@@ -269,6 +274,8 @@ public class TreeModelProxyNode implements XPathSubscriber, Serializable {
 				
 			}
 		} catch (JXPathNotFoundException e) {
+		} finally {
+			fetchingChildren = false;
 		}
 		children = (TreeModelProxyNode[]) work.toArray(new TreeModelProxyNode[work.size()]);
 		return children;
@@ -355,7 +362,7 @@ public class TreeModelProxyNode implements XPathSubscriber, Serializable {
 	 * 
 	 */
 	void refresh() {
-		if (!detached)
+		if (!detached && !fetchingChildren)
 		{
 			
 			unsubscribe();
@@ -371,12 +378,12 @@ public class TreeModelProxyNode implements XPathSubscriber, Serializable {
 							children[i].detach();
 						}
 					}
-					
-					searchChildren();
-					
-					if (children != null && children.length > 0)
-						modelProxy.sendEvent ( new TreeDataEvent (modelProxy, TreeDataEvent.INTERVAL_ADDED, this, 0, children.length -1));
 				}
+				
+				searchChildren();
+				
+				if (children != null && children.length > 0)
+					modelProxy.sendEvent ( new TreeDataEvent (modelProxy, TreeDataEvent.INTERVAL_ADDED, this, 0, children.length -1));
 				subscribe ();
 			} catch (JXPathNotFoundException e) {
 				if (children != null && children.length > 0)
@@ -506,7 +513,6 @@ public class TreeModelProxyNode implements XPathSubscriber, Serializable {
 		try
 		{
 			SingletonBinder binder = modelProxy.getBinder();
-			binder.invalidate();
 			JXPathContext ctx = binder.getDataSource().getJXPathContext();
 			ctx = ctx.getRelativeContext(getPointer());
 			ChildXPathQuery queries [] = modelProxy.getChildXPathQuerys();
