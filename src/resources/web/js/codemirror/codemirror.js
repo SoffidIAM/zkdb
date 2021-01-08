@@ -10,6 +10,44 @@
 zkCodemirror = {};
 
 zkCodemirror.init = function (ed) {
+	window.addEventListener("resize", function() {
+		zkCodemirror.refresh(ed);
+	});
+	
+	// Detect visibilty
+	ed.__hidden = true;
+	try {
+		var observer = new IntersectionObserver((entries, observer) => {
+			entries.forEach(entry => {
+				if (entry.intersectionRatio > 0) {
+					if (ed.__hidden) {
+						window.setTimeout (() => { zkCodemirror.refresh(ed); }, 100);
+//						window.setTimeout (() => { zkCodemirror.refresh(ed); }, 1000);
+						ed.__hidden = false;
+					}
+				} else if (!ed.__hidden) {
+					ed.__hidden = true;
+				}
+			});
+		}, {root: document.documentElement});
+		
+		zkCodemirror.refresh(ed);
+
+		observer.observe(ed);
+	} catch (e) {
+		// Not available in IE
+	}
+};
+
+
+zkCodemirror.refresh=function(ed) {
+	ed.codemirror = null;
+	var v = ed.firstElementChild
+	while (v != null) {
+		var v2 = v.nextElementSibling;
+		v.remove();
+		v = v2;
+	}
 	var v = ed.value;
 	if (v == undefined)
 		v = ed.getAttribute("value");
@@ -20,6 +58,7 @@ zkCodemirror.init = function (ed) {
 		lang = "xml";
 	var ln = ed.getAttribute("z.linenumbers");
 	var ro = ed.getAttribute("z.readonly");
+	
 	ed.codemirror = new CodeMirror(ed, {
 		value: v,
 		hintOptions:   {
@@ -49,42 +88,12 @@ zkCodemirror.init = function (ed) {
 		ed.codemirror.refresh();
 	});
 
-	window.addEventListener("resize", function() {
-		ed.codemirror.setSize(ed.offsetWidth, ed.offsetHeight);
-		ed.codemirror.refresh();
-	});
-	
-	// Detect visibilty
-	ed.__hidden = true;
-	try {
-		var observer = new IntersectionObserver((entries, observer) => {
-			entries.forEach(entry => {
-				if (entry.intersectionRatio > 0) {
-					if (ed.__hidden) {
-						window.setTimeout (() => { ed.codemirror.refresh() }, 100);
-						window.setTimeout (() => { ed.codemirror.refresh() }, 1000);
-						ed.__hidden = false;
-					}
-				} else if (!ed.__hidden) {
-					ed.__hidden = true;
-				}
-			});
-		}, {root: document.documentElement});
-		
-		observer.observe(ed);
-	} catch (e) {
-		// Not available in IE
-	}
-};
-
-zkCodemirror.onSize=function(ed) {
-	ed.codemirror.refresh();
 }
 
-zkCodemirror.refresh = function (ed) {
-	ed.codemirror.refresh();
-};
-
+zkCodemirror.onSize=function(ed) {
+	if (ed.codemirror)
+		ed.codemirror.refresh();
+}
 
 zkCodemirror.cleanup = function (ed) {
 };
@@ -93,7 +102,9 @@ zkCodemirror.cleanup = function (ed) {
 zkCodemirror.setAttr = function (ed, name, value) {
 	switch (name) {
 	case "value":
+		ed.value=value;
 		ed.codemirror.doc.setValue(value);
+		setTimeout( function() {zkCodemirror.refresh(ed)},100);
 		return true;;
 	}
 	return false;

@@ -91,10 +91,15 @@ zkSwitch.setAttr = function (s, name, value) {
 		return true;
 	case "disabled":
 		s.disabled =  value == "checked" || value == "true" || value == true;
-		if (s.disabled)
+		if (s.disabled) {
 			s.classList.add("disabled");
+			s.setAttribute("disabled", "disabled");
+		}
 		else
+		{
 			s.classList.remove("disabled");
+			s.removeAttribute("disabled");
+		}
 	}
 	return false;
 };

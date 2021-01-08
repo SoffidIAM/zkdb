@@ -60,4 +60,12 @@ public class DateFormats {
 		else
 			return "yyyy/MM/dd HH:mm";
 	}
+
+	public static String getTimeFormatString() {
+		String[] f = getThreadLocal();
+		if (f == null)
+			return "HH:mm";
+		else
+			return f[1];
+	}
 }

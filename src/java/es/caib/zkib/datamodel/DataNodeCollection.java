@@ -43,6 +43,7 @@ public class DataNodeCollection implements List, DataModelCollection, Serializab
 	Future<?> delayedList = null;
 	int lastDelayedListMember;
 
+	private boolean _refreshInCourse = false;
 	private boolean _dirty = true;
 	private boolean _firstRefresh = true;
 	Finder finder;
@@ -89,45 +90,50 @@ public class DataNodeCollection implements List, DataModelCollection, Serializab
 	}
 
 	private synchronized void smartRefresh() throws Exception {
-		if (_dirty)
+		if (_dirty && ! _refreshInCourse)
 		{
 			cancel();
 			// Purgar las tablas
 			elements.clear();
-			
-			// Repopular las tablas
-			Collection coll = null;
+
+			_refreshInCourse = true;
 			try {
-				if ( !ctx.getParent().isNew() || !_firstRefresh)
-					coll = finder.find();
-				else if (finder instanceof ExtendedFinder && ((ExtendedFinder) finder).findOnNewObjects())
-					coll = finder.find();
-			} catch (Exception e) {
-				e.printStackTrace();
-				throw e;
-			}
-			
-			if (coll != null)
-			{
-				if (treeElements != null)
-					treeElements.clear();
-				delayedList = coll instanceof Future ? (Future) coll: null;
-				lastDelayedListMember = 0;
-				Iterator it = coll.iterator();
-				while (it.hasNext())
-				{
-				    Object obj = it.next();
-				    populate (obj, false);
-					lastDelayedListMember++;
+				// Repopular las tablas
+				Collection coll = null;
+				try {
+					if ( !ctx.getParent().isNew() || !_firstRefresh)
+						coll = finder.find();
+					else if (finder instanceof ExtendedFinder && ((ExtendedFinder) finder).findOnNewObjects())
+						coll = finder.find();
+				} catch (Exception e) {
+					e.printStackTrace();
+					throw e;
 				}
+				
+				if (coll != null)
+				{
+					if (treeElements != null)
+						treeElements.clear();
+					delayedList = coll instanceof Future ? (Future) coll: null;
+					lastDelayedListMember = 0;
+					Iterator it = coll.iterator();
+					while (it.hasNext())
+					{
+					    Object obj = it.next();
+					    populate (obj, false);
+						lastDelayedListMember++;
+					}
+				}
+				
+				_dirty = false;
+				_firstRefresh = false;
+				int newsize = elements.size();
+				// Enviar evento
+	//			getDataSource().sendEvent(new XPathCollectionEvent (getDataSource(), getXPath(), XPathCollectionEvent.RECREATED, newsize));
+				getDataSource().sendEvent(new XPathRerunEvent(getDataSource(), getXPath()));
+			} finally {
+				_refreshInCourse = false;
 			}
-			
-			_dirty = false;
-			_firstRefresh = false;
-			int newsize = elements.size();
-			// Enviar evento
-//			getDataSource().sendEvent(new XPathCollectionEvent (getDataSource(), getXPath(), XPathCollectionEvent.RECREATED, newsize));
-			getDataSource().sendEvent(new XPathRerunEvent(getDataSource(), getXPath()));
 		}
 	}
 	

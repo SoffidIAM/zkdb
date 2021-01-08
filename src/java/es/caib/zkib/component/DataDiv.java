@@ -147,7 +147,6 @@ public class DataDiv extends XulElement implements AfterCompose, BindContext, XP
 			return null;
 		
 		Component c = (Component) r.clone ();
-		insertBefore(c, before);
 		if (getModel() != null && getModel() instanceof ModelProxy)
 		{
 			String xPath = ((ModelProxy) getModel()).getBind(j);
@@ -155,6 +154,7 @@ public class DataDiv extends XulElement implements AfterCompose, BindContext, XP
 			binder.setDataPath(xPath);
 			c.setAttribute(BindContext.BINDCTX_ATTRIBUTE, binder, Component.COMPONENT_SCOPE);
 		}
+		insertBefore(c, before);
 		Events.postEvent("onNewRow", this, c);
 		return c;
 	}
@@ -174,7 +174,7 @@ public class DataDiv extends XulElement implements AfterCompose, BindContext, XP
 	 */
 	private void onListDataChange(ListDataEvent event) {
 		//when this is called _model is never null
-		final int newsz = _model.getSize(), oldsz = getChildren().size() - 1;
+		final int newsz = _model.getSize(), oldsz = getChildren().size();
 		int min = event.getIndex0(), max = event.getIndex1();
 		if (min < 0) min = 0;
 
@@ -185,7 +185,7 @@ public class DataDiv extends XulElement implements AfterCompose, BindContext, XP
 				log.warning("Conflict event: number of added items not matched: "+event);
 				break; //handle it as CONTENTS_CHANGED
 			}
-			final Component before = (Component) getChildren().get(min+1);
+			final Component before = min >= getChildren().size() ? null : (Component) getChildren().get(min);
 			for (int j = min; j <= max; ++j)
 			{
 				
@@ -200,7 +200,6 @@ public class DataDiv extends XulElement implements AfterCompose, BindContext, XP
 				break; //handle it as CONTENTS_CHANGED
 			}
 			for (int j = min; j <= max; ++j)
-//				((Component)getChildren().get(min+1)).detach(); //detach and remove
 				((Component)getChildren().get(min+0)).detach(); //detach and remove
 			break;
 		}

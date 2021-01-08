@@ -328,7 +328,7 @@
 	</component>
 
 	<component>
-		<component-name>databutton</component-name>
+		<component-name>databutton2</component-name>
 		<component-class>es.caib.zkib.component.DatasourceButton</component-class>
 	</component>
 

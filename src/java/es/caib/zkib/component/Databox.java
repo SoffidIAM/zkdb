@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.Writer;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Base64;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
@@ -12,7 +13,9 @@ import java.util.List;
 
 import org.json.JSONArray;
 import org.json.JSONStringer;
+import org.zkoss.image.AImage;
 import org.zkoss.mesg.Messages;
+import org.zkoss.util.TimeZones;
 import org.zkoss.util.resource.Labels;
 import org.zkoss.xml.HTMLs;
 import org.zkoss.zk.au.AuRequest;
@@ -23,6 +26,7 @@ import org.zkoss.zk.ui.Component;
 import org.zkoss.zk.ui.Page;
 import org.zkoss.zk.ui.UiException;
 import org.zkoss.zk.ui.WrongValueException;
+import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.Events;
 import org.zkoss.zk.ui.ext.AfterCompose;
 import org.zkoss.zk.ui.render.SmartWriter;
@@ -49,8 +53,14 @@ public class Databox extends InputElement implements XPathSubscriber, AfterCompo
 	boolean multiline;
 	Integer maxlength;
 	boolean composed = false;
+	boolean duringClientChange = false;
+	boolean hyperlink = false;
+	boolean noadd = false;
+	boolean noremove = false;
+	
 	public enum Type {
 		STRING,
+		NUMBER,
 		NAME_DESCRIPTION,
 		DESCRIPTION,
 		DATE,
@@ -69,10 +79,12 @@ public class Databox extends InputElement implements XPathSubscriber, AfterCompo
 	String icon;
 	String removeIcon = "~./img/remove.png";
 	String calendarIcon = "~./zul/img/caldrbtn.gif";
-	String selectIcon = "~./img/magnifier.png";
+	String selectIcon = null;
+	String selectIcon2 = null;
 	String waitIcon = "/img/wait.gif"; 
 	String warningIcon = "~./img/warning.gif";
 	String format;
+	boolean forceSelectIcon;
 
 	public Databox() {
 		setSclass("databox");
@@ -88,6 +100,14 @@ public class Databox extends InputElement implements XPathSubscriber, AfterCompo
 	public String getBind() {		
 		return binder.getDataPath();
 		
+	}
+	
+	public Object translateToUserInterface(Object o) {
+		return o;
+	}
+
+	public Object translateFromUserInterface(Object o) {
+		return o;
 	}
 
 	public void setValue(Object value) throws WrongValueException {
@@ -106,7 +126,7 @@ public class Databox extends InputElement implements XPathSubscriber, AfterCompo
 			onItemChange(value, position);
 			response("set_value_"+position,
 					new AuInvoke(this, "setValue", position.toString(), 
-							normalize(value).toString()));
+							normalize( translateToUserInterface( value ) ).toString()));
 		}
 	}
 
@@ -154,7 +174,8 @@ public class Databox extends InputElement implements XPathSubscriber, AfterCompo
 	}
 
 	public void onUpdate (XPathEvent event) {
-		refreshValue ();
+		if ( ! duringClientChange && ! duringClientChange)
+			refreshValue ();
 	}
 
 	protected void refreshValue ()
@@ -244,6 +265,14 @@ public class Databox extends InputElement implements XPathSubscriber, AfterCompo
 			HTMLs.appendAttribute(sb, "readonly", readonly);
 		HTMLs.appendAttribute(sb, "multiline", multiline);
 		HTMLs.appendAttribute(sb, "multivalue", multiValue);
+		if (multiValue) {
+			if (noadd) HTMLs.appendAttribute(sb, "noadd", noadd);
+			if (noremove) HTMLs.appendAttribute(sb, "noremove", noremove);
+		}
+		if (type == Databox.Type.NUMBER)
+			HTMLs.appendAttribute(sb, "number", true);
+		if (hyperlink)
+			HTMLs.appendAttribute(sb, "hyperlink", true);
 		if (required)
 			HTMLs.appendAttribute(sb, "required", required);
 		if (maxlength != null)
@@ -258,9 +287,12 @@ public class Databox extends InputElement implements XPathSubscriber, AfterCompo
 		if (type == Type.DATE && calendarIcon != null)
 			HTMLs.appendAttribute(sb, "calendaricon", getDesktop().getExecution().encodeURL(calendarIcon));
 			
-		if ((type == Type.NAME_DESCRIPTION || type == Type.DESCRIPTION) && selectIcon != null)
-			HTMLs.appendAttribute(sb, "selecticon", getDesktop().getExecution().encodeURL(selectIcon));
-
+		if (type == Type.NAME_DESCRIPTION || type == Type.DESCRIPTION || selectIcon != null)
+			HTMLs.appendAttribute(sb, "selecticon", getDesktop().getExecution().encodeURL(selectIcon == null ? "~./img/magnifier.png" : selectIcon));
+		if (selectIcon2 != null)
+			HTMLs.appendAttribute(sb, "selecticon2", getDesktop().getExecution().encodeURL(selectIcon2));
+		if (forceSelectIcon)
+			HTMLs.appendAttribute(sb, "forceSelecticon", "true");
 		if (values != null && type == Type.LIST)
 		{
 			JSONArray jsonValues = new JSONArray(values);
@@ -308,11 +340,11 @@ public class Databox extends InputElement implements XPathSubscriber, AfterCompo
 			}
 			for (int i = 0; i < array.length(); i++) {
 				String name = array.optString(i);
-				array.put(i, normalize(name));
+				array.put(i, normalize(  translateToUserInterface( name ) ));
 			}
 			stringValue = array.toString();
 		} else {
-			Object v = normalize(value);
+			Object v = normalize(translateToUserInterface( value ));
 			if (v instanceof String) 
 				v = new JSONStringer().valueToString(v);
 			if (v != null)
@@ -322,30 +354,68 @@ public class Databox extends InputElement implements XPathSubscriber, AfterCompo
 	}
 
 	private Object normalize(Object name) {
-		if (type == Type.PASSWORD) {
-			return "********";
-		} else if ( type == Type.NAME_DESCRIPTION || type == Type.DESCRIPTION) {
-			try {
-				if (name == null || name.toString().trim().isEmpty())
-					return new JSONArray(new String[] {"", "", ""});
-				else {
-					String description = getDescription((String)name);
-					return new JSONArray(new String[] {(String)name, description, description == null? "Wrong value": ""});
-				}
-			} catch (Exception e) {
-				return new JSONArray(new String[] {(String)name, null, e.toString()});
-			}
-		} else if (type == Type.DATE) {
-			if (name instanceof Date)
-				return new SimpleDateFormat( format ).format((Date)name);
-			else if (name instanceof Calendar)
-				return new SimpleDateFormat( format ).format(((Calendar)name).getTime());
-			else
-				return name;
-		} else if (name != null) {
-			return name.toString();
+		if (name instanceof Collection) {
+			JSONArray a = new JSONArray();
+			for ( Object o: (Collection) name)
+				a.put( normalize(o));
+			return a;
 		} else {
-			return null;
+			if (type == Type.PASSWORD) {
+				if ( name == null || name.toString().trim().isEmpty())
+					return "";
+				else
+					return "*Soffid*Secured*";
+			} else if ( type == Type.NAME_DESCRIPTION || type == Type.DESCRIPTION) {
+				try {
+					if (name == null || name.toString().trim().isEmpty())
+						return new JSONArray(new String[] {"", "", ""});
+					else {
+						String description = getDescription(translateFromUserInterface( name ).toString());
+						return new JSONArray(new String[] {name.toString(), description, description == null? "Wrong value": ""});
+					}
+				} catch (Exception e) {
+					return new JSONArray(new String[] {name.toString(), null, e.toString()});
+				}
+			} else if (type == Type.DATE) {
+				if (name instanceof Date) {
+					if (format == null)
+						return DateFormats.getDateTimeFormat().format((Date)name);
+					else {
+						SimpleDateFormat df = new SimpleDateFormat( format );
+						df.setTimeZone(TimeZones.getCurrent());
+						return df.format((Date)name);
+					}
+				}
+				else if (name instanceof Calendar) {
+					if (format == null)
+						return DateFormats.getDateTimeFormat().format(((Calendar)name).getTime());
+					else {
+						SimpleDateFormat df = new SimpleDateFormat( format );
+						df.setTimeZone(TimeZones.getCurrent());
+						return df.format(((Calendar)name).getTime());
+					}					
+				}
+				else
+					return name;
+			} else if (type == Type.IMAGE) {
+				if (name instanceof byte[]) {
+					byte[] img = (byte[]) name;
+					if (img.length > 10) {
+						String sb = img[0] == '<' && img[1] == '?' ? "image/svg+xml" :
+							img[0] == 0x77 && img[1] == 0xd8 && img[2] == 0xff ?  "image/jpeg":
+							img[0] == 0x89 && img[1] == 0x50 && img[2] == 0x4e ?  "image/png":
+								"image/gif";
+						return "data:"+sb+";base64," + Base64.getEncoder().encodeToString(img);
+					} else 
+						return "";
+				}
+				else
+					return "";
+			} else if (name != null) {
+				return name.toString();
+			} else {
+				return null;
+			}
 		}
 	}
 
@@ -355,6 +425,12 @@ public class Databox extends InputElement implements XPathSubscriber, AfterCompo
 		final String uuid = getUuid();		
 		
 		if (type == Type.STRING)
+		{
+			wh.write("<div id=\"").write(uuid).write("\" z.type=\"zul.databox.DataText\"")
+			.write(getOuterAttrs()).write(getInnerAttrs())
+			.write("></div>");
+		}
+		else if (type == Type.NUMBER)
 		{
 			wh.write("<div id=\"").write(uuid).write("\" z.type=\"zul.databox.DataText\"")
 			.write(getOuterAttrs()).write(getInnerAttrs())
@@ -521,7 +597,7 @@ public class Databox extends InputElement implements XPathSubscriber, AfterCompo
 			Integer pos = null;
 			if (request.getData().length > 3 && request.getData()[3] != null && !request.getData()[3].isEmpty())
 				pos = Integer.parseInt(request.getData()[3]);
-			db.onItemChange(value, pos);
+			db.onItemChange( value , pos);
 		}
 	};
 
@@ -565,58 +641,73 @@ public class Databox extends InputElement implements XPathSubscriber, AfterCompo
 	};
 
 	protected void onItemChange(Object value, Integer pos) {
-		value = parseUiValue(value);
-		
-		if (pos != null && multiValue) {
-			while (pos.intValue() >= collectionValue.size())
-				collectionValue.add(null);
-			collectionValue.set(pos.intValue(), value);
+		duringClientChange = true;
+		try {
 			
-			Collection v = new LinkedList();
-			for (Object o: collectionValue)
-				if (o != null)
-					v.add(o);
-			this.value = v;
-		} else {
-			this.value = value;
-		}
-		
-		if (binder.getDataPath() != null)
-			binder.setValue(this.value);
-
-		
-		if (type == type.NAME_DESCRIPTION) {
-			try {
-				String description = getDescription(value);
-				setWarning(pos, description == null? "Wrong value": "");
-				response("set_description_"+pos, new AuInvoke(this, "setDescription", pos.toString(), description));
-			} catch (UiException e) {
-				response("set_description_"+pos, new AuInvoke(this, "setDescription", pos.toString(), ""));
-				setWarning(pos, e.getMessage());
-			} catch (Exception e) {
-				response("set_description_"+pos, new AuInvoke(this, "setDescription", pos.toString(), ""));
-				setWarning(pos, e.toString());
+			value = parseUiValue(value);
+			
+			if (pos != null && multiValue) {
+				while (pos.intValue() >= collectionValue.size())
+					collectionValue.add(null);
+				collectionValue.set(pos.intValue(), value);
+				
+				Collection v = new LinkedList();
+				for (Object o: collectionValue)
+					if (o != null)
+						v.add(o);
+				this.value = v;
+			} else {
+				this.value = value;
 			}
+			
+			if (binder.getDataPath() != null)
+				binder.setValue(this.value);
+			
+			
+			if (type == type.NAME_DESCRIPTION) {
+				try {
+					String description = getDescription(value);
+					setWarning(pos, description == null? "Wrong value": "");
+					response("set_description_"+pos, new AuInvoke(this, "setDescription", pos.toString(), description));
+				} catch (UiException e) {
+					response("set_description_"+pos, new AuInvoke(this, "setDescription", pos.toString(), ""));
+					setWarning(pos, e.getMessage());
+				} catch (Exception e) {
+					response("set_description_"+pos, new AuInvoke(this, "setDescription", pos.toString(), ""));
+					setWarning(pos, e.toString());
+				}
+			}
+			
+			if (required && !multiValue && 
+					(value == null || value.toString().trim().isEmpty())) {
+				setWarning(pos, "Value is required");
+			}
+			Events.postEvent("onChange", this, this.value);
+		} finally {
+			duringClientChange = false;
 		}
-		
-		if (required && !multiValue && 
-				(value == null || value.toString().trim().isEmpty())) {
-			setWarning(pos, "Value is required");
-		}
-		Events.postEvent("onChange", this, this.value);
 	}
 
 	protected Object parseUiValue(Object value) {
+		value = translateFromUserInterface(value);
 		if (type == Type.DATE && value != null && value instanceof String) {
 			if (value.toString().trim().isEmpty())
 				value = null;
 			else
 				try {
-					value = new SimpleDateFormat(format).parse(value.toString());
+					if (format == null)
+						value = DateFormats.getDateTimeFormat().parse(value.toString());
+					else {
+						SimpleDateFormat df = new SimpleDateFormat(format);
+						df.setTimeZone(TimeZones.getCurrent());
+						value = df.parse(value.toString());
+					}
 				} catch (ParseException e) {
 					throw new UiException(e);
 				}
 		}
+		if (type == Type.BOOLEAN)
+			value = value != null && "true".equals(value.toString());
 		return value;
 	}
 
@@ -724,6 +815,7 @@ public class Databox extends InputElement implements XPathSubscriber, AfterCompo
 	}
 	
 	public void openSelectWindow(Integer position) {
+		Events.postEvent(new Event("onOpen", this, position));
 	}
 
 	public void setWarning (Integer position, String message) {
@@ -797,6 +889,65 @@ public class Databox extends InputElement implements XPathSubscriber, AfterCompo
 
 	public void setMultiline(boolean multiline) {
 		this.multiline = multiline;
+	}
+
+	public String getCalendarIcon() {
+		return calendarIcon;
+	}
+
+	public void setCalendarIcon(String calendarIcon) {
+		this.calendarIcon = calendarIcon;
+	}
+
+	@Override
+	public String getText() throws WrongValueException {
+		return value == null ? "": value.toString();
+	}
+
+	@Override
+	public void setText(String value) throws WrongValueException {
+		setValue(value);
+	}
+
+	public boolean isHyperlink() {
+		return hyperlink;
+	}
+
+	public void setHyperlink(boolean hyperlink) {
+		this.hyperlink = hyperlink;
+		smartUpdate("hyperlink", hyperlink);
+	}
+
+	public String getSelectIcon2() {
+		return selectIcon2;
+	}
+
+	public void setSelectIcon2(String selectIcon2) {
+		this.selectIcon2 = selectIcon2;
+	}
+
+	public boolean isForceSelectIcon() {
+		return forceSelectIcon;
+	}
+
+	public void setForceSelectIcon(boolean forceSelectIcon) {
+		this.forceSelectIcon = forceSelectIcon;
+	}
+
+	public boolean isNoadd() {
+		return noadd;
+	}
+
+	public void setNoadd(boolean noadd) {
+		this.noadd = noadd;
+	}
+
+	public boolean isNoremove() {
+		return noremove;
+	}
+
+	public void setNoremove(boolean noremove) {
+		this.noremove = noremove;
 	}
 }
 

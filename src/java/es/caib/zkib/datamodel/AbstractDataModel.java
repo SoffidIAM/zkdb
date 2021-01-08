@@ -66,8 +66,10 @@ public abstract class AbstractDataModel extends AbstractDataSource  {
 					throw new RuntimeException(e2);
 				}
 			}
+			boolean previousTransaction = tx.getStatus() == Status.STATUS_ACTIVE;
 			try {
-				tx.begin();
+				if (!previousTransaction)
+					tx.begin();
 			} catch (NotSupportedException e1) {
 				throw new RuntimeException(e1);
 			}
@@ -81,10 +83,12 @@ public abstract class AbstractDataModel extends AbstractDataSource  {
 				e.activateDataModel();
 				throw e;
 			} finally {
-				if (tx.getStatus() == Status.STATUS_MARKED_ROLLBACK)
-					tx.rollback();
-				else
-					tx.commit();
+				if (!previousTransaction) {
+					if (tx.getStatus() == Status.STATUS_MARKED_ROLLBACK)
+						tx.rollback();
+					else
+						tx.commit();
+				}
 			}
 		} catch (SystemException e) {
 			throw new RuntimeException (e);

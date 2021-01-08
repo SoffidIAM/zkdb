@@ -103,7 +103,7 @@ public class DataTree extends Tree implements XPathSubscriber, BindContext, Data
 	private void applyModel() throws Exception {
 		if (composed && treeBinder.getDataPath() != null)
 		{
-			FullTreeModelProxy lm = new FullTreeModelProxy(treeBinder); 
+			FullTreeModelProxy lm = new FullTreeModelProxy(treeBinder, false); 
 
 			for (Iterator<MasterTreeitem> it=masterTreeItems.iterator(); it.hasNext();)
 			{

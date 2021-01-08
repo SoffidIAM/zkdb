@@ -154,7 +154,15 @@ zkDatatable.createHeaders = function (ed, tr) {
 			td.column = column;
 			tr.addEventListener("click", zkDatatable.onSort)
 		}
-		td.appendChild( document.createTextNode ( ed.columns[column].name ));
+		if (ed.columns[column].vertical) {
+			var span = document.createElement("span");
+			span.setAttribute("style", "writing-mode: vertical-lr");
+			td.appendChild(span);
+			span.appendChild( document.createTextNode ( ed.columns[column].name ));
+		} else {
+			td.appendChild( document.createTextNode ( ed.columns[column].name ));
+			td.setAttribute("title", ed.columns[column].name);
+		}
 	}
 };
 
@@ -366,10 +374,8 @@ zkDatatable.addRow=function(ed, pos, value)
 {
 	pos = parseInt(pos);
 	zkDatatable.addRowInternal (ed, pos, JSON.parse(value));
-	zkDatatable.prepareSort(ed);
 	ed.count ++;
-	zkDatatable.createFooter(ed);
-	zkDatatable.findSelectedPosition(ed);
+	zkDatatable.prepareSort(ed);
 }
 
 zkDatatable.addRows=function(ed, pos, values)
@@ -379,9 +385,7 @@ zkDatatable.addRows=function(ed, pos, values)
 	for (var i = 0; i < values.length; i++)
 		zkDatatable.addRowInternal (ed, pos+i, values[i]);
 	ed.count += values.length;
-	zkDatatable.createFooter(ed);
 	zkDatatable.prepareSort(ed);
-	zkDatatable.findSelectedPosition(ed);
 }
 
 zkDatatable.addRowInternal=function(ed, pos, value)
@@ -430,7 +434,12 @@ zkDatatable.fillRow=function(ed,tr,value)
 		td.appendChild(cb);
 	}
 	tr.value = value;
-	if (value['$class']) tr.setAttribute("class", value['$class']);
+	if (value['$class']) {
+		if (tr.classList.contains("selected"))
+			tr.setAttribute("class", "selected "+value['$class']);
+		else
+			tr.setAttribute("class", value['$class']);
+	}
 	for (var column =  0; column < ed.columns.length; column ++)
 	{
 		var td = document.createElement("td");
@@ -446,17 +455,20 @@ zkDatatable.fillRow=function(ed,tr,value)
 			{
 				var value2 = zkDatatable.evaluateInContext (col.value, value);
 				if (value2 == undefined)
-					td.appendChild( document.createTextNode ( "" ));
+					td.innerText= "";
 				else
-					td.appendChild( document.createTextNode ( value2 ));
+					td.innerText=value2;
 			}
 			else if (value[col.value] == null)
-				td.appendChild( document.createTextNode ( "" ));
+				td.innerText = "";
 			else
-				td.appendChild( document.createTextNode ( value[col.value] ));
+				td.innerText = value[col.value] ;
 		}
 		else
-			td.appendChild( document.createTextNode ( value[col.name] ));
+			td.innerText = value[col.name];
+		if (col.className) {
+			td.setAttribute("class", zkDatatable.replaceExpressions(col.className, value));
+		}
 	}
 }
 
@@ -676,7 +688,7 @@ zkDatatable.onSelectRow=function(ev) {
 			cb.checked = false;
 			target.classList.remove("selected");			
 		}
-		zkDatatable.sendSelect(t);
+		zkDatatable.sendSelect(t, cb.checked);
 	} else {
 		var tbody = document.getElementById(t.id+"!tbody");
 		var row = t.selectedTr;
@@ -744,7 +756,7 @@ zkDatatable.onSelectAll=function(ev) {
 		else
 			row.classList.remove("selected");
 	}
-	zkDatatable.sendSelect(table);
+	zkDatatable.sendSelect(table, false);
 	zkDatatable.findSelectedPosition(table);
 }
 
@@ -762,7 +774,7 @@ zkDatatable.onSelect=function(ev) {
 		table.selectedTr = row;
 		row.classList.add("selected");
 	}
-	zkDatatable.sendSelect(table);
+	zkDatatable.sendSelect(table, false);
 }
 
 /** Selected by the server * */
@@ -850,7 +862,7 @@ zkDatatable.setSelectedMulti=function(t, pos) {
 	zkDatatable.updatePagers(t);
 }
 
-zkDatatable.sendSelect=function(table) {
+zkDatatable.sendSelect=function(table, singleSelect) {
 	var selected=[];
 	var tbody = document.getElementById(table.id+"!tbody"); 
 	for (var row = tbody.firstElementChild; row != null; row = row.nextElementSibling)
@@ -865,8 +877,14 @@ zkDatatable.sendSelect=function(table) {
 			}	
 		}
 	}
-	var req = {uuid: table.id, cmd: "onMultiSelect", data : [ JSON.stringify(selected)]};
-	zkau.send (req, 5);		
+	
+	if (singleSelect && selected.length == 1) {
+		var req = {uuid: table.id, cmd: "onSelect", data : [ selected[0] ]};
+		zkau.send (req, 5);		
+	} else {
+		var req = {uuid: table.id, cmd: "onMultiSelect", data : [ JSON.stringify(selected)]};
+		zkau.send (req, 5);		
+	}
 }
 
 zkDatatable.onSort=function(ev) {
@@ -898,20 +916,24 @@ zkDatatable.prepareSort=function(ed) {
 		if (rows < 50) {
 			if (ed.sortColumn >= 0)
 				zkDatatable.doSort(ed);
+			zkDatatable.createFooter(ed);
 			zkDatatable.fixupColumns(ed);
+			zkDatatable.findSelectedPosition(ed);
 		}
 		else {
 			ed.sortPending = true;
 			window.setTimeout(() => {
+				ed.sortPending = false;
 				if (ed.sortColumn >= 0)
 					zkDatatable.doSort(ed);
+				zkDatatable.createFooter(ed);
 				zkDatatable.fixupColumns(ed);
+				zkDatatable.findSelectedPosition(ed);
 			}, 100);
 		}
 	}
 }
 zkDatatable.doSort=function(ed) {
-	ed.sortPending = false;
 	var sortColumn = ed.sortColumn;
 	var value = ed.columns[ed.sortColumn].value;
 	var direction = ed.sortDirection;
@@ -1043,7 +1065,7 @@ zkDatatable.next=function(t)
 			if (t.multiselect) {
 				var cb = next.firstElementChild/* td */.firstElementChild/* input */;
 				cb.checked = true;
-				zkDatatable.sendSelect(t);
+				zkDatatable.sendSelect(t, true);
 			} else {
 				var position = t.index.indexOf(next.id);
 				if (position >= 0)
@@ -1078,7 +1100,7 @@ zkDatatable.previous=function(t)
 			if (t.multiselect) {
 				var cb = next.firstElementChild/* td */.firstElementChild/* input */;
 				cb.checked = true;
-				zkDatatable.sendSelect(t);
+				zkDatatable.sendSelect(t, true);
 			} else {
 				var position = t.index.indexOf(next.id);
 				if (position >= 0)

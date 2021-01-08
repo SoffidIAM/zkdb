@@ -8,6 +8,7 @@ import org.apache.commons.beanutils.ConstructorUtils;
 import org.zkoss.zk.ui.UiException;
 import org.zkoss.zk.ui.ext.AfterCompose;
 
+import es.caib.zkib.binder.BindContext;
 import es.caib.zkib.datamodel.AbstractDataModel;
 import es.caib.zkib.datamodel.DataContext;
 import es.caib.zkib.datamodel.DataModelNode;
@@ -16,6 +17,7 @@ import es.caib.zkib.datamodel.xml.CustomData;
 import es.caib.zkib.datamodel.xml.Parser;
 import es.caib.zkib.datamodel.xml.XmlDataNode;
 import es.caib.zkib.datamodel.xml.definition.ModelDefinition;
+import es.caib.zkib.datasource.DataSource;
 
 
 public class DataModel extends AbstractDataModel implements AfterCompose {
@@ -149,4 +151,5 @@ public class DataModel extends AbstractDataModel implements AfterCompose {
 			getJXPathContext().getVariables().declareVariable((String)att, value);
 		}
 	}
+
 }

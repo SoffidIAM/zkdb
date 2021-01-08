@@ -54,7 +54,7 @@ public class Form2 extends Div implements BindContext {
 		
 		if (ds != null)
 		{
-			binder.getDataSource().sendEvent(new XPathRerunEvent(ds, path));
+			ds.sendEvent(new XPathRerunEvent(ds, path));
 		}
 		
 		if (binder.getDataSource() != null)
@@ -84,5 +84,6 @@ public class Form2 extends Div implements BindContext {
 		clone.binder.setDataPath(binder.getDataPath());
 		return clone;
 	}
+	
 
 }

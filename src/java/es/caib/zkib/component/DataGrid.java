@@ -360,7 +360,7 @@ public class DataGrid extends Grid implements BindContext, XPathSubscriber, Afte
 
 
 	public void afterCompose() {
-		if ( getModel() == null && getSclass().equals("grid"))
+		if ( getModel() == null && "grid".equals(getSclass()))
 			setSclass("noBorderGrid");
 	}
 	

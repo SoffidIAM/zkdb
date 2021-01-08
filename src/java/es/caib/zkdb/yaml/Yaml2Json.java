@@ -94,7 +94,6 @@ public class Yaml2Json {
 				else if (value.equals( "|-")) {
 					value = readMultiLine(prefix.replaceAll("-", " "), false, true);
 				}
-
 				writer.append(quoteValue( value ));
 			}
 			else
@@ -220,7 +219,8 @@ public class Yaml2Json {
 		do {
 			lines++;
 			line=reader.readLine();
-		} while (line != null && line.trim().isEmpty());
+		} while (line != null && 
+				(line.trim().isEmpty() || line.startsWith("#")));
 	}
 	
 	public static void main(String args[]) throws IOException

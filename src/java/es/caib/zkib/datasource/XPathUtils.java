@@ -49,13 +49,13 @@ public class XPathUtils {
 		return null;
 	}
 
-	public static Object getValue (DataSource ds, String xpath) 
+	private static Object getDsValue (DataSource ds, String xpath) 
 	{
 		if (ds == null || xpath == null) return null;
 		return ds.getJXPathContext().getValue(xpath);
 	}
 	
-	public static void setValue (DataSource ds, String xpath, Object value)
+	private static void setDsValue (DataSource ds, String xpath, Object value)
 	{
 		ds.getJXPathContext().setValue(xpath, value);
 	}
@@ -84,32 +84,56 @@ public class XPathUtils {
 			result = "/";
 		return result;
 	}
-	public static Object getValue (BindContext ctx, String xpath) 
+	
+	private static Object getCtxValue (BindContext ctx, String xpath) 
 	{
 		return ctx.getDataSource().getJXPathContext().getValue( concat(ctx.getXPath(), xpath));
 	}
 	
+	@Deprecated
 	public static Object getValue (Component ctxComponent, String xpath) 
 	{
-		if (ctxComponent instanceof DataSource)
-			return getValue ((DataSource) ctxComponent, xpath);
+		return eval((Object)ctxComponent, xpath);
+	}
 
-		BindContext ctx = getComponentContext(ctxComponent);
+	@Deprecated
+	public static Object getValue (BindContext ctxComponent, String xpath) 
+	{
+		return eval((Object)ctxComponent, xpath);
+	}
+
+	@Deprecated
+	public static Object getValue (DataSource ctxComponent, String xpath) 
+	{
+		return eval((Object)ctxComponent, xpath);
+	}
+
+	public static Object eval (Object ctxComponent, String xpath) 
+	{
+		if (ctxComponent instanceof DataSource)
+			return getDsValue ((DataSource) ctxComponent, xpath);
+
+		if (ctxComponent instanceof BindContext)
+			return getCtxValue ((BindContext) ctxComponent, xpath);
+
+		BindContext ctx = getComponentContext((Component) ctxComponent);
 		return ctx.getDataSource().getJXPathContext().getValue( concat(ctx.getXPath(), xpath));
 	}
 
-	public static void setValue (BindContext ctx, String xpath, Object obj) 
+	private static void setCtxValue (BindContext ctx, String xpath, Object obj) 
 	{
 		ctx.getDataSource().getJXPathContext().setValue( concat(ctx.getXPath(), xpath), obj);
 	}
 	
 
-	public static void setValue (Component cmp, String xpath, Object obj) 
+	public static void setValue (Object cmp, String xpath, Object obj) 
 	{
 		if (cmp instanceof DataSource)
-			setValue ((DataSource) cmp, xpath, obj);
+			setDsValue ((DataSource) cmp, xpath, obj);
+		else if (cmp instanceof BindContext)
+			setCtxValue ((BindContext) cmp, xpath, obj);
 		else
-			setValue( getComponentContext(cmp), xpath, obj);
+			setCtxValue( getComponentContext((Component)cmp), xpath, obj);
 	}
 	
 	public static void removePath (DataSource ds, String xpath)

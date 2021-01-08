@@ -7,6 +7,7 @@ import org.zkoss.xml.HTMLs;
 import org.zkoss.xml.XMLs;
 import org.zkoss.zk.au.out.AuScript;
 import org.zkoss.zk.ui.Component;
+import org.zkoss.zk.ui.ComponentNotFoundException;
 import org.zkoss.zk.ui.Executions;
 import org.zkoss.zk.ui.Path;
 import org.zkoss.zk.ui.event.Event;
@@ -29,7 +30,7 @@ public class DatasourceButton extends Button  {
 	
 	public DatasourceButton ()
 	{
-		setImage ("~./img/document-save.gif"); //$NON-NLS-1$
+//		setImage ("~./img/document-save.gif"); //$NON-NLS-1$
 		addEventListener(Events.ON_CREATE, new EventListener () {
 			public boolean isAsap() {
 				return false;
@@ -93,7 +94,11 @@ public class DatasourceButton extends Button  {
 	
 
 	protected void checkCommitPending() {
-		Component c = Path.getComponent(getSpaceOwner(), dataModel);
+		Component c = null;
+		try {
+			c = Path.getComponent(getSpaceOwner(), dataModel);
+		} catch (ComponentNotFoundException e) {
+		}
 		if (c != null && c instanceof DataSource)
 		{
 			DataSource dataSource = (DataSource) c;

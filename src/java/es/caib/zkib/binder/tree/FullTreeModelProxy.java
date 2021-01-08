@@ -23,15 +23,16 @@ public class FullTreeModelProxy implements TreeModelProxy, Serializable {
 	transient Vector listeners;
 	Vector childrenXPath;
 	SingletonBinder binder;
+	boolean notifyChanges;
 	
-	public FullTreeModelProxy(SingletonBinder binder) {
+	public FullTreeModelProxy(SingletonBinder binder, boolean notifyChanges) {
 		this.binder = binder;
 		childrenXPath = new Vector ();
 		root = new TreeModelProxyNode (this);
 
 		listeners = new Vector ();
 		v = new Vector ();
-
+		this.notifyChanges = notifyChanges;
 	}
 
 	
@@ -174,6 +175,16 @@ public class FullTreeModelProxy implements TreeModelProxy, Serializable {
 	throws java.io.IOException, ClassNotFoundException {
 		s.defaultReadObject();
 		listeners = new Vector();
+	}
+
+
+	public boolean notifyChanges() {
+		return notifyChanges;
+	}
+
+
+	public void setNotifyChanges(boolean notifyChanges) {
+		this.notifyChanges = notifyChanges;
 	}
 
 }

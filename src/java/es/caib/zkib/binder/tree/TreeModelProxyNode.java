@@ -195,6 +195,10 @@ public class TreeModelProxyNode implements XPathSubscriber, Serializable {
 		}
 	}
 	
+
+	public boolean areChildrenPopulated() {
+		return children != null & ! detached;
+	}
 	/**
 	 * @return Returns the children.
 	 */
@@ -439,18 +443,20 @@ public class TreeModelProxyNode implements XPathSubscriber, Serializable {
 	 * @param childPath
 	 */
 	private void updateChild(String path) {
-		String thisPath = XPathUtils.concat(modelProxy.getBinder().getDataSource().getRootPath(),getXPathPrefix());
-		
-		// Cerquem si tenim fills (n'hi ha vegades que children arriba null):
-		if (children==null) 
-			children = searchChildren();
-		
-		for (int i = 0 ; i < children.length; i ++)  
-		{
-			String newPath  = XPathUtils.concat(thisPath,children[i].localPath);
-			if (path.equals(newPath))
+		if (modelProxy.notifyChanges()) {
+			String thisPath = XPathUtils.concat(modelProxy.getBinder().getDataSource().getRootPath(),getXPathPrefix());
+			
+			// Cerquem si tenim fills (n'hi ha vegades que children arriba null):
+			if (children==null) 
+				children = searchChildren();
+			
+			for (int i = 0 ; i < children.length; i ++)  
 			{
-				modelProxy.sendEvent ( new TreeDataEvent (modelProxy, TreeDataEvent.CONTENTS_CHANGED, this, i, i));
+				String newPath  = XPathUtils.concat(thisPath,children[i].localPath);
+				if (path.equals(newPath))
+				{
+					modelProxy.sendEvent ( new TreeDataEvent (modelProxy, TreeDataEvent.CONTENTS_CHANGED, this, i, i));
+				}
 			}
 		}
 	}

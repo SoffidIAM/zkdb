@@ -42,7 +42,7 @@ public class SingletonBinder extends AbstractBinder {
 					_pointer = getDataSource().getJXPathContext().getPointer(getXPath());
 					_xPath = _pointer.asPath();
 				}
-			} catch (JXPathException e) {
+			} catch (JXPathException | IndexOutOfBoundsException e) {
 				LogFactory.getLog(getClass()).debug("Error evaluating xpath " +
 						getXPath() + ":" + e.toString());
 				_pointer = new NullPointer (null, getDataSource().getJXPathContext().getLocale());

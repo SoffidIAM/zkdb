@@ -5,6 +5,7 @@ import java.io.StringWriter;
 import java.io.Writer;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
@@ -41,6 +42,7 @@ import es.caib.zkib.binder.tree.TreeModelProxy;
 import es.caib.zkib.binder.tree.TreeModelProxyNode;
 import es.caib.zkib.datamodel.DataModelCollection;
 import es.caib.zkib.datamodel.DataModelNode;
+import es.caib.zkib.datamodel.DataNodeCollection;
 import es.caib.zkib.datasource.ChildDataSourceImpl;
 import es.caib.zkib.datasource.CommitException;
 import es.caib.zkib.datasource.DataSource;
@@ -161,7 +163,7 @@ public class DataTree2 extends XulElement implements XPathSubscriber,
 	private void applyModel() throws Exception {
 		if (treeBinder.getDataPath() != null && finders != null)
 		{
-			FullTreeModelProxy lm = new FullTreeModelProxy(treeBinder); 
+			FullTreeModelProxy lm = new FullTreeModelProxy(treeBinder, true); 
 
 			for (int i = 0; i < finders.length(); i++)
 			{
@@ -182,13 +184,13 @@ public class DataTree2 extends XulElement implements XPathSubscriber,
 				dsImpl = new ChildDataSourceImpl ();
 			
 			dsImpl.setDataSource(treeBinder.getDataSource());
-			dsImpl.setRootXPath(treeBinder.getXPath());
+			dsImpl.setRootXPath("/");
 	
 			int[] path = getSelectedItem();
 			if (path != null && path.length > 0)
 			{
 				selectedItemXPath = lm.getXPath(path);
-				dsImpl.setXPath(selectedItemXPath);
+				dsImpl.setXPath(selectedItemXPath == null ? treeBinder.getXPath(): selectedItemXPath);
 				
 			}
 		}
@@ -206,6 +208,42 @@ public class DataTree2 extends XulElement implements XPathSubscriber,
 		response("setData", new AuInvoke(this, "setData", sb.toString()));
 	}
 	
+	public void updateCurrentRow(JSONObject obj)
+	{
+        try {
+    		StringWriter sb = new StringWriter();
+    		JSONWriter writer = new JSONWriter(sb);
+    		
+    		if (selectedItem != null && selectedItem.length > 0) {
+    			LinkedList<Integer> l = new LinkedList<Integer>();
+    			for (int p: selectedItem) l.add(p);
+    			dump (obj,  writer, -1, l);
+    			
+       			response("update_"+posToString(selectedItem), new AuInvoke(this, "updateRow", sb.toString()));
+        	}
+        } catch (Exception e) {
+            throw new UiException(e);
+        }
+	}
+
+	public void updateCurrentBranch(JSONObject obj)
+	{
+        try {
+    		StringWriter sb = new StringWriter();
+    		JSONWriter writer = new JSONWriter(sb);
+    		
+    		if (selectedItem != null && selectedItem.length > 0) {
+    			LinkedList<Integer> l = new LinkedList<Integer>();
+    			for (int p: selectedItem) l.add(p);
+    			dump (obj,  writer, -1, l);
+    			
+       			response("update_"+posToString(selectedItem), new AuInvoke(this, "updateBranch", sb.toString()));
+        	}
+        } catch (Exception e) {
+            throw new UiException(e);
+        }
+	}
+
 	private void dump(JSONObject node, JSONWriter writer, int levels, LinkedList<Integer> pos) {
 		writer.object();
 		writer.key("position");
@@ -254,10 +292,21 @@ public class DataTree2 extends XulElement implements XPathSubscriber,
 					} else {
 						renderValue(node, writer, value, template);
 					}
-					if (finder.optBoolean("leaf"))
+					String leafExpr = finder.optString("leaf");
+					if (leafExpr != null)
 					{
 						writer.key("leaf");
-						writer.value(true);
+						if ("true".equals(leafExpr))
+							writer.value(true);
+						else if ("false".equals(leafExpr))
+							writer.value(false);
+						else {
+							if (expf == null)
+								expf = Expressions.newExpressionFactory(null);
+							Object v = expf.evaluate(new JSONContext (this, node), translateHashExpression(leafExpr), Boolean.class);
+							v = formatObject(v);
+							writer.value(v != null && "true".equals(v.toString().trim()));
+						}
 					}
 					if (node.has("collapsed"))
 					{
@@ -269,7 +318,7 @@ public class DataTree2 extends XulElement implements XPathSubscriber,
 						writer.value(true);
 					}
 					String tail = finder.optString("tail");
-					if (tail != null) {
+					if (tail != null && !tail.trim().isEmpty()) {
 						writer.key("tail");
 						if (expf == null)
 							expf = Expressions.newExpressionFactory(null);
@@ -350,9 +399,28 @@ public class DataTree2 extends XulElement implements XPathSubscriber,
 			response("setData", new AuInvoke(this, "setData", "{}"));
 		}
 	}
-
 	
-	private void dump(FullTreeModelProxy lm, TreeModelProxyNode node, JSONWriter writer, int levels, LinkedList<Integer> pos) {
+	public void updateClient() {
+		if (this.model != null) {
+			TreeModelProxyNode root = (TreeModelProxyNode) model.getRoot();
+			updateClient(root, new int[0]);
+		}
+	}
+
+	private void updateClient(TreeModelProxyNode root, int [] pos) {
+		int[] pos2 = Arrays.copyOf(pos, pos.length+1);
+		if (root.areChildrenPopulated()) {
+			TreeModelProxyNode[] children = root.getChildren();
+			for (int i = 0; i < children.length; i++) 
+			{
+				pos2[pos.length] = i;
+				onTreeDataContentChange(root, pos2);
+				updateClient(children[i], pos2);
+			}
+		}
+	}
+	
+	protected void dump(FullTreeModelProxy lm, TreeModelProxyNode node, JSONWriter writer, int levels, LinkedList<Integer> pos) {
 		if (node == null ||node.getLocalPath() == null)
 			return;
 		writer.object();
@@ -397,10 +465,21 @@ public class DataTree2 extends XulElement implements XPathSubscriber,
 			} else {
 				renderValue(node, writer, value, template);
 			}
-			if (finder.optBoolean("leaf"))
+			String leafExpr = finder.optString("leaf");
+			if (leafExpr != null)
 			{
 				writer.key("leaf");
-				writer.value(true);
+				if ("true".equals(leafExpr))
+					writer.value(true);
+				else if ("false".equals(leafExpr))
+					writer.value(false);
+				else {
+					if (expf == null)
+						expf = Expressions.newExpressionFactory(null);
+					Object v = expf.evaluate(new TreeNodeContext (this, node.getValue()), translateHashExpression(leafExpr), Boolean.class);
+					v = formatObject(v);
+					writer.value(v != null && "true".equals(v.toString().trim()));
+				}
 			}
 			if (finder.optBoolean("collapsed"))
 			{
@@ -480,7 +559,10 @@ public class DataTree2 extends XulElement implements XPathSubscriber,
 	public Object evaluateExpression(TreeModelProxyNode node, String expression) {
 		if (expf == null)
 			expf = Expressions.newExpressionFactory(null);
-		Object v = expf.evaluate(new TreeNodeContext (this, node.getValue()), translateHashExpression(expression), String.class);
+		Object value = node.getValue();
+		if (value == null)
+			return null;
+		Object v = expf.evaluate(new TreeNodeContext (this, value), translateHashExpression(expression), String.class);
 		v = formatObject(v);
 		return v;
 	}
@@ -560,6 +642,26 @@ public class DataTree2 extends XulElement implements XPathSubscriber,
 	}
 	
 	
+	public void refreshCurrentRow()
+	{
+        try {
+        	if (selectedItem != null && selectedItem.length > 0) {
+        		TreeModelProxyNode node = model.getTreeModelProxyNode(selectedItem);
+        		if (node != null)
+        		{
+        			StringWriter sb = new StringWriter();
+        			LinkedList<Integer> posl = new LinkedList<Integer>();
+        			for (int p: selectedItem) posl.add(p);
+        			dump (model, node, new JSONWriter(sb), 0, posl);
+        			response("update_"+posToString(selectedItem), new AuInvoke(this, "updateRow", sb.toString()));
+        		}
+        		
+        	}
+        } catch (Exception e) {
+            throw new UiException(e);
+        }
+	}
+	
 	private void onTreeDataContentChange(TreeModelProxyNode parent, int pos[]) {
         try {
         	TreeModelProxyNode node = model.getTreeModelProxyNode(pos);
@@ -635,10 +737,10 @@ public class DataTree2 extends XulElement implements XPathSubscriber,
     private void updateDataSource() {
     	if (model != null && dsImpl != null)
     	{
-    		if (selectedItem == null)
+    		if (selectedItem == null || selectedItem.length == 0)
     		{
     			selectedItemXPath = null;
-    			dsImpl.setXPath(selectedItemXPath);
+    			dsImpl.setXPath(treeBinder.getXPath());
     		}
     		else
     		{
@@ -727,7 +829,11 @@ public class DataTree2 extends XulElement implements XPathSubscriber,
         this.autocommit = autocommit;
     }
 
-	public String addNew (String path)
+    public String addNew (String path) {
+    	return addNew (path, null);
+    }
+    
+	public String addNew (String path, Object value)
 	{
 		if (autocommit) commit ();
 		
@@ -741,19 +847,43 @@ public class DataTree2 extends XulElement implements XPathSubscriber,
 			
 			Object coll = treeBinder.getJXPathContext().getValue(parentPath+"/"+path);
 			
-			if ( coll == null || ! (coll instanceof DataModelCollection))
-				throw new UiException("Only a data model can be added without a value");
-			DataModelCollection collection = (DataModelCollection) coll;
-			DataModelNode nouNode = collection.newInstance(); // Propaguem event onchange
+			String nouXPath = null;
+			if ( coll == null || ! (coll instanceof DataModelCollection)) {
+				if (value == null)
+					throw new UiException("Only a data model can be added without a value");
+				else if (coll instanceof Collection) {
+					Collection collection = (Collection) coll;
+					collection.add(value);
+					nouXPath = parentPath+"/"+path+"["+collection.size()+"]";
+				} else {
+					throw new UiException("Wrong xpath to add a value: "+path);
+				}
+			} else if (coll instanceof DataNodeCollection) {
+				DataNodeCollection collection = (DataNodeCollection) coll;
+				DataModelNode nouNode;
+				if (value == null) 
+					nouNode = collection.newInstance(); // Propaguem event onchange
+				else {
+					collection.add(value);
+					nouNode = collection.getDataModel(collection.size()-1);
+				}
+				value = nouNode;
+				nouXPath = nouNode.getXPath();
+			} else {
+				DataNodeCollection collection = (DataNodeCollection) coll;
+				if (value == null) 
+					throw new UiException("Only a data node can be added with a value");
+				DataModelNode nouNode = collection.newInstance(); // Propaguem event onchange
+				nouXPath = nouNode.getXPath();
+				value = nouNode;
+			}
 			
-			// Seleccionem el nou element a l'arbre (u88683):
-			String nouXPath = nouNode.getXPath();
 			// Comprovem que item != null (nodes sense pare)
 			int[] index = Arrays.copyOf(selectedItem, selectedItem.length + 1);
 			TreeModelProxyNode[] children = node.getChildren();
 			for (int i = 0; i < children.length; i++)
 			{
-				if (children[i].getValue() == nouNode)
+				if (children[i].getValue() == value)
 				{
 					index[selectedItem.length] = i;
 					setSelectedIndex(index);
@@ -917,11 +1047,15 @@ public class DataTree2 extends XulElement implements XPathSubscriber,
 				selectedItemList.add ( a.getInt(pos));
 			}
 			
-			TreeModelProxyNode node = table.model.getTreeModelProxyNode(selectedItem);
-			StringWriter sb = new StringWriter();
-			JSONWriter writer = new JSONWriter(sb);
-			table.dump (table.model, node, writer, 1, selectedItemList);
-			table.response("setData", new AuInvoke(table, "addChildren", sb.toString()));
+			if (table.model != null) {
+				TreeModelProxyNode node = table.model.getTreeModelProxyNode(selectedItem);
+				StringWriter sb = new StringWriter();
+				JSONWriter writer = new JSONWriter(sb);
+				table.dump (table.model, node, writer, 1, selectedItemList);
+				table.response("setData", new AuInvoke(table, "addChildren", sb.toString()));
+			} else {
+				table.response("setData", new AuInvoke(table, "addChildren", "{}"));
+			}
 		}
 		
 	};

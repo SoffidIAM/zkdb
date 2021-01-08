@@ -75,7 +75,7 @@ public class CollectionBinder extends AbstractBinder  {
 		try {
 			p = getDataSource().getJXPathContext().getPointer(path);
 			value = p.getValue();
-		} catch (JXPathException e) {
+		} catch (JXPathException | IndexOutOfBoundsException e) {
 		}
 		if (value != null && value instanceof DataModelCollection)
 		{

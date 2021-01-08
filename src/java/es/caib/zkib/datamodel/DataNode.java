@@ -74,6 +74,9 @@ public abstract class DataNode implements DataModelNode, DynaBean, Map, Serializ
 		children = new HashMap();
 		dynaProperties = new Vector();
 		dynaPropertiesMap = new HashMap ();
+		DynaProperty dp = new DynaProperty ("instance", Object.class);
+		dynaProperties.add(dp);
+		dynaPropertiesMap.put("instance", dp);
 	}
 
 	protected void addFinder (String name, Finder finder, Class clazz)
@@ -440,6 +443,8 @@ public abstract class DataNode implements DataModelNode, DynaBean, Map, Serializ
      *  of the specified name
      */
 	public Object get(String name) {
+		if (name.equals("instance"))
+    		return ctx.getData();
 		Object obj  = getListModel(name);
 		if (obj == null)
 			if (lazyMap == null)
@@ -447,11 +452,11 @@ public abstract class DataNode implements DataModelNode, DynaBean, Map, Serializ
 		        try {
 		            return PropertyUtils.getSimpleProperty(ctx.getData(), name);
 		        } catch (Throwable t) {
-		            throw new IllegalArgumentException
+	        		throw new IllegalArgumentException
 		                    ("Property '" + name + "' has no read method");
 		        }
 			}
-			else
+			else 
 				return lazyMap.get(name);
 		else
 			return obj;

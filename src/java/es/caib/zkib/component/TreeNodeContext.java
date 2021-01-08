@@ -10,6 +10,8 @@ import org.zkoss.xel.XelException;
 import org.zkoss.zk.ui.Component;
 import org.zkoss.zk.ui.Executions;
 
+import es.caib.zkib.datamodel.DataNode;
+
 public class TreeNodeContext implements XelContext {
 	private Component c;
 	private Object value;
@@ -49,7 +51,7 @@ class CustomVariableResolver implements VariableResolver {
 		if ( p != null)
 			return p;
 		else
-			return parent.resolveVariable(name);
+ 			return parent.resolveVariable(name);
 	}
 	
 }

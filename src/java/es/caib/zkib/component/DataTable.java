@@ -1,20 +1,20 @@
 package es.caib.zkib.component;
 
-import java.beans.PropertyDescriptor;
 import java.io.IOException;
 import java.io.Writer;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.text.DateFormat;
-import java.text.Format;
 import java.text.SimpleDateFormat;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
+import java.util.Base64;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import org.apache.commons.beanutils.DynaBean;
 import org.apache.commons.beanutils.DynaClass;
@@ -24,7 +24,6 @@ import org.apache.commons.beanutils.PropertyUtilsBean;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.zkoss.util.Locales;
 import org.zkoss.util.TimeZones;
 import org.zkoss.util.resource.Labels;
 import org.zkoss.xml.HTMLs;
@@ -32,7 +31,6 @@ import org.zkoss.zk.au.AuRequest;
 import org.zkoss.zk.au.Command;
 import org.zkoss.zk.au.ComponentCommand;
 import org.zkoss.zk.au.out.AuInvoke;
-import org.zkoss.zk.au.out.AuSetAttribute;
 import org.zkoss.zk.ui.Component;
 import org.zkoss.zk.ui.Page;
 import org.zkoss.zk.ui.UiException;
@@ -49,7 +47,6 @@ import org.zkoss.zul.impl.XulElement;
 import es.caib.zkdb.yaml.Yaml2Json;
 import es.caib.zkib.binder.BindContext;
 import es.caib.zkib.binder.CollectionBinder;
-import es.caib.zkib.binder.SingletonBinder;
 import es.caib.zkib.binder.list.ModelProxy;
 import es.caib.zkib.datamodel.DataModelCollection;
 import es.caib.zkib.datamodel.DataModelNode;
@@ -97,8 +94,10 @@ public class DataTable extends XulElement implements XPathSubscriber,
 	boolean download = false;
 	boolean updateRowEvent = true;
 	boolean reorder = false;
+	boolean translatelabels = false;
 	private boolean initialized = false;
-	
+	private JSONArray columnsArray;
+
 	public DataTable () {
 		setSclass("datatable");
 		String r = Labels.getLabel("zkdb.rows");
@@ -113,6 +112,12 @@ public class DataTable extends XulElement implements XPathSubscriber,
     
     public String getSelectedItemXPath () {
     	return selectedItemXPath;
+    }
+    
+    public String getItemXPath(int position) {
+    	String base = collectionBinder.getModelXPath();
+        String p = ((ModelProxy) getModel()).getBind(position);
+        return XPathUtils.concat(base, p);
     }
 
     public void setDataPath(String bind) {
@@ -165,11 +170,13 @@ public class DataTable extends XulElement implements XPathSubscriber,
 	public void setColumns(String columns) {
 		try {
 			this.columns = new Yaml2Json().transform(columns);
+			columnsArray = new JSONArray(this.columns);
 		} catch (IOException e) {
 			throw new UiException("Unable to parse JSON descriptor "+columns);
 		}
 		
 		smartUpdate("columns", this.columns);
+		
 		if (model != null)
 			sendModelData();
 	}
@@ -302,7 +309,14 @@ public class DataTable extends XulElement implements XPathSubscriber,
         }
 		
 	}
-	
+
+	public void updateClientRow(int i) {
+		if (updateRowEvent) {
+            String value = getClientValue(i);
+            response("update_"+i, new AuInvoke(this, "updateRow", Integer.toString(i), value));
+		}
+	}
+
 	public int getSelectedIndex() {
 		return selectedIndex;
 	}
@@ -320,7 +334,7 @@ public class DataTable extends XulElement implements XPathSubscriber,
 			response("setSelected", new AuInvoke(this, "setSelected", Integer.toString(selectedIndex)));
 		}
 		this.selectedIndex = selectedIndex;
-		if (multiselect && selectedIndex >= 0)
+		if (selectedIndex >= 0)
 		{
 			selectedIndexList.clear();
 			selectedIndexList.add(selectedIndex);
@@ -347,7 +361,9 @@ public class DataTable extends XulElement implements XPathSubscriber,
 	}
 
 	public JXPathContext getJXPathContext() {
-        if (dsImpl == null)
+		if (dsImpl == null)
+			updateDataSource();
+        if (dsImpl == null) 
             return null;
         else
             return dsImpl.getJXPathContext();
@@ -458,11 +474,21 @@ public class DataTable extends XulElement implements XPathSubscriber,
     	if (element == null)
     		return "{}";
     	JSONObject o = getClientValue(element);
+    	
     	return o.toString();
 	}
     
 	protected JSONObject getClientValue(Object element) throws JSONException {
+		JSONObject o = wrap(element);
+		return o;
+	}
+
+	public JSONObject wrap(Object element) {
 		JSONObject o;
+		if (element == null)
+			o = new JSONObject();
+		if (element instanceof ClassLoader)
+			return null;
 		if (element instanceof DynaBean) {
 			DynaBean dynaBean = (DynaBean) element;
 			DynaClass cl = dynaBean.getDynaClass();
@@ -470,6 +496,7 @@ public class DataTable extends XulElement implements XPathSubscriber,
 			for ( DynaProperty p: cl.getDynaProperties()) {
 				String name = p.getName();
 				if (!name.equals("class") && 
+					!name.equals("instance") &&
 					! DataModelCollection.class.isAssignableFrom( p.getType()) ) 
 				{
 					Object value = dynaBean.get(name);
@@ -478,12 +505,24 @@ public class DataTable extends XulElement implements XPathSubscriber,
 			}
 		} else {
 			if (element instanceof DataNode) element = ((DataNode) element).getInstance();
-			o = new JSONObject(element);
+			Map<String, Object> p;
+			try {
+				p = PropertyUtils.describe(element);
+			} catch (Exception e) {
+				throw new JSONException(e);
+			}
+			o = new JSONObject();
+			for (Entry<String, Object> entry: p.entrySet()) {
+				wrapClientValue(o, entry.getKey(), entry.getValue());
+			}
 		}
 		return o;
 	}
+	
 	public void wrapClientValue(JSONObject o, String name, Object value) {
-		if (value instanceof Date) {
+		if (value instanceof ClassLoader) {
+			// Nothing to do
+		} else if (value instanceof Date) {
 			DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-DD'T'HH:mm:ss");
 			dateFormat.setTimeZone(TimeZones.getCurrent());
 			String v =  dateFormat.format((Date)value);
@@ -498,6 +537,15 @@ public class DataTable extends XulElement implements XPathSubscriber,
 			o.put(name, JSONObject.wrap(v));
 			o.put(name+"_date", DateFormats.getDateFormat().format(d));
 			o.put(name+"_datetime", DateFormats.getDateTimeFormat().format(d));
+		} else if (value instanceof byte[]) {
+			byte[] img = (byte[]) value;
+			o.put(name, Base64.getEncoder().encodeToString(img));
+			String ct = img[0] == '<' && img[1] == '?' ? "image/svg+xml" :
+				img[0] == 0x77 && img[1] == 0xd8 && img[2] == 0xff ?  "image/jpeg":
+				img[0] == 0x89 && img[1] == 0x50 && img[2] == 0x4e ?  "image/png":
+					"image/gif";
+			o.put(name+"_contentType", ct);
+
 		} else if (value instanceof Map) {
 			Map m = (Map) value;
 			JSONObject o2 = new JSONObject();
@@ -506,6 +554,18 @@ public class DataTable extends XulElement implements XPathSubscriber,
 				wrapClientValue(o2, name2.toString(), m.get(name2));
 			}
 		} else {
+			if (translatelabels && value != null) {
+				try {
+					Method m = value.getClass().getMethod("getValue");
+					if (m != null) {
+						String className = value.getClass().getName();
+						value = m.invoke(value);
+						value = Labels.getLabel(className+"."+value);
+					}
+				} catch (Exception e) {
+					// Ignore reflection errors
+				}
+			}
 			o.put(name, JSONObject.wrap(value));
 		}
 	}
@@ -513,31 +573,51 @@ public class DataTable extends XulElement implements XPathSubscriber,
 
 	public void delete() {
         ListModel lm = getModel();
-        if (lm == null || !(lm instanceof ModelProxy))
-            throw new UiException(
-                    "Not allowed to delete records without a model");
-
-        if (getSelectedIndex() >= 0) {
-            Object obj = lm.getElementAt(getSelectedIndex());
-            if (obj instanceof DataModelNode) {
-            	((DataModelNode) obj).delete();
-            } else {
-            	DataSource dataSource = collectionBinder.getDataSource();
-				JXPathContext ctx = dataSource.getJXPathContext();
-				Object c = ctx.getValue(collectionBinder.getXPath());
-            	if (c instanceof Collection) {
-            		((Collection) c).remove(obj);
-            		ctx.setValue(collectionBinder.getXPath(), c);
-            		dataSource.sendEvent(new XPathRerunEvent(dataSource, collectionBinder.getXPath()));
-            	} else {
-            		throw new UiException( "Unable to delete object "+obj.toString());
-            	}
-            }
-
-            // response("remove_"+getSelectedIndex(), new AuInvoke(this, "removeRow", Integer.toString(getSelectedIndex())));
-            if (autocommit)
-                commit();
-            setSelectedIndex(-1);
+        if (lm == null)
+        {
+        	if (selectedIndex >= 0) {
+		        try {
+		            response("remove_"+selectedIndex, new AuInvoke(this, "deleteRow", Integer.toString(selectedIndex)));
+		        } catch (Exception e) {
+		            throw new UiException(e);
+		        }
+		        selectedIndex = -1;
+        	}
+        } else {
+        	if (!(lm instanceof ModelProxy))
+        		throw new UiException(
+        				"Not allowed to delete records without a model");
+        	
+        	if (getSelectedIndex() >= 0 || multiselect && !selectedIndexList.isEmpty()) {
+        		int[] s = getSelectedIndexes();
+        		Arrays.sort(s);
+        		for (int i = s.length - 1; i >= 0; i--) {
+        			int pos = s[i];
+   					Object obj = lm.getElementAt(pos);
+        			if (obj instanceof DataModelNode) {
+        				((DataModelNode) obj).delete();
+        			} else {
+        				DataSource dataSource = collectionBinder.getDataSource();
+        				JXPathContext ctx = dataSource.getJXPathContext();
+        				Object c = ctx.getValue(collectionBinder.getXPath());
+        				if (c instanceof Collection) {
+        					((Collection) c).remove(obj);
+        					ctx.setValue(collectionBinder.getXPath(), c);
+        					dataSource.sendEvent(new XPathRerunEvent(dataSource, collectionBinder.getXPath()));
+        				} else {
+        					throw new UiException( "Unable to delete object "+obj.toString());
+        				}
+        			}
+        		}
+        		
+        		// response("remove_"+getSelectedIndex(), new AuInvoke(this, "removeRow", Integer.toString(getSelectedIndex())));
+        		if (autocommit)
+        			commit();
+        		setSelectedIndex(-1);
+        		if (multiselect)
+        			setSelectedIndex(new int[0]);
+        	}
+        	
         }
     }
 
@@ -580,18 +660,9 @@ public class DataTable extends XulElement implements XPathSubscriber,
         syncSelectedItem();
     }
 
-    public void setPage(Page page) {
-        super.setPage(page);
-        collectionBinder.setPage(page);
-    }
-
-    public void setParent(Component parent) {
-        super.setParent(parent);
-        collectionBinder.setParent(parent);
-    }
-
     public Object clone() {
         DataTable clone = (DataTable) super.clone();
+        clone._dataListener = null;
         clone.collectionBinder = new CollectionBinder(clone);
         clone.setDataPath(collectionBinder.getDataPath());
         return clone;
@@ -688,6 +759,8 @@ public class DataTable extends XulElement implements XPathSubscriber,
 		protected void process(AuRequest request) {
 			final DataTable table = (DataTable) request.getComponent();
 			table.selectedIndex = Integer.parseInt( request.getData()[0] );
+			table.selectedIndexList.clear();
+			table.selectedIndexList.add(table.selectedIndex);
 			table.updateDataSource();
 			Events.postEvent(new Event("onSelect", table, new Integer(table.selectedIndex)));
 		}
@@ -708,7 +781,7 @@ public class DataTable extends XulElement implements XPathSubscriber,
 			else
 				table.selectedIndex = -1;
 			table.updateDataSource();
-			Events.postEvent(new Event("onSelect", table, new Integer(table.selectedIndex)));
+			Events.postEvent(new Event("onMultiSelect", table, new Integer(table.selectedIndex)));
 		}
 		
 	};
@@ -727,29 +800,16 @@ public class DataTable extends XulElement implements XPathSubscriber,
 	};
 
 	public void deleteSelectedItem() {
-        ListModel lm = getModel();
-        if (lm == null || !(lm instanceof ModelProxy))
-            throw new UiException(
-                    "Not allowed to delete records without a model");
-
-        if (autocommit)
-            commit();
-
-        if (getSelectedIndex() >= 0) {
-            Object obj = lm.getElementAt(getSelectedIndex());
-            if (!(obj instanceof DataModelNode))
-                throw new UiException("Unable to delete object " + obj);
-            ((DataModelNode) obj).delete();
-            if (autocommit)
-                commit();
-            setSelectedIndex(-1);
-        }
+		delete();
 	}
 	public boolean isEnablefilter() {
 		return enablefilter;
 	}
 	public void setEnablefilter(boolean enablefilter) {
 		this.enablefilter = enablefilter;
+		if (! enablefilter) {
+			setSclass(getSclass()+" fixedlayout");
+		}
 	}
 	public int getSortColumn() {
 		return sortColumn;
@@ -826,5 +886,27 @@ public class DataTable extends XulElement implements XPathSubscriber,
 	public void setReorder(boolean reorder) {
 		this.reorder = reorder;
 		smartUpdate("reorder", reorder);
+	}
+	public boolean isTranslatelabels() {
+		return translatelabels;
+	}
+	public void setTranslatelabels(boolean translatelabels) {
+		this.translatelabels = translatelabels;
+	}
+	@Override
+	public void onPageAttached(Page newpage, Page oldpage) {
+		super.onPageAttached(newpage, oldpage);
+        collectionBinder.setPage(newpage);
+	}
+	@Override
+	public void onPageDetached(Page page) {
+		super.onPageDetached(page);
+		collectionBinder.setPage(null);
+		setModel(null);
+	}
+
+	public void refresh () throws Exception {
+		if (collectionBinder != null && collectionBinder.isValid())
+			collectionBinder.getUpdateableListModel().refresh();
 	}
 }
