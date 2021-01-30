@@ -194,7 +194,7 @@ public class Yaml2Json {
 	private String quote(String value) {
 		if (value.startsWith("\"") && value.endsWith("\""))
 			value = value.substring(1, value.length()-1);
-		return "\""+value.replaceAll("\\\\", "\\\\\\\\").replaceAll("\"", "\\\\\"") + "\"";
+		return "\""+value.replaceAll("\\\\", "\\\\\\\\").replaceAll("\"", "\\\\\"").replace("\n", "\\\n") + "\"";
 	}
 
 	private String quoteValue(String value) {
