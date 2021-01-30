@@ -246,7 +246,7 @@ zkDataList.addElement = function(e, parent, pos) {
 		var split = option.indexOf(":");
 		if (split >= 0) {
 			key = option.substring(0,split).trim();
-			key = decodeURIComponent(key);
+			key = decodeURIComponent(key.replaceAll("+"," "));
 			label = option.substring(split+1).trim();
 		} else {
 			key = label = option;
@@ -1064,8 +1064,10 @@ zkDataImage.addElement = function(e, parent, pos) {
 
 	zkDataCommon.createRemoveIcon(e, parent, pos);
 	/* add event listeners */
-	if ( !e.readOnly && !e.disabled)
+	if ( !e.readOnly && !e.disabled) {
+		img.databoxid = e.getAttribute("id");
 		zk.listen(img, "click", zkDataCommon.onOpenSelect);
+	}
     
     /* set css class */
     if (e.readOnly) {
@@ -1108,9 +1110,10 @@ zkDataHtml.addElement = function(e, parent, pos) {
 
 	zkDataCommon.createRemoveIcon(e, parent, pos);
 	/* add event listeners */
-	if (!e.readOnly && !e.disabled) 
+	if (!e.readOnly && !e.disabled)  {
+		img.databoxid = e.getAttribute("id");
 		zk.listen(img, "click", zkDataCommon.onOpenSelect);
-    
+    }
     /* set css class */
     if (e.readOnly) {
         zk.addClass(img, "readonly")
@@ -1205,7 +1208,7 @@ zkDataCommon.refresh=function(databox, value) {
 		databox.appendChild(container);
 		try {
 			var cs = getComputedStyle(labelContainer);
-			if (cs.width != cs.minWidth && ws.width != "auto") {
+			if (cs.width != cs.minWidth && cs.width != "auto") {
 				container.setAttribute("class", "container wrapped");
 			}
 		} catch (error) { // Can fail if container is not visible yet 

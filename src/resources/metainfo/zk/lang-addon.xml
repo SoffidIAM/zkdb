@@ -9,6 +9,8 @@
 
   <language-name>xul/html</language-name>
 
+  <javascript src="~./js/ext/ckeditor5-build-classic/ckeditor.js" />
+
   <javascript src="~./js/ext/codemirror/lib/codemirror.js" />
   <javascript src="~./js/ext/codemirror/mode/xml/xml.js" />
   <javascript src="~./js/ext/codemirror/mode/java/java.js" />
@@ -362,6 +364,16 @@
 		<mold>
 			<mold-name>default</mold-name>
 			<mold-uri>~./codemirror/codemirror.dsp</mold-uri>
+		</mold>
+	</component>
+
+	<javascript-module name="ckeditor.ckeditor" version="1.0"/>
+	<component>
+		<component-name>ckeditor</component-name>
+		<component-class>com.soffid.ckeditor.Ckeditor</component-class>
+		<mold>
+			<mold-name>default</mold-name>
+			<mold-uri>~./ckeditor/ckeditor.dsp</mold-uri>
 		</mold>
 	</component>
 
