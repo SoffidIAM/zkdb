@@ -44,6 +44,8 @@ zkDatatree2.init = function (ed) {
 	if (!ed.pagers)
 		ed.pagers=[];
 	zkDatatree2.refresh(ed);
+	
+	new ResizeSensor(ed, function ()  { zkDatatree2.fixupColumns(ed); });
 };
 
 zkDatatree2.registerPager=function(ed, pager) {
@@ -574,11 +576,14 @@ zkDatatree2.renderRow=function(tree, container, value) {
 	var label = document.createElement("div");
 	label.setAttribute("class", "tree-label");
 	label.value = value;
+	
 	container.insertBefore(label, container.firstChild);
 	
+	var style = "tree-label";
 	if (value['$class']) { 
-		label.setAttribute("class", "tree-label "+value['$class']);
+		style = "tree-label "+value['$class'];
 	}
+	label.setAttribute("class", style);
 	
 	if (value.columns && value.columns.length > 0) {
 		var div0 = document.createElement("div");
@@ -604,7 +609,7 @@ zkDatatree2.renderRow=function(tree, container, value) {
 		}
 		div0.style.width = "" + total + "px"; 
 	} else {
-		label.setAttribute("class", "tree-label no-columns");
+		label.setAttribute("class", style + " no-columns");
 		zkDatatree2.renderValue(tree, label, value, value.icon);
 	}
 	zk.listen(label, "click", zkDatatree2.onSelectRow);

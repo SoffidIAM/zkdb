@@ -441,7 +441,7 @@ public class DataTree2 extends XulElement implements XPathSubscriber,
 			}
 			Object cl = getRowClass(node);
 			if (cl != null) {
-				writer.key("class");
+				writer.key("$class");
 				writer.value(cl);
 			}
 			String value = finder.optString("value");
