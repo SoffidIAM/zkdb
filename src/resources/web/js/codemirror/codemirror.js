@@ -16,6 +16,10 @@ zkCodemirror.init = function (ed) {
 	
 	// Detect visibilty
 	ed.__hidden = true;
+	
+	if (true)
+		new ResizeSensor(ed, function ()  { zkCodemirror.refresh(ed); });
+	else {
 	try {
 		var observer = new IntersectionObserver((entries, observer) => {
 			entries.forEach(entry => {
@@ -36,6 +40,7 @@ zkCodemirror.init = function (ed) {
 		observer.observe(ed);
 	} catch (e) {
 		// Not available in IE
+	}
 	}
 };
 
