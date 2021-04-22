@@ -46,10 +46,12 @@ public class DataLabel extends org.zkoss.zul.Label implements XPathSubscriber {
 	}
 
 	public void onUpdate(XPathEvent event) {
-		if (binder.getValue() == null)
-			setValue("");
-		else
-			setValue(binder.getValue().toString());
+		if (binder.getDataPath() != null) {
+			if (binder.getValue() == null)
+				setValue("");
+			else
+				setValue(binder.getValue().toString());			
+		}
 	}
 
 	/*
