@@ -52,6 +52,7 @@ import es.caib.zkib.events.XPathSubscriber;
 
 public class DataDiv extends XulElement implements AfterCompose, BindContext, XPathSubscriber {
 	Component templateElement = null;
+	boolean composed = false;
 	
 	@Override
 	public Object clone() {
@@ -114,19 +115,19 @@ public class DataDiv extends XulElement implements AfterCompose, BindContext, XP
 				_model.addListDataListener(_dataListener);
 			}
 
-			Iterator<Component> it = getChildren().iterator();
-			while (it.hasNext()) { it.next(); it.remove();}
-
-			invalidate();
-
-			syncModel(); //create rows if necessary
+			if (composed) {
+				invalidate();
+	
+				syncModel(); //create rows if necessary
+			}
 		} else if (_model != null) {
 			_model.removeListDataListener(_dataListener);
 			_model = null;
-			Iterator<Component> it = getChildren().iterator();
-//			if (it.hasNext()) it.next();
-			while (it.hasNext()) { it.next(); it.remove();}
-			invalidate();
+			if (composed) {
+				Iterator<Component> it = getChildren().iterator();
+				while (it.hasNext()) { it.next(); it.remove();}
+				invalidate();
+			}
 		}
 	}
 	private void initDataListener() {
@@ -165,9 +166,13 @@ public class DataDiv extends XulElement implements AfterCompose, BindContext, XP
 	 * @param max the higher index that a range of invalidated rows
 	 */
 	private void syncModel() {
+		Iterator<Component> it = getChildren().iterator();
+		while (it.hasNext()) { it.next(); it.remove();}
+
 		final int newsz = _model.getSize();
 		for ( int i = 0; i < newsz; i++)
 			newRow (i, null);
+//		invalidate();
 	}
 	
 	/** Handles when the list model's content changed.
@@ -248,6 +253,7 @@ public class DataDiv extends XulElement implements AfterCompose, BindContext, XP
 				templateElement.setParent(null);
 			}
 		}
+		composed = true;
 		if (_model != null)
 			syncModel();
 	}
