@@ -681,7 +681,7 @@ public class DataTree2 extends XulElement implements XPathSubscriber,
 	static int msgNumber = 0 ;
 	private void onTreeDataRemoved(TreeModelProxyNode parent, int [] pos) {
         try {
-            response("remove_"+posToString(pos), new AuInvoke(this, "deleteRow", new JSONArray(pos).toString()));
+            response(null, new AuInvoke(this, "deleteRow", new JSONArray(pos).toString()));
         } catch (Exception e) {
             throw new UiException(e);
         }
