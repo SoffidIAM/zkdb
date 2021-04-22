@@ -7,6 +7,7 @@ import org.zkoss.zk.ui.event.EventListener;
 import org.zkoss.zk.ui.event.Events;
 
 import es.caib.zkib.datasource.CommitException;
+import es.caib.zkib.datasource.XPathUtils;
 
 public class RollbackButton extends DatasourceButton  {
 	/**
@@ -22,7 +23,7 @@ public class RollbackButton extends DatasourceButton  {
 			public void onEvent(org.zkoss.zk.ui.event.Event event) {
 				if (getDatamodel() != null)
 				{
-					Component c = Path.getComponent(getSpaceOwner(), getDatamodel());
+					Component c = XPathUtils.getPath(RollbackButton.this, getDatamodel());
 					if (c != null && c instanceof DataModel)
 					{
 						DataModel dm = (DataModel) c;

@@ -19,6 +19,7 @@ import org.zkoss.zul.Toolbarbutton;
 import es.caib.zkib.component.DataModel;
 import es.caib.zkib.datasource.CommitException;
 import es.caib.zkib.datasource.DataSource;
+import es.caib.zkib.datasource.XPathUtils;
 
 public class CommitButton extends DatasourceButton  {
 	/**
@@ -34,7 +35,7 @@ public class CommitButton extends DatasourceButton  {
 			public void onEvent(org.zkoss.zk.ui.event.Event event) {
 				if (getDatamodel() != null)
 				{
-					Component c = Path.getComponent(getSpaceOwner(), getDatamodel());
+					Component c = XPathUtils.getPath(CommitButton.this, getDatamodel());
 					if (c != null && c instanceof DataModel)
 					{
 						DataModel dm = (DataModel) c;

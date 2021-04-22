@@ -21,6 +21,7 @@ import org.zkoss.zk.ui.event.Events;
 import es.caib.zkib.component.MasterListItem;
 import es.caib.zkib.component.MasterRow;
 import es.caib.zkib.datasource.DataSource;
+import es.caib.zkib.datasource.XPathUtils;
 import es.caib.zkib.events.SerializableEventListener;
 import es.caib.zkib.events.XPathEvent;
 import es.caib.zkib.events.XPathRerunEvent;
@@ -184,18 +185,18 @@ public abstract class AbstractBinder implements BindContext, XPathSubscriber, Se
 		        if (realDS.startsWith("/") && ! ds.startsWith("//"))
 		            realDS = "//"+_component.getPage().getId()+realDS;
 			try {
-			    Component c = Path.getComponent(id, realDS);
-	                        if (c instanceof DataSource)
-	                        {
-	                                _ds = (DataSource) c;
-	                                _xPath = normalizePath(path);
-	                                parsePath ();
-	                                subscribe();
-	                        }
-	                        else
-	                        {
-	                            throw new UiException (realDS+" is not a DataSource");
-	                        }
+			    Component c = XPathUtils.getPath(_component, realDS);
+                if (c instanceof DataSource)
+                {
+                        _ds = (DataSource) c;
+                        _xPath = normalizePath(path);
+                        parsePath ();
+                        subscribe();
+                }
+                else
+                {
+                    throw new UiException (realDS+" is not a DataSource");
+                }
 			} catch (ComponentNotFoundException e) {
 			    throw new UiException ("Unable to parse "+ds+":"+path, e);
 			}

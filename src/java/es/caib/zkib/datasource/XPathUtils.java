@@ -5,6 +5,9 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.zkoss.zk.ui.Component;
+import org.zkoss.zk.ui.IdSpace;
+import org.zkoss.zk.ui.Page;
+import org.zkoss.zk.ui.Path;
 
 import es.caib.zkib.binder.BindContext;
 import es.caib.zkib.datamodel.DataModelCollection;
@@ -17,6 +20,23 @@ import es.caib.zkib.jxpath.JXPathContext;
 import es.caib.zkib.jxpath.Pointer;
 
 public class XPathUtils {
+	public static Component getPath ( Component ref, String name ) {
+		IdSpace space = ref.getSpaceOwner();
+		if (name.startsWith( "/") && !name.startsWith("//")) {
+			Page page = ref.getPage();
+			if (page != null)
+				name = "//"+page.getId()+name;
+		}
+		return Path.getComponent(space, name);
+	}
+	
+	public static Component getPath(Page page, String name) {
+		if (name.startsWith( "/") && !name.startsWith("//")) {
+			name = "//"+page.getId()+name;
+		}
+		return Path.getComponent(page, name);
+	}
+
 	public static BindContext getComponentContext (Component c)
 	{
 		while (c != null)

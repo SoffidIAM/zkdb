@@ -10,6 +10,8 @@ import org.zkoss.zk.ui.UiException;
 import org.zkoss.zk.ui.render.SmartWriter;
 import org.zkoss.zul.impl.XulElement;
 
+import es.caib.zkib.datasource.XPathUtils;
+
 public class Pager extends XulElement  {
 	String datatable;
 	String datatree2; 
@@ -48,7 +50,7 @@ public class Pager extends XulElement  {
 			return null;
 		else
 		{
-			Component c = Path.getComponent(getSpaceOwner(), datatable);
+			Component c = XPathUtils.getPath(this, datatable);
 			if (c == null)
 				return null;
 			else if (c instanceof DataTable)
@@ -63,7 +65,7 @@ public class Pager extends XulElement  {
 			return null;
 		else
 		{
-			Component c = Path.getComponent(getSpaceOwner(), datatree2);
+			Component c = XPathUtils.getPath(this, datatree2);
 			if (c == null)
 				return null;
 			else if (c instanceof DataTree2)

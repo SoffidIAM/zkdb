@@ -18,6 +18,7 @@ import org.zkoss.zul.Button;
 
 import es.caib.zkib.binder.BindContext;
 import es.caib.zkib.datasource.DataSource;
+import es.caib.zkib.datasource.XPathUtils;
 
 public class DatasourceButton extends Button  {
 	/**
@@ -54,7 +55,7 @@ public class DatasourceButton extends Button  {
 		this.dataModel = listbox;
 		if (!_created)
 		{
-			installHooks();
+//			installHooks();
 		} else {
 			if (listbox != null)
 			{
@@ -71,7 +72,7 @@ public class DatasourceButton extends Button  {
 	}
 	
 	protected void installHooks() {
-		Component c = Path.getComponent(getSpaceOwner(), dataModel);
+		Component c = XPathUtils.getPath(this, dataModel);
 		if (c != null && c instanceof DataModel)
 		{
 			c.addEventListener("onChange", new EventListener () //$NON-NLS-1$
@@ -96,7 +97,7 @@ public class DatasourceButton extends Button  {
 	protected void checkCommitPending() {
 		Component c = null;
 		try {
-			c = Path.getComponent(getSpaceOwner(), dataModel);
+			c = XPathUtils.getPath(this, dataModel);
 		} catch (ComponentNotFoundException e) {
 		}
 		if (c != null && c instanceof DataSource)
@@ -175,7 +176,7 @@ public class DatasourceButton extends Button  {
 		String path = dataModel;
 		if (path.startsWith("/") && ! path.startsWith("//"))
 		    path = "//"+getPage().getId()+path;
-		Component ds = Path.getComponent(getSpaceOwner(), path);
+		Component ds = XPathUtils.getPath(this, path);
 		while (ds instanceof BindContext) {
 			DataSource parent = ((BindContext)ds).getDataSource();
 			if (parent == null) return ds;
