@@ -334,9 +334,9 @@ public class DataTable extends XulElement implements XPathSubscriber,
 			response("setSelected", new AuInvoke(this, "setSelected", Integer.toString(selectedIndex)));
 		}
 		this.selectedIndex = selectedIndex;
+		selectedIndexList.clear();
 		if (selectedIndex >= 0)
 		{
-			selectedIndexList.clear();
 			selectedIndexList.add(selectedIndex);
 		}
 		updateDataSource();
