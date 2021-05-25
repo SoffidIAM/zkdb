@@ -432,6 +432,7 @@ zkDatatable.fillRow=function(ed,tr,value)
 		cb.addEventListener("input", zkDatatable.onSelect)
 		cb.addEventListener("click", zkDatatable.dontBubble)
 		td.appendChild(cb);
+		td.addEventListener("click", zkDatatable.onSelectCell)
 	}
 	tr.value = value;
 	if (value['$class']) {
@@ -760,8 +761,19 @@ zkDatatable.onSelectAll=function(ev) {
 	zkDatatable.findSelectedPosition(table);
 }
 
+zkDatatable.onSelectCell=function(ev) {
+    var cb = ev.currentTarget.firstElementChild;
+    cb.checked = ! cb.checked;
+	zkDatatable.selectRow(cb);
+	ev.stopPropagation();
+}
+
 zkDatatable.onSelect=function(ev) {
 	var cb = ev.currentTarget;
+	zkDataTable.selectRow(cb);
+}
+
+zkDatatable.selectRow=function(cb) {
 	var row = cb.parentNode/* td */.parentNode/* tr */;
 	var table = row.parentNode/* thead */.parentNode/* tbody */.parentNode/* table */;
 	if (!cb.checked)
