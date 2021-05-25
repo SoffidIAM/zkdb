@@ -2,8 +2,10 @@ package es.caib.zkib.component;
 
 import java.io.IOException;
 import java.io.Writer;
+import java.util.HashSet;
 
 import org.zkoss.xml.HTMLs;
+import org.zkoss.zk.au.out.AuInvoke;
 import org.zkoss.zk.ui.Component;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.Events;
@@ -18,10 +20,22 @@ import es.caib.zkdb.yaml.Yaml2Json;
 public class Wizard extends Div implements AfterCompose {
 	String steps;
 	int selected = 0;
+	HashSet<Integer> disabledSteps = new HashSet<Integer>();
+	
 	public String getSteps() {
 		return steps;
 	}
 	
+	public void enableStep(int step) {
+		disabledSteps.remove(step);
+		response(null, new AuInvoke(this, "enableStep", Integer.toString(step)));
+	}
+	
+	public void disableStep(int step) {
+		disabledSteps.add(step);
+		response(null, new AuInvoke(this, "disableStep", Integer.toString(step)));
+	}
+
 	public void setSteps(String steps) throws IOException {
 		this.steps = new Yaml2Json().transform(steps);
 		smartUpdate("steps", steps);
@@ -62,12 +76,17 @@ public class Wizard extends Div implements AfterCompose {
 	}
 	
     public void next() {
-    	setSelected(selected + 1);
+    	do {
+    		setSelected(selected + 1);
+    	} while (selected < getChildren().size() && disabledSteps.contains(selected));
     }
 
     public void previous() {
-    	if (selected > 0)
-    		setSelected(selected - 1);
+    	if (selected > 0) {
+    		do {
+    			setSelected(selected - 1);
+        	} while (selected > 0 && disabledSteps.contains(selected));
+    	}
     }
 
 	public void afterCompose() {
