@@ -562,12 +562,19 @@ zkDataNameDescription.oninput = function (evt) {
 	zkDataCommon.openSearchPopup(i, databox);
 }
 
-zkDataNameDescription.onContinueSearchResponse = 
+zkDataNameDescription.onContinueSearchResponse = function(ed, id, data) {
+	var div = document.getElementById(id);
+	if (div) {
+		var data = JSON.parse(data);
+		zkDataCommon.addSearchResult(div, data, true);
+	}
+}
+
 zkDataNameDescription.onStartSearchResponse = function(ed, id, data) {
 	var div = document.getElementById(id);
 	if (div) {
 		var data = JSON.parse(data);
-		zkDataCommon.addSearchResult(div, data);
+		zkDataCommon.addSearchResult(div, data, false);
 	}
 }
 
@@ -692,12 +699,19 @@ zkDataDescription.oninput = function (evt) {
 	zkDataCommon.openSearchPopup(i, databox);
 }
 
-zkDataDescription.onStartSearchResponse =
+zkDataDescription.onStartSearchResponse = function(ed, id, data) {
+	var div = document.getElementById(id);
+	if (div) {
+		var data = JSON.parse(data);
+		zkDataCommon.addSearchResult(div, data, true);
+	}
+}
+
 zkDataDescription.onContinueSearchResponse = function(ed, id, data) {
 	var div = document.getElementById(id);
 	if (div) {
 		var data = JSON.parse(data);
-		zkDataCommon.addSearchResult(div, data);
+		zkDataCommon.addSearchResult(div, data, false);
 	}
 }
 
@@ -1642,9 +1656,14 @@ zkDataCommon.highlightSearchResult=function(child, text, criteria) {
 		}
 	}
 } 
-zkDataCommon.addSearchResult=function(div, data) {
+
+zkDataCommon.addSearchResult=function(div, data, clear) {
 	var databox = div.input.databox;
 	var criteria = div.searchCriteria.toLowerCase().replace(/.,-/, " ").split(" ");
+	if (clear) {
+		while (div.firstElementChild != div.lastElementChild)
+			div.firstElementChild.remove();
+	}
 	for (var i = 0; i < data.length; i++) {
 		var row = data[i];
 		var name = row[0];

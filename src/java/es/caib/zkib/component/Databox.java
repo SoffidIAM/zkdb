@@ -722,11 +722,11 @@ public class Databox extends InputElement implements XPathSubscriber, AfterCompo
 				l = findNextObjects();
 				if (l == null)
 				{
-					response("continue-search", new AuInvoke(this, "onEndSearchResponse", cmpId));
+					response(null, new AuInvoke(this, "onEndSearchResponse", cmpId));
 					currentSearch = null;
 				} else {
 					JSONArray array = new JSONArray(l);
-					response("continue-search", new AuInvoke(this, "onContinueSearchResponse", cmpId, array.toString()));			
+					response(null, new AuInvoke(this, "onContinueSearchResponse", cmpId, array.toString()));			
 				}
 			} catch (Throwable e) {
 				throw new UiException(e);
@@ -739,7 +739,7 @@ public class Databox extends InputElement implements XPathSubscriber, AfterCompo
 		try {
 			List<String[]> l = findObjects(text);
 			JSONArray array = new JSONArray(l);
-			response("start-search", new AuInvoke(this, "onStartSearchResponse", cmpId, array.toString()));
+			response(null, new AuInvoke(this, "onStartSearchResponse", cmpId, array.toString()));
 		} catch (Throwable e) {
 			throw new UiException(e);
 		}
