@@ -86,7 +86,8 @@ zkCodemirror.refresh=function(ed) {
 	});
 	ed.codemirror.setSize (ed.getAttribute("width"), ed.getAttribute("height"));
 	ed.codemirror.on ("change", function() {
-			var req = {uuid: ed.id, cmd: "onChange", data : [ed.codemirror.getDoc().getValue()], ignorable: true};
+			ed.value = ed.codemirror.getDoc().getValue();
+			var req = {uuid: ed.id, cmd: "onChange", data : [ed.value], ignorable: true};
 			zkau.send (req, 5);
 		});
 	ed.codemirror.on ("focus", function() {
