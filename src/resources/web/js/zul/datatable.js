@@ -770,7 +770,7 @@ zkDatatable.onSelectCell=function(ev) {
 
 zkDatatable.onSelect=function(ev) {
 	var cb = ev.currentTarget;
-	zkDataTable.selectRow(cb);
+	zkDatatable.selectRow(cb);
 }
 
 zkDatatable.selectRow=function(cb) {
