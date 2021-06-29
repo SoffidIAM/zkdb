@@ -616,8 +616,8 @@ zkDataDescription.addElement = function(e, parent, pos) {
 	i.position = pos;
 	i.databox = e;
 	var rowValue = e.multivalue ? (pos < e.value.length? e.value[pos]: ""): e.value;
-	i.defaultValue = i.actualValue = rowValue[0];
-	i.value = rowValue[1];
+	i.defaultValue = i.actualValue = rowValue == null? null: rowValue[0];
+	i.value = rowValue == null ? null: rowValue[1];
 	
 	parent.appendChild(i);
 	
@@ -660,7 +660,7 @@ zkDataDescription.addElement = function(e, parent, pos) {
         zk.addClass(i, "text-disd")
         i.setAttribute("disabled","disabled")
     }
-    if (rowValue[2] != null && rowValue[2].length > 0) {
+    if (rowValue != null && rowValue[2] != null && rowValue[2].length > 0) {
     	var w = document.getElementById($uuid(parent)+"!Warning");
     	if (w)
     		w.style.display = "";
