@@ -42,6 +42,8 @@ class CustomVariableResolver implements VariableResolver {
 	}
 
 	public Object resolveVariable(String name) throws XelException {
+		if ("this".equals(name))
+			return value;
 		Object p;
 		try {
 			p = PropertyUtils.getProperty(value, name);
