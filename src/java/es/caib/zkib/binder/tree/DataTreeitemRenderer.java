@@ -101,8 +101,9 @@ public class DataTreeitemRenderer implements TreeitemRenderer, Serializable {
 			List<Component> children = new LinkedList<Component>(item.getChildren());
 			for (Component c: children)
 			{
-				if (! (c instanceof Treechildren))
-					c.setParent(null);
+				if (! (c instanceof Treechildren)) {
+					detachChildren(c);
+				}
 			}
 			Iterator it1 = master.getChildren().iterator();
 			while ( it1.hasNext() )
@@ -142,6 +143,16 @@ public class DataTreeitemRenderer implements TreeitemRenderer, Serializable {
 	}
 
 	
+	private void detachChildren(Component c) {
+		Component child = c.getFirstChild();
+		while (child != null) {
+			detachChildren(child);
+			child = c.getFirstChild();
+		}
+		c.detach();
+	}
+
+
 	private int [] getTreeItemPath (Treeitem item)
 	{
 		Vector v = new Vector ();

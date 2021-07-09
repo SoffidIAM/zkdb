@@ -62,5 +62,4 @@ public class MasterListItem extends Listitem implements IdSpace {
 		return super.insertBefore(child, insertBefore);
 	}
 
-	
 }

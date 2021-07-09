@@ -15,7 +15,6 @@ import org.zkoss.zk.ui.ext.AfterCompose;
 import org.zkoss.zul.Columns;
 import org.zkoss.zul.Grid;
 import org.zkoss.zul.ListModel;
-import org.zkoss.zul.Listhead;
 import org.zkoss.zul.Row;
 import org.zkoss.zul.Rows;
 import org.zkoss.zul.event.ListDataEvent;
@@ -357,11 +356,4 @@ public class DataGrid extends Grid implements BindContext, XPathSubscriber, Afte
 		this.noSizable = noSizable;
 	}
 
-
-
-	public void afterCompose() {
-		if ( getModel() == null && "grid".equals(getSclass()))
-			setSclass("noBorderGrid");
-	}
-	
 }

@@ -15,6 +15,7 @@ import org.zkoss.zk.ui.Page;
 import org.zkoss.zk.ui.UiException;
 import org.zkoss.zk.ui.event.EventListener;
 import org.zkoss.zk.ui.ext.AfterCompose;
+import org.zkoss.zk.ui.sys.DesktopCtrl;
 import org.zkoss.zul.ListModel;
 import org.zkoss.zul.Listbox;
 import org.zkoss.zul.Listhead;
@@ -371,10 +372,9 @@ public class DataListbox extends Listbox implements XPathSubscriber,
     public boolean insertBefore(Component newChild, Component refChild) {
         if (newChild instanceof MasterListItem) {
             _masterListItem = (MasterListItem) newChild;
-            _masterListItem.setParent(null);
             _masterListItem.setTheListbox(this);
             this.setItemRenderer(new DataListItemRenderer(this));
-            return false;
+			return false;
 		} else if (newChild instanceof Listhead) {
 			// Hacemos que la cabecera sea siempre ajustable
 			// Alejandro Usero Ruiz - 12/07/2011

@@ -13,6 +13,7 @@ import org.zkoss.zk.ui.UiException;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
 import org.zkoss.zk.ui.ext.AfterCompose;
+import org.zkoss.zk.ui.sys.DesktopCtrl;
 import org.zkoss.zul.Tree;
 import org.zkoss.zul.TreeModel;
 import org.zkoss.zul.Treechildren;
@@ -580,6 +581,8 @@ public class DataTree extends Tree implements XPathSubscriber, BindContext, Data
 		} catch (Exception e) {
 			throw new UiException(e);
 		}
+//		for (MasterTreeitem master: masterTreeItems)
+//			((DesktopCtrl)getDesktop()).removeComponent(master);
 	}
 
 	public String getRootPath() {
