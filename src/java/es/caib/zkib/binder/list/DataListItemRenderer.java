@@ -61,7 +61,7 @@ public class DataListItemRenderer implements ListitemRenderer, Serializable {
 			while (item.getChildren().size() > 0)
 			{
 				Component c = (Component) item.getChildren().get(0);
-				c.setParent(null);
+				detachChildren(c);
 			}
 			Iterator it1 = master.getChildren().iterator();
 			Listhead listhead = item.getListbox().getListhead();
@@ -95,6 +95,16 @@ public class DataListItemRenderer implements ListitemRenderer, Serializable {
 	}
 
 	
+	private void detachChildren(Component c) {
+		Component child = c.getFirstChild();
+		while (child != null) {
+			detachChildren(child);
+			child = c.getFirstChild();
+		}
+		c.detach();
+	}
+
+
 	private Component duplicateComponent (Component master, Component parent)
 	{
 //		InstanceDefinition definition = (InstanceDefinition) master.getDefinition();
