@@ -373,8 +373,9 @@ public class DataListbox extends Listbox implements XPathSubscriber,
         if (newChild instanceof MasterListItem) {
             _masterListItem = (MasterListItem) newChild;
             _masterListItem.setTheListbox(this);
-            this.setItemRenderer(new DataListItemRenderer(this));
-			return false;
+			boolean b = super.insertBefore(newChild, refChild);
+			this.setItemRenderer(new DataListItemRenderer(this));
+			return b;
 		} else if (newChild instanceof Listhead) {
 			// Hacemos que la cabecera sea siempre ajustable
 			// Alejandro Usero Ruiz - 12/07/2011
@@ -501,6 +502,8 @@ public class DataListbox extends Listbox implements XPathSubscriber,
      * @see org.zkoss.zul.Listbox#onInitRender()
      */
     public void onInitRender() {
+    	if (_masterListItem != null && _masterListItem.getParent() != null)
+    		_masterListItem.detach();
         super.onInitRender();
         syncSelectedItem();
     }
@@ -577,5 +580,7 @@ public class DataListbox extends Listbox implements XPathSubscriber,
 
 	public void afterCompose() {
 		updateFilters();
+    	if (_masterListItem != null && _masterListItem.getParent() != null)
+    		_masterListItem.detach();
 	}
 }
