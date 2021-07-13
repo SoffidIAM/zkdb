@@ -29,7 +29,7 @@ import es.caib.zkib.events.XPathEvent;
 import es.caib.zkib.events.XPathRerunEvent;
 import es.caib.zkib.events.XPathSubscriber;
 
-public class DataGrid extends Grid implements BindContext, XPathSubscriber, AfterCompose {
+public class DataGrid extends Grid implements BindContext, XPathSubscriber {
 	private final class OnApplyDatapathListener implements EventListener, Serializable {
 		private static final long serialVersionUID = 1L;
 		private final DataGrid clone;
