@@ -452,18 +452,20 @@ zkDatatable.fillRow=function(ed,tr,value)
 			window[col.render](td, col, value);
 		else if (col.value)
 		{
+			var t = "";
 			if (!value.hasOwnProperty(col.value))
 			{
 				var value2 = zkDatatable.evaluateInContext (col.value, value);
 				if (value2 == undefined)
-					td.innerText= "";
+					t= "";
 				else
-					td.innerText=value2;
+					t=value2;
 			}
 			else if (value[col.value] == null)
-				td.innerText = "";
+				t = "";
 			else
-				td.innerText = value[col.value] ;
+				t = value[col.value] ;
+			td.innerText = zkDatatable.trimColumn(t);
 		}
 		else
 			td.innerText = value[col.name];
@@ -473,6 +475,15 @@ zkDatatable.fillRow=function(ed,tr,value)
 	}
 }
 
+zkDatatable.trimColumn=function(v) {
+    try {
+		var i = v.indexOf("\n");
+		if (i >= 0) v = v.substring(0, i)+ " ...";
+		return v;
+	} catch (error) {
+		return v;
+	}
+}
 zkDatatable.dontBubble=function(ev) {
 	ev.stopPropagation();
 }
