@@ -57,6 +57,7 @@ public class Databox extends InputElement implements XPathSubscriber, AfterCompo
 	boolean hyperlink = false;
 	boolean noadd = false;
 	boolean noremove = false;
+	Integer rows = null;
 	
 	public enum Type {
 		STRING,
@@ -264,6 +265,9 @@ public class Databox extends InputElement implements XPathSubscriber, AfterCompo
 		if (readonly)
 			HTMLs.appendAttribute(sb, "readonly", readonly);
 		HTMLs.appendAttribute(sb, "multiline", multiline);
+		if (Boolean.TRUE.equals(multiline) && rows != null)
+			HTMLs.appendAttribute(sb, "rows", rows);
+		
 		HTMLs.appendAttribute(sb, "multivalue", multiValue);
 		if (multiValue) {
 			if (noadd) HTMLs.appendAttribute(sb, "noadd", noadd);
@@ -310,7 +314,7 @@ public class Databox extends InputElement implements XPathSubscriber, AfterCompo
 		if (descriptions != null) {
 			HTMLs.appendAttribute(sb, "description", new JSONArray(descriptions).toString());
 		}
-		
+
 		if (type == Type.BOOLEAN) {
 			HTMLs.appendAttribute(sb, "onLabel", Messages.get(MZul.YES));
 			HTMLs.appendAttribute(sb, "offLabel", Messages.get(MZul.NO));
@@ -722,7 +726,7 @@ public class Databox extends InputElement implements XPathSubscriber, AfterCompo
 				l = findNextObjects();
 				if (l == null)
 				{
-					response(null, new AuInvoke(this, "onEndSearchResponse", cmpId));
+					response(null, new AuInvoke(this, "onEndSearchResponse", cmpId, Labels.getLabel("common.no-results")));
 					currentSearch = null;
 				} else {
 					JSONArray array = new JSONArray(l);
@@ -948,6 +952,14 @@ public class Databox extends InputElement implements XPathSubscriber, AfterCompo
 
 	public void setNoremove(boolean noremove) {
 		this.noremove = noremove;
+	}
+
+	public Integer getRows() {
+		return rows;
+	}
+
+	public void setRows(Integer rows) {
+		this.rows = rows;
 	}
 }
 

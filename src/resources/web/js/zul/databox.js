@@ -42,6 +42,10 @@ zkDataText.addElement = function(e, parent, pos) {
 		i.setAttribute("type", "number");
 	else
 		i.setAttribute("type", "text");
+		
+	if (e.multiline && e.getAttribute("rows") != null)
+		i.setAttribute("rows", e.getAttribute("rows"));
+		
 	if (e.required && !e.readOnly && !e.disabled)
 		i.setAttribute("class", "text required");
 	else
@@ -578,9 +582,14 @@ zkDataNameDescription.onStartSearchResponse = function(ed, id, data) {
 	}
 }
 
-zkDataNameDescription.onEndSearchResponse = function(ed, id, data) {
+zkDataNameDescription.onEndSearchResponse = function(ed, id, msg) {
 	var div = document.getElementById(id);
 	if (div) {
+		if (div.childElementCount == 2) {
+ 			div.firstElementChild.style.display = "block";
+ 			div.firstElementChild.innerText = msg;
+ 		}
+
 		div.lastElementChild.style.display="none";
 	}
 }
@@ -715,9 +724,13 @@ zkDataDescription.onContinueSearchResponse = function(ed, id, data) {
 	}
 }
 
-zkDataDescription.onEndSearchResponse = function(ed, id, data) {
+zkDataDescription.onEndSearchResponse = function(ed, id, msg) {
 	var div = document.getElementById(id);
 	if (div) {
+		if (div.childElementCount == 2) {
+ 			div.firstElementChild.style.display = "block";
+ 			div.firstElementChild.innerText = msg;
+ 		}
 		div.lastElementChild.style.display="none";
 	}
 }
@@ -1208,6 +1221,23 @@ zkDataCommon.init = function (databox) {
 	zkDataCommon.refresh(databox, value);
 }
 
+zkDataCommon.labelObserver = new IntersectionObserver((entries, observer) => {
+		entries.forEach(entry => {
+			var cs = getComputedStyle(entry.target);
+			var w = Number(cs.width.substring(0, cs.width.length-2));
+			var mw = Number(cs.minWidth.substring(0, cs.minWidth.length-2));
+			if (w > mw +1) 
+				entry.target.nextElementSibling.classList.add("wrapped");
+			else			
+				entry.target.nextElementSibling.classList.remove("wrapped");
+		})
+	}, 
+	{
+	  rootMargin: '0px',
+	  threshold: 1.0
+	}
+);
+
 zkDataCommon.refresh=function(databox, value) {
 	var container = databox;
 	if (databox.getAttribute("label")) {
@@ -1222,8 +1252,16 @@ zkDataCommon.refresh=function(databox, value) {
 		databox.appendChild(container);
 		try {
 			var cs = getComputedStyle(labelContainer);
-			if (cs.width != cs.minWidth && cs.width != "auto") {
-				container.setAttribute("class", "container wrapped");
+			if (cs.width == "auto" || ! cs.width.endsWith("px")) {
+				zkDataCommon.labelObserver.observe(labelContainer);				
+			}
+			else {
+				var w = Number(cs.width.substring(0, cs.width.length-2));
+				var mw = Number(cs.minWidth.substring(0, cs.minWidth.length-2));
+				if (w > mw +1) 
+					container.classList.add("wrapped");
+				else			
+					container.classList.remove("wrapped");
 			}
 		} catch (error) { // Can fail if container is not visible yet 
 		}
@@ -1288,7 +1326,7 @@ zkDataCommon.onblur = function(A) {
         		value = [el.value, el.value];
                 zkDataCommon.updateChange(el, B, C);
         	}
-        	else if (el.popup.firstElementChild == el.popup.lastElementChild) {
+        	else if (el.popup.childElementCount == 2) {
         		w.style.display="";
         		wl.innerText = "Wrong value";
         		value = [el.value, el.value];
@@ -1565,17 +1603,22 @@ zkDataCommon.openSearchPopup = function (input, databox) {
 		input.parentElement.insertBefore(div, input);
 		input.popup = div;
 		div.input = input;
+		var ss = document.createElement("div");
+		ss.setAttribute("class", "no-results");
+		div.appendChild(ss);
+		ss.style.display="none";
 		var img = document.createElement("img");
 		img.setAttribute("src", databox.getAttribute("waiticon"));
 		img.setAttribute("class", "databox-wait");
 		div.appendChild(img);
 	} else {
 		for (var e = input.popup.firstElementChild; 
-			e != input.popup.lastElementChild;
+			e != input.popup.lastElementChild.previousElementSibling;
 			e = input.popup.firstElementChild ) {
 			e.remove();
 		}
 	}
+	input.popup.lastElementChild.previousElementSibling.style.display = "none";
 	input.popup.lastElementChild.style.display = "";
 	input.popup.searchCriteria = input.value;
 	var req = {uuid: databox.id, cmd: "onStartSearch", 
@@ -1602,30 +1645,32 @@ zkDataCommon.onSelectValue=function(evt) {
 	setTimeout(()=>{try{menu.remove(); menu.input.popup=null;} catch(e) {}}, 150);		
 }
 
-zkDataCommon.onSelectValue2=function(opt) {	
-	var value = [opt.value[0], opt.value[1]];
-	var menu = opt.parentElement;
-	var input = menu.input;
-	var databox = input.databox;
-	var position = input.position;
-
-	if (databox.multivalue) {
-		databox.value[position] = value;
-	} else {
-		databox.value = value;
+zkDataCommon.onSelectValue2=function(opt) {
+    if (opt.value) {
+		var value = [opt.value[0], opt.value[1]];
+		var menu = opt.parentElement;
+		var input = menu.input;
+		var databox = input.databox;
+		var position = input.position;
+	
+		if (databox.multivalue) {
+			databox.value[position] = value;
+		} else {
+			databox.value = value;
+		}
+		if (databox.useNameDescription) {
+			input.value = value[0];
+			zkDataNameDescription.setDescription(databox, position, value[1]);
+		} else if (databox.useDescription) {
+			input.value = value[1];
+			input.actualValue = value[0];
+		}
+		var wi = document.getElementById($uuid(input)+"!Warning");
+		if ( wi ) {
+			wi.style.display = "none";
+		}
+	    zkDataCommon.updateChange(input, databox, false);
 	}
-	if (databox.useNameDescription) {
-		input.value = value[0];
-		zkDataNameDescription.setDescription(databox, position, value[1]);
-	} else if (databox.useDescription) {
-		input.value = value[1];
-		input.actualValue = value[0];
-	}
-	var wi = document.getElementById($uuid(input)+"!Warning");
-	if ( wi ) {
-		wi.style.display = "none";
-	}
-    zkDataCommon.updateChange(input, databox, false);
 }
 
 zkDataCommon.highlightSearchResult=function(child, text, criteria) {
@@ -1661,7 +1706,7 @@ zkDataCommon.addSearchResult=function(div, data, clear) {
 	var databox = div.input.databox;
 	var criteria = div.searchCriteria.toLowerCase().replace(/.,-/, " ").split(" ");
 	if (clear) {
-		while (div.firstElementChild != div.lastElementChild)
+		while (div.firstElementChild != div.lastElementChild.previousElementSibling)
 			div.firstElementChild.remove();
 	}
 	for (var i = 0; i < data.length; i++) {
@@ -1690,12 +1735,16 @@ zkDataCommon.addSearchResult=function(div, data, clear) {
 		zk.listen(child, "focus", zkDataCommon.onFocusSearchPopup);
 		zk.listen(child, "blur", zkDataCommon.onBlurSearchPopup);
 		child.value = row;
-		div.insertBefore(child, div.lastElementChild);
+		
+		div.insertBefore(child, div.lastElementChild.previousElementSibling);
 
 	}
+	var data = div.input;
 	setTimeout( () => {
-		zkau.send( {uuid: databox.id, cmd: "onContinueSearch", 
-			data: [div.getAttribute("id") ], ignorable:true}, 0);
+	      if (div.input == data) {
+			zkau.send( {uuid: databox.id, cmd: "onContinueSearch", 
+				data: [div.getAttribute("id") ], ignorable:true}, 0);
+		  }
 		} , 100 );
 }
 
