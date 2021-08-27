@@ -319,12 +319,14 @@ public class DataTree2 extends XulElement implements XPathSubscriber,
 					}
 					String tail = finder.optString("tail");
 					if (tail != null && !tail.trim().isEmpty()) {
-						writer.key("tail");
 						if (expf == null)
 							expf = Expressions.newExpressionFactory(null);
 						Object v = expf.evaluate(new JSONContext (this, node), translateHashExpression(tail), String.class);
-						v = formatObject(v);
-						writer.value(v);
+						if (v != null & ! v.toString().trim().isEmpty()) {
+							writer.key("tail");
+							v = formatObject(v);
+							writer.value(v);
+						}
 					}
 				}
 			}
@@ -488,12 +490,14 @@ public class DataTree2 extends XulElement implements XPathSubscriber,
 			}
 			String tail = finder.optString("tail");
 			if (tail != null) {
-				writer.key("tail");
 				if (expf == null)
 					expf = Expressions.newExpressionFactory(null);
 				Object v = expf.evaluate(new TreeNodeContext (this, node.getValue()), translateHashExpression(tail), String.class);
 				v = formatObject(v);
-				writer.value(v);
+				if (v != null & ! v.toString().trim().isEmpty()) {
+					writer.key("tail");
+					writer.value(v);
+				}
 			}
 		}
 		
