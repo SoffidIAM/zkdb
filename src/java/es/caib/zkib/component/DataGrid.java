@@ -223,8 +223,8 @@ public class DataGrid extends Grid implements BindContext, XPathSubscriber {
 			break;
 		}
 
-		if (getPage() != null)
-			invalidate ();
+//		if (getPage() != null)
+//			invalidate ();
 	}
 
 	private int getRowCount() {
