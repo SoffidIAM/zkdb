@@ -46,6 +46,25 @@ zkDatatree2.init = function (ed) {
 	zkDatatree2.refresh(ed);
 	
 	new ResizeSensor(ed, function ()  { zkDatatree2.fixupColumns(ed); });
+	try {
+		var observer = new IntersectionObserver((entries, observer) => {
+			entries.forEach(entry => {
+				if (entry.isIntersecting) {
+					if (ed.__hidden) {
+						ed.__hidden = false;
+						zkDatatree2.fixupColumns(ed);
+					}
+				} else if (!ed.__hidden) {
+					ed.__hidden = true;
+				}
+			});
+		}, {root: document.documentElement});
+		
+		ed.__hidden = true;
+		observer.observe(ed);
+	} catch (e) {
+		// Not available in IE
+	}
 };
 
 zkDatatree2.registerPager=function(ed, pager) {
@@ -128,7 +147,7 @@ zkDatatree2.fixupColumns=function(ed) {
 		}
 		var tbody = document.getElementById(ed.id+"!tbody");
 		var label;
-		var iterator = document.evaluate("//div[@class='tree-label']", tbody, 
+		var iterator = document.evaluate("//div[starts-with(@class,'tree-label')]", tbody, 
 				null, XPathResult.UNORDERED_NODE_ITERATOR_TYPE, null);
 		var labels = [];
 		while ((label = iterator.iterateNext()) != null) {
@@ -743,24 +762,26 @@ zkDatatree2.updateBranch=function(ed, data)
 		var div = document.getElementById(ed.id+"!row"+parentId);
 
 		var v ;
-		while ((v = div.firstChild) != null )
-		{
-			v.remove();
+		if (div != null) {
+			while ((v = div.firstChild) != null )
+			{
+				v.remove();
+			}
+	
+			var selected = ed.selectedItem;
+			
+			if ( ! value.leaf )
+			{
+				zkDatatree2.renderBranch(ed, div, value, parentId);
+			} else {
+				zkDatatree2.renderRow(ed, div, value);
+			}
+	
+			zkDatatree2.setSelected(ed, JSON.stringify(selected));
+			if (ed.sortDirection != 0)
+				zkDatatree2.doSort(ed, div.parentElement);
+			zkDatatree2.doFilter(ed);
 		}
-
-		var selected = ed.selectedItem;
-		
-		if ( ! value.leaf )
-		{
-			zkDatatree2.renderBranch(ed, div, value, parentId);
-		} else {
-			zkDatatree2.renderRow(ed, div, value);
-		}
-
-		zkDatatree2.setSelected(ed, JSON.stringify(selected));
-		if (ed.sortDirection != 0)
-			zkDatatree2.doSort(ed, div.parentElement);
-		zkDatatree2.doFilter(ed);
 	}
 };
 
