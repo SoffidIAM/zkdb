@@ -958,6 +958,7 @@ zkDatatable.prepareSort=function(ed) {
 }
 zkDatatable.doSort=function(ed) {
 	var sortColumn = ed.sortColumn;
+	if (ed.multiselect) sortColumn++;
 	var value = ed.columns[ed.sortColumn].value;
 	var direction = ed.sortDirection;
 	var tbody = document.getElementById(ed.id+"!tbody");
