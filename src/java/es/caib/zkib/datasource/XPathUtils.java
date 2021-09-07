@@ -150,8 +150,6 @@ public class XPathUtils {
 	{
 		if (cmp instanceof DataSource)
 			setDsValue ((DataSource) cmp, xpath, obj);
-		else if (cmp instanceof BindContext)
-			setCtxValue ((BindContext) cmp, xpath, obj);
 		else
 			setCtxValue( getComponentContext((Component)cmp), xpath, obj);
 	}
