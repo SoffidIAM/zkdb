@@ -294,7 +294,7 @@ zkDataList.setAttr = function (ed, name, value) {
 
 zkDataList.onselect = function(ev) {
 	var el = ev.currentTarget;
-	zkDataCommon.onupdate(el, el.databox);
+	zkDataCommon.onupdate(el, el.databox, false);
 	zkDataCommon.oninput (ev);
 }
 
@@ -1029,19 +1029,20 @@ zkDataDate.close = function (pp, focus) {
 	var input = $e(uuid+'!real');
 	zkDatasource.updatedElement(input);
 	zkDataCommon.updatedElement(input);
-	zkDataCommon.onupdate(input, databox);
+	zkDataCommon.onupdate(input, databox, true);
 	
 };
 zkDataDate.closepp = function (evt) {
 	if (!evt) evt = window.event;
 	var pp = Event.element(evt);
+	if (pp.onclick) return;
 	for (; pp; pp = pp.parentNode) {
 		if (pp.id) {
-			if (pp.id.endsWith("!pp"))
+			if (pp.id.endsWith("!pp")) {
 				zkDataDate.close(pp, true);
-			return; //done
+				return; //done
+			}
 		}
-		if (pp.onclick) return;
 	}
 };
 
@@ -1397,7 +1398,7 @@ zkDataCommon.updateChange = function(el, A, B) {
         zkVld.closeErrbox(A.id)
     }
     if (!B) {
-        zkDataCommon.onupdate(el, A)
+        zkDataCommon.onupdate(el, A, false)
     }
     return true
 }
@@ -1430,7 +1431,7 @@ zkDataCommon._noonblur = function(el, B) {
 }
 ;
 zkDataCommon.inSearchPopup = false;
-zkDataCommon.onupdate = function(el,C) {
+zkDataCommon.onupdate = function(el,C, force) {
     var D = el.value;
     if (el.databox.useDescription)
     	D = el.actualValue;
@@ -1450,7 +1451,7 @@ zkDataCommon.onupdate = function(el,C) {
     	else
     		C.value = D;
     }
-    if (D != el.defaultValue) {
+    if (D != el.defaultValue || force) {
         el.defaultValue = D;
         var B = $uuid(C);
         var A = zk.getSelectionRange(el);
