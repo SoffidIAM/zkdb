@@ -37,6 +37,7 @@ public class DataListItemRenderer implements ListitemRenderer, Serializable {
 	}
 
 	public void render(Listitem item, Object data) throws Exception {
+		if (data == null) return;
 		try {
 			String xPath;
 			

@@ -70,6 +70,8 @@ public class PartialModelProxy implements XPathSubscriber, ModelProxy, ListModel
 	
 
 	public Object getElementAt(int index) {
+		if (index < 0 || index >= v.size())
+			return null;
 		Integer i = (Integer) v.get(index);
 		if ( i == null)
 			return null;
