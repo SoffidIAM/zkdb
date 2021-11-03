@@ -75,6 +75,8 @@ public class ListModelProxy implements XPathSubscriber, ModelProxy, ListModelExt
 
 	public Object getElementAt(int index)
 	{
+		if (index < 0 || index >= v.size())
+			return null;
 		String p = (String) v.get(index);
 		if (p == null)
 			return null;
