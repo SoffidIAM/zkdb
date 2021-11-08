@@ -11,11 +11,13 @@ import org.zkoss.zk.ui.Component;
 import org.zkoss.zk.ui.IdSpace;
 import org.zkoss.zk.ui.event.Events;
 import org.zkoss.zul.ListModel;
+import org.zkoss.zul.Listbox;
 import org.zkoss.zul.Listcell;
 import org.zkoss.zul.Listhead;
 import org.zkoss.zul.Listheader;
 import org.zkoss.zul.Listitem;
 import org.zkoss.zul.ListitemRenderer;
+import org.zkoss.zul.ListitemRendererExt;
 
 import es.caib.zkib.binder.BindContext;
 import es.caib.zkib.binder.SingletonBinder;
@@ -24,7 +26,7 @@ import es.caib.zkib.component.DataCombobox;
 import es.caib.zkib.component.DataListbox;
 import es.caib.zkib.component.MasterListItem;
 
-public class DataListItemRenderer implements ListitemRenderer, Serializable {
+public class DataListItemRenderer implements ListitemRenderer, Serializable, ListitemRendererExt {
 	/**
 	 * 
 	 */
@@ -46,6 +48,9 @@ public class DataListItemRenderer implements ListitemRenderer, Serializable {
 			MasterListItem master = null;
 			model = _listbox.getModel();
 			master = _listbox.getMasterListItem();
+			
+			if (master == item) // This can happen when the paging event is processed before finishing onInitRender
+				return;
 			
 			if (model != null && model instanceof ModelProxy )
 				xPath = (( ModelProxy )model).getBind(i);
@@ -127,6 +132,18 @@ public class DataListItemRenderer implements ListitemRenderer, Serializable {
 			duplicateComponent((Component) it.next(), component);
 		}
 		
+	}
+
+	public Listitem newListitem(Listbox listbox) {
+		return null;
+	}
+
+	public Listcell newListcell(Listitem item) {
+		return null;
+	}
+
+	public int getControls() {
+		return 0;
 	}
 	
 }
