@@ -88,6 +88,10 @@ public class ListModelProxy implements XPathSubscriber, ModelProxy, ListModelExt
 				return binder.getJXPathContext().getValue(p);
 			}
 			
+			else if (binder.getDataSource() != null)
+			{
+				return binder.getDataSource().getJXPathContext().getValue(p);
+			}
 			else
 			{
 				return null;
