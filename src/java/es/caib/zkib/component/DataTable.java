@@ -97,6 +97,8 @@ public class DataTable extends XulElement implements XPathSubscriber,
 	boolean translatelabels = false;
 	private boolean initialized = false;
 	private JSONArray columnsArray;
+	private String nextPageMsg;
+	private String previousPageMsg;
 
 	public DataTable () {
 		setSclass("datatable");
@@ -105,7 +107,15 @@ public class DataTable extends XulElement implements XPathSubscriber,
 		
 		String d = Labels.getLabel("zkdb.download");
 		if (d != null) downloadMsg = d;
+
+		nextPageMsg = Labels.getLabel("zkdb.datatable.nextPage");
+		if (nextPageMsg == null || nextPageMsg.isEmpty())
+			nextPageMsg = "Next page";
+		previousPageMsg = Labels.getLabel("zkdb.datatable.previousPageMsg");
+		if (previousPageMsg == null || previousPageMsg.isEmpty())
+			previousPageMsg = "Previous page";
 	}
+	
     public String getDataPath() {
         return dataPath;
     }
@@ -153,6 +163,8 @@ public class DataTable extends XulElement implements XPathSubscriber,
 		HTMLs.appendAttribute(sb, "footer", footer);
 		HTMLs.appendAttribute(sb, "maxheight", maxheight);
 		HTMLs.appendAttribute(sb, "msgrows", rowsMsg);
+		HTMLs.appendAttribute(sb, "msgnextpage", nextPageMsg);
+		HTMLs.appendAttribute(sb, "msgpreviouspage", previousPageMsg);
 		HTMLs.appendAttribute(sb, "reorder", reorder);
 		if (download)
 			HTMLs.appendAttribute(sb, "msgdownload", downloadMsg);
@@ -908,5 +920,21 @@ public class DataTable extends XulElement implements XPathSubscriber,
 	public void refresh () throws Exception {
 		if (collectionBinder != null && collectionBinder.isValid())
 			collectionBinder.getUpdateableListModel().refresh();
+	}
+
+	public String getNextPageMsg() {
+		return nextPageMsg;
+	}
+
+	public void setNextPageMsg(String nextPageMsg) {
+		this.nextPageMsg = nextPageMsg;
+	}
+
+	public String getPreviousPageMsg() {
+		return previousPageMsg;
+	}
+
+	public void setPreviousPageMsg(String previousPageMsg) {
+		this.previousPageMsg = previousPageMsg;
 	}
 }
