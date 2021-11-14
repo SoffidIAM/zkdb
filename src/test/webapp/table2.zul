@@ -1,0 +1,317 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<zk>
+	<style>
+	
+	img.dataimage {
+		min-height: 100px;
+		max-height: 200px;
+		min-width: 100px;
+		max-width: 200px;
+	}
+	
+	div.datatable span.tablepager {
+		float:left;
+	}
+
+	div.datatable span.tablepager span {
+		cursor: pointer;
+		margin-left: 8px;
+		margin-right: 8px;
+	}
+
+	div.datatable span.tablepager span:hover {
+		color: red;
+	}
+
+		div.datatable table, div.datatable table td {
+			border: solid 1px #c0c0c0;
+			border-collapse: collapse;
+		}
+		div.datatable table.thead td {
+			box-sizing: border-box;
+			background-color: #f0f0f0;
+		    overflow: hidden;
+		    text-overflow: ellipsis;
+		    white-space: nowrap;		
+    	}
+		div.datatable .thead td input {
+			width:100%;
+		}
+		div.datatable div.tfoot {
+			background-color: white;
+			text-align: right;
+			box-sizing: border-box;
+			border: none;
+		}
+		div.datatable div.tfoot a { float: left;} 
+		div.datatable table.thead td.filter-cell {
+			padding-left:10px;
+			padding-right: 10px;
+		    text-overflow: clip;
+		}
+		
+		div.datatable {
+			display: block;
+			border-spacing: 0;
+  		}
+		
+		div.datatable table.thead {
+		  width:100%;
+		  table-layout: fixed;  
+		}
+		
+		div.datatable div.tfoot {
+		  width:100%;
+		  box-sizing: border-box;
+		}
+				
+		div.datatable div.tbodydiv{
+		  background-color: white;
+		  box-sizing: border-box;
+		  width:100%; 
+		  overflow-y:auto;
+		  overflow-x:clip;
+		  border-bottom: 1px solid #c0c0c0;
+		}
+		
+		div.datatable table.tbody{
+		  width:100%; 
+		}
+
+		div.datatable tr{
+		  width: 100%;
+		}
+		
+		div.datatable td.selector {
+			padding-left:10px;
+			padding-right: 10px;
+			margin: 0px;
+			width: 48px;
+		}
+		
+		div.datatable table.tbody tr:hover {
+			background-color: #e0e0ff;
+		}
+
+		div.datatable table.tbody tr.selected {
+			background-color: #c0c0ff;
+		}
+
+		div.datatable table.tbody tr {
+			cursor: pointer;
+		}
+
+		div.datatable table.thead td {
+			box-sizing: border-box;
+    	}
+
+		div.datatable td.sortable-column {
+			cursor: pointer;
+		}
+		div.datatable td.sortable-column div.sort-indicator {
+			display: inline-block;
+			margin-left: 5px;
+			margin-right: 5px;
+		}
+		div.datatable td.sortable-column div.sort-indicator div,
+		div.datatable td div.reorder-indicator div {
+			font-size: 50%;
+		}
+		div.datatable div.sort-indicator-disabled {
+			visibility: hidden;
+		}
+		div.datatable table td.reorder {
+			width: 16px;
+		} 
+		
+		.switch, .switch * {
+    box-sizing: content-box;
+}
+
+.switch {
+    color: white;
+    width: 80px;
+    position: relative;
+    margin-top: 10px;
+    font-size: 10px;
+    line-height: 1.4;
+    cursor: pointer;
+}
+
+.switch span { 
+    font-size: 10px;
+}
+
+.switch.disabled {
+    opacity: 0.3;
+}
+
+.switch.outdated,
+.switch.incompatible {
+    width: auto;
+}
+
+/* create a new BFC to have floating label work correctly.
+ * http://colinaarts.com/articles/float-containment/ */
+.switch:before, .switch:after {
+  content    : '';
+  display    : table;
+}
+
+.switch:after {
+  clear: both;
+}
+
+.switch { display : inline-block; }
+.switch { display : block; }
+
+
+
+.switch, .switch * {
+    display: block;
+    user-select: none;
+}
+
+.switch .slider.not-dragging {
+    -webkit-transition: left 0.2s ease-in-out;
+    -moz-transition: left 0.2s ease-in-out;
+    -ms-transition: left 0.2s ease-in-out;
+    -o-transition: left 0.2s ease-in-out;
+    transition: left 0.2s ease-in-out;
+}
+
+.switch .slider {
+    position: absolute;
+    /* (80px / 2) - 2px */
+    width: 38px;
+    top: -2px;
+    bottom: -2px;
+
+    border: 3px solid #5f5f5f;
+    background-color: #000;
+    border-radius: 4px;
+}
+
+.switch .slider .handle {
+    display: block;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    margin-left: -5px;
+    margin-top: -4px;
+    width: 2px;
+    height: 8px;
+    border-width: 0 6px 0 2px;
+    border-style: none double none solid;
+    border-color: #5f5f5f;
+}
+
+.switch .off,
+.switch .on,
+.switch.customized .custom-content {
+    font-weight: bold;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6),
+                 0 1px 0   rgba(0, 0, 0, 0.6);
+    border-style: solid;
+    border-width: 2px;
+    text-align: center;
+    padding: 1px 0;
+}
+
+.switch .off,
+.switch .on {
+    /* 80px / 2 - 2px */
+    width: 38px;
+}
+
+.slider.not-dragging.slider-on {
+	left: 38px;
+}
+
+.slider.not-dragging.slider-off {
+	left: 0px;
+}
+
+.switch .custom-content {
+    /* To aid with writing style sheets, put the default color styles
+     * in a less specified selector, so they're easily overridden. */
+    display: none;
+
+    /* default colors */
+    background-color: #000000;
+    border-color: #2e3436;
+}
+
+.switch.customized .custom-content {
+    display: block;
+
+    /* 80px - 4px */
+    width: 76px;
+    border-radius: 4px;
+}
+
+.switch.customized .custom-content.outdated,
+.switch.customized .custom-content.incompatible {
+    width: auto;
+}
+
+.switch.customized .custom-content.incompatible {
+    cursor: help;
+}
+
+.switch .off {
+    float: right;
+    border-color: #2e3436;
+    border-left-style: none;
+    border-radius: 0 4px 4px 0;
+    background-color: #000000;
+}
+
+.switch .on {
+    float: left;
+    border-color: #3465a4;
+    border-right-style: none;
+    border-radius: 4px 0 0 4px;
+    background-color: #4a90d9;
+}
+
+.switch.customized .on,
+.switch.customized .off,
+.switch.customized .slider {
+    display: none;
+}
+		
+		
+	</style>
+	
+	
+	
+	<datamodel id="mydata" src="/descriptor.xml" rootNode="countries" />
+	<datatable id="countries" multiselect="true"
+		width="100%" dataPath="/mydata:/country" 
+		reorder="true"
+		maxheight="440px">
+		<attribute name="columns">
+		<![CDATA[
+		[
+		 {"name":"column1", "value":"abbreviation"},
+		 {"name":"column2","value":"name"},
+		 {"name":"column3", "template":"##<b>${"${name }"}</b>##"},
+		 {"name":"", "template":"<button value='Remove' onClick='zkDatatable.sendClientAction(this,\"onRemoveItem\")'>Remove</button>", 
+		 	"filter": false, "sort": false}
+		]
+		]]>
+		</attribute>
+		<attribute name="onRemoveItem">
+		<![CDATA[
+			alert("Removed "+countries.getSelectedIndex());
+			countries.deleteSelectedItem();
+		]]></attribute>
+	</datatable>
+
+	<hbox>
+		<label value="Active country:" />
+		<textbox bind="/countries:/@name" onChange="" />
+	</hbox>	
+	<pager datatable="countries" sclass="pager"/>
+</zk>
