@@ -323,7 +323,7 @@
 		</attribute>
 	</select>
 	<pager datatable="countries" sclass="pager"/>
-	<databutton label="Commit" datamodel="mydata"/>
+	<databutton2 label="Commit" datamodel="mydata"/>
 	
 	<databox type="STRING" maxlength="50" bind="/countries:/@name" multiline="true"></databox>
 	<databox type="STRING" maxlength="50" value="abc123" multiValue="true" multiline="true">

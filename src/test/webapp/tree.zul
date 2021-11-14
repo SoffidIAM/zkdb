@@ -530,5 +530,19 @@ div.datatree div.tbody div.tree-label {
 		</attribute>
 	</select>
  	<pager datatree2="countries" sclass="pager"/>
-	<databutton label="Commit" datamodel="mydata"/>
+	<databutton2 label="Commit" datamodel="mydata"/>
+	<intbox id="rows"></intbox>
+	<button label="Add">
+	<attribute name="onClick"> <![CDATA[
+		int num = es.caib.zkib.datasource.XPathUtils.eval(mydata, "/country").size();
+		for (int i = 0; i < rows.intValue(); i++) {
+			c4 = new es.caib.zkib.sample.Country ();
+			c4.name= "Country "+num;
+			c4.abbreviation= "c"+num;
+			num++;
+			es.caib.zkib.datasource.XPathUtils.createPath(mydata, "/country", c4);
+		}
+	]]>
+	</attribute>
+	</button>
 </zk>
