@@ -4,6 +4,19 @@ zk.load("zul.zul");
 
 zkDatatable = {};
 
+/***
+ data  -> array of data, sorted as received
+   data.num -> Row number assigned by the server
+   data.value -> received data
+   data.text -> text formated data
+   data.html -> html formated data
+   data.trid -> id of the tr for its row
+   data.positon -> server position
+   data.displayed -> boolean value
+   data.ts -> Timestamp when the data was added
+ sortedData -> Data sorted
+ filteredData -> Data sorted and filtered 
+***/
 zkDatatable.init = function (ed) {
 	var c = ed.getAttribute("columns");
 	if (c)
@@ -28,7 +41,16 @@ zkDatatable.init = function (ed) {
 	ed.maxheight = ed.getAttribute("maxheight");
 	ed.selectedPosition = 0;
 	ed.selectedTr = null;
+	ed.selecteidServerPosition = 0;
 	ed.count = 0;
+	ed.sortAction = 0;
+	ed.data = [];
+	ed.sortedData = [];
+	ed.filteredData = [];
+	ed.filterTs = 0;
+	ed.currentPage = 0;
+	ed.pageSize = ed.getAttribute("pageSize");
+	if (ed.pageSize == null) ed.pageSize = 200;
 	if (!ed.pagers)
 		ed.pagers=[];
 	zkDatatable.refresh(ed);
@@ -173,7 +195,7 @@ zkDatatable.fixupColumns=function(ed) {
 	var tfoot = document.getElementById(ed.id+"!tfoot");
 	for (var tr = tbody.firstElementChild; tr != null; tr = tr.nextElementSibling)
 	{
-		if ( "none" != tr.style.display)
+		if ( "none" != tr.style.display && !tr.pager)
 			break;
 	}
 	var trh = thead.firstElementChild; 
@@ -207,6 +229,35 @@ zkDatatable.fixupColumns=function(ed) {
 }
 
 
+zkDatatable.onFirstPageButton = function (event) {
+	var ed = event.target.parentElement.parentElement.parentElement;
+	if (ed.currentPage != null) {
+		ed.currentPage = 0;
+		zkDatatable.doFilter(ed);
+	}
+}
+
+zkDatatable.onLastPageButton = function (event) {
+	var ed = event.target.parentElement.parentElement.parentElement;
+	if (ed.currentPage != ed.pages - 1) {
+		ed.currentPage = ed.pages-1;
+		zkDatatable.doFilter(ed);		
+	}
+}
+zkDatatable.onPreviousPageButton = function (event) {
+	var ed = event.target.parentElement.parentElement.parentElement;
+	if (ed.currentPage > 0) {
+		ed.currentPage --;
+		zkDatatable.doFilter(ed);
+	}
+}
+zkDatatable.onNextPageButton = function (event) {
+	var ed = event.target.parentElement.parentElement.parentElement;
+	if (ed.currentPage < ed.pages - 1) {
+		ed.currentPage ++;
+		zkDatatable.doFilter(ed);
+	}
+}
 zkDatatable.createFooter = function (ed) {
 	var footer = document.getElementById(ed.id+"!tfoot");
 	var v ;
@@ -216,7 +267,40 @@ zkDatatable.createFooter = function (ed) {
 	}
 	if (  ed.footer)
 	{
-		footer.appendChild( document.createTextNode ( ed.getAttribute("msgrows")+ ": "+ ed.count ));
+		var msg = ed.getAttribute("msgrows")+ ": "+ ed.filteredData.length;
+		if (ed.pages > 0 && ed.pageSize > 0) {
+			var first = 1 + ed.currentPage * ed.pageSize;
+			var end = (ed.currentPage + 1) * ed.pageSize;
+			if ( end > ed.filteredData.length)
+				end = ed.filteredData.length;
+			var span = document.createElement("span");
+			span.setAttribute("class", "tablepager");
+			footer.appendChild(span);
+
+			var t = document.createElement("span");
+			t.addEventListener("click", zkDatatable.onFirstPageButton);
+			t.innerHTML = "&#x25c3;&#x25c3;";
+			span.appendChild(t);
+			
+			t = document.createElement("span");
+			t.addEventListener("click", zkDatatable.onPreviousPageButton);
+			t.innerHTML = "&#x25c4;";
+			span.appendChild(t);
+
+			span.appendChild(document.createTextNode (" "+first + " - "+end+" "));
+			
+			t = document.createElement("span");
+			t.addEventListener("click", zkDatatable.onNextPageButton);
+			t.innerHTML = "&#x25ba;";
+			span.appendChild(t);
+
+			t = document.createElement("span");
+			t.addEventListener("click", zkDatatable.onLastPageButton);
+			t.innerHTML = "&#x25b9;&#x25b9;";
+			span.appendChild(t);
+
+		} 
+		footer.appendChild( document.createTextNode ( msg ));
 		if (ed.getAttribute("msgdownload")) {
 			var a = document.createElement("a");
 			a.setAttribute("href", "#");
@@ -276,38 +360,132 @@ zkDatatable.onFilter=function(ev) {
 		else
 			t.columns[column].currentFilter = [];
 	}
+	t.filterTs = new Date().getTime();
 	zkDatatable.doFilter(t);
+}
+
+zkDatatable.previousPage=function(event) {
+	var t = event.currentTarget.datatable;
+	t.currentPage --;
+	zkDatatable.doFilter(t);
+	var body = document.getElementById(t.id+"!tbodydiv");
+	body.scrollTop = body.scrollHeight;
+}
+
+zkDatatable.nextPage=function(event) {
+	var t = event.currentTarget.datatable;
+	t.currentPage ++;
+	zkDatatable.doFilter(t);
+	var body = document.getElementById(t.id+"!tbodydiv");
+	body.scrollTop = 0;
+}
+
+zkDatatable.isVisibleRow=function(t, row) {
+	var visible = true;
+	if (row.ts && row.ts > t.filterTs) {
+		row.displayed = true;
+		return true;
+	}
+	for (var column = 0; column < t.columns.length; column++)
+	{
+		var filter = t.columns[column].currentFilter;
+		var col = t.columns[column];
+		if (filter) {
+			var text = zkDatatable.getRowText(t,row)[column]; 
+			for (var f = 0; f < filter.length; f++)
+			{
+				if (text.toLowerCase().indexOf(filter[f]) < 0)
+				{
+					visible = false;
+					break;
+				}
+			}
+		}
+	}
+	row.displayed = visible;
+	return visible;
+}
+
+zkDatatable.addNextPageButton=function(t) {
+	var body = document.getElementById(t.id+"!tbody");
+	var tr = document.createElement('tr');
+	tr.setAttribute("class", "next-page");
+	body.appendChild(tr);
+	if (t.multiselect) {
+		var td2 = document.createElement("td");
+		td2.setAttribute("class", "selector");
+		tr.appendChild(td2);
+	}
+	var td = document.createElement("td");
+	td.colSpan = t.columns.length; 
+	td.innerText = t.getAttribute("msgnextpage");
+	tr.appendChild(td);
+	tr.pager = true;
+	tr.datatable = t;
+	tr.addEventListener("click", zkDatatable.nextPage);
 }
 
 zkDatatable.doFilter=function(t) {
 	t.count = 0;
 	t.selectedPosition = 0;
-	var tb = document.getElementById(t.id+"!tbody");
-	for (var row = tb.firstElementChild; row != null; row = row.nextElementSibling)
-	{
-		var visible = true;
-		for (var column = 0; column < t.columns.length; column++)
-		{
-			var filter = t.columns[column].currentFilter;
-			if (filter) {
-				for (var f = 0; f < filter.length; f++)
-				{
-					if (row.childNodes[ t.multiselect ? column+1: column].textContent.toLowerCase().indexOf(filter[f]) < 0)
-					{
-						visible = false;
-						break;
-					}
-				}
-			}
-		}
+	t.filteredData = [];
+	for (var i = 0; i < t.sortedData.length; i++) {
+		var row = t.sortedData[i];
+		var visible = zkDatatable.isVisibleRow(t,row);
 		if ( visible ) {
+			t.filteredData.push(row);
 			t.count ++; 
-			if (row == t.selectedTr)
+			if (row.position == t.selectedServerPosition)
 				t.selectedPosition = t.count;
-			row.style.display=""; 
 		}
-		else row.style.display="none";
 	}
+
+	var first = 0;
+	var end = t.filteredData.length;	
+	if (t.pageSize > 0 && t.pageSize < t.filteredData.length) {
+		t.pages = Math.floor((t.filteredData.length + t.pageSize - 1) / t.pageSize);
+		if (t.currentPage == null) t.currentPage = 0;
+		if (t.currentPage > t.pages) t.currentPage = t.pages - 1;
+		first = t.currentPage * t.pageSize;
+		end = (t.currentPage + 1) * t.pageSize;
+	}
+	var body = document.getElementById(t.id+"!tbody");
+	if (body) {
+		// Clean document
+		while ((v = body.firstChild) != null )
+		{
+			v.remove();
+		}
+		if (first > 0) {
+			var tr = document.createElement('tr');
+			tr.setAttribute("class", "previous-page");
+			body.appendChild(tr);
+			if (t.multiselect)
+			{
+				var td2 = document.createElement("td");
+				td2.setAttribute("class", "selector");
+				tr.appendChild(td2);
+			}
+			var td = document.createElement("td");
+			td.colSpan = t.columns.length; 
+			td.innerText = t.getAttribute("msgpreviouspage");
+			tr.appendChild(td);
+			tr.datatable = t;
+			tr.pager = true;
+			tr.addEventListener("click", zkDatatable.previousPage);
+		}
+		if ( end > t.filteredData.length)
+			end = t.filteredData.length;
+		// Generate rows
+		for (var i = first; i < end; i++ )
+		{
+			zkDatatable.addRowInternal (t, t.filteredData[i] ); 
+		}
+		if (end < t.filteredData.length) {
+			zkDatatable.addNextPageButton(t);
+		}
+	}
+	
 	zkDatatable.fixupColumns(t);
 	zkDatatable.createFooter(t);
 	zkDatatable.updatePagers(t);
@@ -360,12 +538,22 @@ zkDatatable.setData = function(ed, data) {
 		// Generate rows
 		ed.index = [] ;
 		data = JSON.parse(data);
+		ed.data = [];
+		ed.sortedData = [];
+		ed.filteredData = [];
+		
 		for (var i = 0; i < data.length; i++ )
 		{
-			zkDatatable.addRowInternal (ed, i, data[i] ); 
+			ed.sortedData[i] = ed.data[i] = {value: data[i], position: i};
 		}
-		zkDatatable.doFilter(ed);
-		zkDatatable.prepareSort(ed);
+		
+		if (!ed.enablefilter && ed.data.length > ed.pageSize)
+		{
+			ed.enablefilter = true;
+			zkDatatable.refresh(ed);
+		}
+
+		zkDatatable.prepareSort(ed, true);
 	}
 }
 
@@ -373,48 +561,123 @@ zkDatatable.setData = function(ed, data) {
 zkDatatable.addRow=function(ed, pos, value)
 {
 	pos = parseInt(pos);
-	zkDatatable.addRowInternal (ed, pos, JSON.parse(value));
-	ed.count ++;
-	zkDatatable.prepareSort(ed);
+	value = JSON.parse(value);
+	var data = { value: value, position: pos++, ts: new Date().getTime(), displayed: true};
+	ed.data.push(data);
+	if (!ed.enablefilter && ed.data.length > ed.pageSize)
+	{
+		ed.enablefilter = true;
+		zkDatatable.refresh(ed);
+	}
+	if (ed.sortColumn < 0) {
+		ed.sortedData.push(data);
+		ed.filteredData.push(data);
+		if (ed.pageSize == 0 ||
+			ed.filteredData.length <= ed.pageSize * (1+ed.currentPage) &&
+			ed.filteredData.length >= ed.pageSize * ed.currentPage ) {
+			zkDatatable.addRowInternal (ed, ed.filteredData[ed.filteredData.length - 1] ); 	
+		}
+		else if (ed.filteredData.length == 1+ed.pageSize * (1+ed.currentPage))  {
+			zkDatatable.addNextPageButton(ed);
+		}
+		ed.count++;
+	}
+	zkDatatable.prepareSort(ed, false);
 }
 
 zkDatatable.addRows=function(ed, pos, values)
 {
 	pos = parseInt(pos);
 	var values = JSON.parse(values);
-	for (var i = 0; i < values.length; i++)
-		zkDatatable.addRowInternal (ed, pos+i, values[i]);
-	ed.count += values.length;
-	zkDatatable.prepareSort(ed);
+	for (var i = 0; i < values.length; i++) {
+		var value = values[i];
+		var data = { value: value, position: pos++, ts: new Date().getTime(), displayed: true};
+		ed.data.push(data);
+		if (ed.sortColumn < 0) {
+			ed.sortedData.push(data);
+			ed.filteredData.push(data);
+			ed.count ++;
+			if (ed.pageSize == 0 ||
+				ed.filteredData.length <= ed.pageSize * (1+ed.currentPage)  &&
+				ed.filteredData.length >= ed.pageSize * ed.currentPage ) {
+				zkDatatable.addRowInternal (ed, ed.filteredData[ed.filteredData.length - 1] ); 	
+			}
+			else if (ed.filteredData.length == 1+ed.pageSize * (1+ed.currentPage) ) {
+				zkDatatable.addNextPageButton(ed);
+			}
+		}
+	}
+
+	if (!ed.enablefilter && ed.data.length > ed.pageSize)
+	{
+		ed.enablefilter = true;
+		zkDatatable.refresh(ed);
+		zkDatatable.doFilter(ed);
+	}
+	zkDatatable.prepareSort(ed, false);
 }
 
-zkDatatable.addRowInternal=function(ed, pos, value)
+zkDatatable.addRowInternal=function(ed, data)
 {
 	var t = document.getElementById(ed.id+"!tbody");
 	var tr = document.createElement("tr");
 	tr.addEventListener("click", zkDatatable.onSelectRow)
 	tr.id = ed.id+"!row."+(ed.nextRowId++);
-	if ( pos >= ed.index.length)
-	{
-		ed.index[pos] = tr.id;
-	}	
-	else
-	{
-		ed.index.splice (pos, 0, tr.id);
-	}
-		
+	data.trid = tr.id;
+	
 	t.appendChild(tr);
 	
 	try {
-		zkDatatable.fillRow(ed, tr, value);
+		zkDatatable.fillRow(ed, tr, data);
 	} catch (e) {
 		console.log("Warning: Error rendering row ");
-		console.log(value);
+		console.log(data);
 		console.log(e);
 	}
 }
 
-zkDatatable.fillRow=function(ed,tr,value)
+
+zkDatatable.getRowText=function(ed, data) {
+	if (data.text)
+		return data.text;
+
+	data.text = [];
+	for (var column =  0; column < ed.columns.length; column ++)
+	{
+		var col = ed.columns[column];
+		if (col.template) {
+			var v = zkDatatable.replaceExpressions(col.template, data.value);
+			const floatingElement = document.createElement("div");
+			floatingElement.innerHTML = v;
+			const textValue = floatingElement.innerText;
+			data.text.push(textValue + zkDatatable.inputValues(floatingElement));		
+		}
+		else if (col.render)
+			data.text.push("");
+		else if (col.value)
+		{
+			var t = "";
+			if (!data.value.hasOwnProperty(col.value))
+			{
+				var value2 = zkDatatable.evaluateInContext (col.value, data.value);
+				if (value2 == undefined)
+					t= "";
+				else
+					t=value2;
+			}
+			else if (data.value[col.value] == null)
+				t = "";
+			else
+				t = data.value[col.value] ;
+			data.text.push (zkDatatable.trimColumn(t));
+		}
+		else
+			data.text.push(data.value[col.name]);
+	}
+	return data.text;
+}
+
+zkDatatable.fillRow=function(ed, tr, data)
 {
 	if (ed.reorder) {
 		tr.table=ed;
@@ -434,43 +697,55 @@ zkDatatable.fillRow=function(ed,tr,value)
 		td.appendChild(cb);
 		td.addEventListener("click", zkDatatable.onSelectCell)
 	}
-	tr.value = value;
+	tr.data = data;
+	var value = data.value;
 	if (value['$class']) {
 		if (tr.classList.contains("selected"))
 			tr.setAttribute("class", "selected "+value['$class']);
 		else
 			tr.setAttribute("class", value['$class']);
 	}
+	var generateData = data.html == null;
+	if (generateData) {
+		data.text = [];
+		data.html = [];		
+	}
 	for (var column =  0; column < ed.columns.length; column ++)
 	{
 		var td = document.createElement("td");
 		tr.appendChild(td);
 		var col = ed.columns[column];
-		if (col.template)
-			td.innerHTML = zkDatatable.replaceExpressions(col.template, value);
-		else if (col.render)
-			window[col.render](td, col, value);
-		else if (col.value)
-		{
-			var t = "";
-			if (!value.hasOwnProperty(col.value))
+		if (generateData) {
+			if (col.template)
+				td.innerHTML = zkDatatable.replaceExpressions(col.template, data.value);
+			else if (col.render)
+				window[col.render](td, col, data.value);
+			else if (col.value)
 			{
-				var value2 = zkDatatable.evaluateInContext (col.value, value);
-				if (value2 == undefined)
-					t= "";
+				var t = "";
+				if (!value.hasOwnProperty(col.value))
+				{
+					var value2 = zkDatatable.evaluateInContext (col.value, data.value);
+					if (value2 == undefined)
+						t= "";
+					else
+						t=value2;
+				}
+				else if (data.value[col.value] == null)
+					t = "";
 				else
-					t=value2;
+					t = data.value[col.value] ;
+				td.innerText = zkDatatable.trimColumn(t);
 			}
-			else if (value[col.value] == null)
-				t = "";
 			else
-				t = value[col.value] ;
-			td.innerText = zkDatatable.trimColumn(t);
+				td.innerText = data.value[col.name];
+			data.text.push (td.innerText);
+			data.html.push (td.innerHTML);
+		} else {
+			td.innerHTML = data.html[column];
 		}
-		else
-			td.innerText = value[col.name];
 		if (col.className) {
-			td.setAttribute("class", zkDatatable.replaceExpressions(col.className, value));
+			td.setAttribute("class", zkDatatable.replaceExpressions(col.className, data.value));
 		}
 	}
 }
@@ -484,6 +759,7 @@ zkDatatable.trimColumn=function(v) {
 		return v;
 	}
 }
+
 zkDatatable.dontBubble=function(ev) {
 	ev.stopPropagation();
 }
@@ -492,45 +768,51 @@ zkDatatable.updateRow=function(ed, pos, value)
 {
 	value = JSON.parse(value);
 	var t = document.getElementById(ed.id+"!tbody");
-	var trid = ed.index[pos];
-	if (trid)
-	{
-		var tr = document.getElementById(trid);
-		if (tr)
+	var data = ed.data[pos];
+	if (data) {
+		data.value = value;
+		data.text = null;
+		data.html = null;
+		var trid = data.trid;
+		if (data.displayed && trid)
 		{
-			var v ;
-			var selected;
-			if ( ed.multiselect)
-				selected = tr.firstChild.firstChild.checked;
-			while ((v = tr.firstChild) != null )
+			var tr = document.getElementById(trid);
+			if (tr)
 			{
-				v.remove();
+				var v ;
+				var selected;
+				if ( ed.multiselect)
+					selected = tr.firstChild.firstChild.checked;
+				while ((v = tr.firstChild) != null )
+				{
+					v.remove();
+				}
+				zkDatatable.fillRow(ed, tr, data);
+				if ( ed.multiselect)
+					tr.firstChild.firstChild.checked = selected;
 			}
-			zkDatatable.fillRow(ed, tr, value);
-			if ( ed.multiselect)
-				tr.firstChild.firstChild.checked = selected;
+			zkDatatable.fixupColumns(ed);
 		}
 	}
-	zkDatatable.fixupColumns(ed);
 	
 };
 
-zkDatatable.sendClientAction=function(el,event,data)
+zkDatatable.sendClientAction=function(el,event, args)
 {
 	var target = el;
 	while (target.tagName != 'TR')
 		target = target.parentNode;
 	var t = target.parentNode/* tbody */.parentNode/* bodydiv */.parentNode/* table */;
-	var position = t.index.indexOf(target.id);
-	if (position >= 0)
+	var data = tr.data;
+	if (data.position >= 0)
 	{
-		zkau.send ({uuid: t.id, cmd: "onSelect", data : [position]}, 5);		
-		if (data) {
-			data.splice(0,0, event);
+		zkau.send ({uuid: t.id, cmd: "onSelect", data : [data.position]}, 5);		
+		if (args) {
+			args.splice(0,0, event);
 		} else {
-			data = [ event];
+			args = [ event];
 		}
-		var req = {uuid: t.id, cmd: "onClientAction", data:data};
+		var req = {uuid: t.id, cmd: "onClientAction", data: args};
 		zkau.send (req, 5);		
 	}	
 }
@@ -590,7 +872,6 @@ zkDatatable.escapeHTML=function(t) {
 zkDatatable.cleanup = function (ed) {
 };
 
-
 zkDatatable.refreshRows = function(ed) {
 	var v;
 	var thead = document.getElementById(ed.id+"!thead");
@@ -607,9 +888,13 @@ zkDatatable.refreshRows = function(ed) {
 		thead.appendChild(tr);
 		zkDatatable.createFilters( ed, tr);
 	}
+	
+	for (var i = 0; i < ed.data.length; i++) {
+		data[i].text = data[i].html = null;		
+	}
 
 	var t = document.getElementById(ed.id+"!tbody");
-	for (var tr = t.firstElementChild; tr != null; tr = tr.nextElementSibilng) 
+	for (var tr = t.firstElementChild; tr != null; tr = tr.nextElementSibling) 
 	{
 		var selected;
 		if ( ed.multiselect)
@@ -618,7 +903,7 @@ zkDatatable.refreshRows = function(ed) {
 		{
 			v.remove();
 		}
-		zkDatatable.fillRow(ed, tr, tr.value);
+		zkDatatable.fillRow(ed, tr, tr.data);
 		if ( ed.multiselect)
 			tr.firstChild.firstChild.checked = selected;
 	}
@@ -650,6 +935,7 @@ zkDatatable.setAttr = function (ed, name, value) {
 	case "reorder":
 		ed.reorder = (value != "false");
 		zkDatatable.refresh(ed);
+		zkDatatable.doSort(ed);
 		return true;
 	case "maxheight":
 		ed.maxheight = value;
@@ -661,14 +947,14 @@ zkDatatable.setAttr = function (ed, name, value) {
 };
 
 zkDatatable.findSelectedPosition=function(t) {
-	var count = 0;
+	var count = t.pageSize * t.currentPage;
 	t.selectedPosition = 0;
 	var tb = document.getElementById(t.id+"!tbody");
 	for (var row = tb.firstElementChild; row != null; row = row.nextElementSibling)
 	{
-		if ( row.style.display != "none" ) {
+		if ( row.style.display != "none" && !row.pager) {
 			count ++; 
-			if (row == t.selectedTr) {
+			if (row.data.position == t.selectedServerPosition) {
 				t.selectedPosition = count;
 				break;
 			}
@@ -694,6 +980,7 @@ zkDatatable.onSelectRow=function(ev) {
 			}
 			cb.checked = true;
 			target.classList.add("selected");
+			t.selectedServerPosition = target.data.position;
 			t.selectedTr = target;
 		} else {
 			t.selectedTr = zkDatatable.findSelectedTr(t);
@@ -709,8 +996,9 @@ zkDatatable.onSelectRow=function(ev) {
 			row.classList.remove("selected")
 		}
 		target.classList.add("selected");
+		t.selectedServerPosition = target.data.position;
 		t.selectedTr = target;
-		var position = t.index.indexOf(target.id);
+		var position = target.data.position;
 		if (position >= 0)
 		{
 			var req = {uuid: t.id, cmd: "onSelect", data : [position]};
@@ -726,11 +1014,13 @@ zkDatatable.findSelectedOne=function(table) {
 	var row;
 	for (row = tbody.firstElementChild; row != null; row = row.nextElementSibling)
 	{
-		var cb2 = row.firstElementChild/* td */.firstElementChild/* input */;
-		if ( cb2.checked )
-		{
-			if (selected == null) selected = row;
-			else return null;
+		if (!row.pager) {
+			var cb2 = row.firstElementChild/* td */.firstElementChild/* input */;
+			if ( cb2.checked )
+			{
+				if (selected == null) selected = row;
+				else return null;
+			}
 		}
 	}
 	return selected;	
@@ -762,11 +1052,13 @@ zkDatatable.onSelectAll=function(ev) {
 		if (table.selectedTr == null)
 			table.selectedTr = row;
 		var cb2 = row.firstElementChild/* td */.firstElementChild/* input */;
-		cb2.checked = cb.checked;
-		if (cb.checked)
-			row.classList.add("selected");
-		else
-			row.classList.remove("selected");
+		if (cb2) {
+			cb2.checked = cb.checked;
+			if (cb.checked)
+				row.classList.add("selected");
+			else
+				row.classList.remove("selected");
+		}
 	}
 	zkDatatable.sendSelect(table, false);
 	zkDatatable.findSelectedPosition(table);
@@ -793,10 +1085,18 @@ zkDatatable.selectRow=function(cb) {
 		cb2.checked = false;
 		row.classList.remove("selected");
 		table.selectedTr = zkDatatable.findSelectedTr(table);
+		table.selectedPosition = 0;
 	} else {
 		table.selectedTr = row;
+		table.selectedServerPosition = row.data.position;
 		row.classList.add("selected");
-	}
+		table.selectedPosition = table.pageSize * table.currentPage ;
+		for (var row2 = row.parentElement.firstElementChild; row2 != null; row2 = row2.nextElementSibling) {
+			if (!row2.pager)
+				table.selectedPosition ++;
+			if (row2 == row) break;
+		}
+ 	}
 	zkDatatable.sendSelect(table, false);
 }
 
@@ -806,28 +1106,33 @@ zkDatatable.setSelected=function(t, pos) {
 	for (var row = tbody.firstElementChild; row != null; row = row.nextElementSibling)
 	{
 		row.classList.remove("selected")
-		if ( t.multiselect )
+		if ( t.multiselect && !row.pager)
 		{
 			var cb = row.firstElementChild/* td */.firstElementChild/* input */;
 			cb.checked = false;
 		}
 	}
 	t.selectedTr = null;
-	var rowid =  t.index[pos];
-	if (rowid)
-	{
-		var row = document.getElementById(rowid);
-		if (row)
+	if (pos >= 0 && pos < t.data.length) {
+		var rowid =  t.data[pos].trid;
+		if (rowid)
 		{
-			if ( t.multiselect )
+			var row = document.getElementById(rowid);
+			if (row)
 			{
-				var cb = row.firstElementChild/* td */.firstElementChild/* input */;
-				cb.checked = true;
+				if ( t.multiselect )
+				{
+					var cb = row.firstElementChild/* td */.firstElementChild/* input */;
+					cb.checked = true;
+				}
+				row.classList.add("selected");
+				t.selectedTr = row;
 			}
-			row.classList.add("selected");
-			t.selectedTr = row;
+			zkDatatable.findSelectedPosition(t);
+		} else {
+			t.selectedPosition = 0;
+			zkDatatable.updatePagers(t);
 		}
-		zkDatatable.findSelectedPosition(t);
 	} else {
 		t.selectedPosition = 0;
 		zkDatatable.updatePagers(t);
@@ -891,9 +1196,9 @@ zkDatatable.sendSelect=function(table, singleSelect) {
 	for (var row = tbody.firstElementChild; row != null; row = row.nextElementSibling)
 	{
 		var cb2 = row.firstElementChild/* td */.firstElementChild/* input */;
-		if (cb2.checked)
+		if (cb2 && cb2.checked)
 		{
-			var position = table.index.indexOf(row.id);
+			var position = row.data.position;
 			if (position >= 0)
 			{
 				selected.push(position);
@@ -932,83 +1237,91 @@ zkDatatable.onSort=function(ev) {
 	}
 }
 
-zkDatatable.prepareSort=function(ed) {
-	if (! ed.sortPending) {
-		var tbody = document.getElementById(ed.id+"!tbody");
-		var rows = tbody.children.length;
-		if (rows < 50) {
-			if (ed.sortColumn >= 0)
-				zkDatatable.doSort(ed);
-			zkDatatable.createFooter(ed);
-			zkDatatable.fixupColumns(ed);
-			zkDatatable.findSelectedPosition(ed);
-		}
-		else {
-			ed.sortPending = true;
-			window.setTimeout(() => {
-				ed.sortPending = false;
+zkDatatable.prepareSort=function(ed, force) {
+	ed.sortAction ++;
+	var tbody = document.getElementById(ed.id+"!tbody");
+	var rows = ed.data.length;
+	if (rows < 50) {
+		if (ed.sortColumn >= 0)
+			zkDatatable.doSort(ed);
+		else if (force)
+			zkDatatable.doFilter(ed);
+		zkDatatable.createFooter(ed);
+		zkDatatable.fixupColumns(ed);
+		zkDatatable.findSelectedPosition(ed);
+	}
+	else {
+		var action = ed.sortAction;
+		ed.sortPending = true;
+		window.setTimeout(() => {
+			if (action == ed.sortAction) {
 				if (ed.sortColumn >= 0)
 					zkDatatable.doSort(ed);
+				else if (force)
+					zkDatatable.doFilter(ed);
 				zkDatatable.createFooter(ed);
 				zkDatatable.fixupColumns(ed);
-				zkDatatable.findSelectedPosition(ed);
-			}, 100);
-		}
+				zkDatatable.findSelectedPosition(ed);				
+			}
+		}, 100);
 	}
 }
+
+
 zkDatatable.doSort=function(ed) {
 	var sortColumn = ed.sortColumn;
-	if (ed.multiselect) sortColumn++;
-	var value = ed.columns[ed.sortColumn].value;
-	var direction = ed.sortDirection;
-	var tbody = document.getElementById(ed.id+"!tbody");
-	var children = [...tbody.children];
-	zkDatatable.quickSort(children,
-			(a,b) => {
-				var r;
-				if (value) {
-					var v1,v2;
-					if (a.value.hasOwnProperty(value)) 
-						v1 = a.value[value];
-					else {
-						with (a.value) { 
-							try {
-								v1 = zkDatatable.evaluateInContext (value, a.value)
-							} catch(e) {
-								v1=""
+	ed.sortedData = [...ed.data];
+	if (sortColumn >= 0) {
+		var col = ed.columns[ed.sortColumn];
+		var value = ed.columns[ed.sortColumn].value;
+		var direction = ed.sortDirection;
+		var tbody = document.getElementById(ed.id+"!tbody");
+		zkDatatable.quickSort(ed.sortedData,
+				(a,b) => {
+					var r;
+					if (value) {
+						var v1,v2;
+						if (a.value.hasOwnProperty(value)) 
+							v1 = a.value[value];
+						else {
+							with (a.value) { 
+								try {
+									v1 = zkDatatable.evaluateInContext (value, a.value)
+								} catch(e) {
+									v1=""
+								}
 							}
 						}
-					}
-					if (b.value.hasOwnProperty(value)) 
-						v2 = b.value[value];
-					else {
-						with (b.value) { 
-							try {
-								v2 = zkDatatable.evaluateInContext (value, b.value)
-							} catch(e) {
-								v2=""
+						if (b.value.hasOwnProperty(value)) 
+							v2 = b.value[value];
+						else {
+							with (b.value) { 
+								try {
+									v2 = zkDatatable.evaluateInContext (value, b.value)
+								} catch(e) {
+									v2=""
+								}
 							}
 						}
+						if (isNaN(v1))
+							v1 = new String(v1).toLowerCase();
+						if (isNaN(v2))
+							v2 = new String(v2).toLowerCase();
+						if (v1 < v2) r = -1;
+						else if (v1 > v2) r = +1;
+						else r = 0; 
+					} else {
+						var v1 = zkDatatable.getRowText(ed,a)[sortColumn]; 
+						var v2 = zkDatatable.getRowText(ed,b)[sortColumn]; 
+						if (v1 < v2) r = -1;
+						else if (v1 > v2) r = +1;
+						else r = 0; 
 					}
-					if (isNaN(v1))
-						v1 = new String(v1).toLowerCase();
-					if (isNaN(v2))
-						v2 = new String(v2).toLowerCase();
-					if (v1 < v2) r = -1;
-					else if (v1 > v2) r = +1;
-					else r = 0; 
-				} else {
-					var v1 = a.childNodes[sortColumn].innerHTML.toLowerCase();
-					var v2 = b.childNodes[sortColumn].innerHTML.toLowerCase();
-					if (v1 < v2) r = -1;
-					else if (v1 > v2) r = +1;
-					else r = 0; 
+					return r*direction;
 				}
-				return r*direction;
-			}
-		);
-	for (var i = 0; i < children.length; i++)
-		tbody.insertBefore(children[i], null);
+			);
+	}
+	zkDatatable.doFilter(ed);
 }
 
 zkDatatable.deleteRow=function(ed, pos)
@@ -1154,14 +1467,12 @@ zkDatatable.downloadCsv=function(ed) {
 	}
 	s += "\n";
 	var tbody = document.getElementById(ed.id+"!tbody");
-	for (var tr = tbody.firstElementChild; tr != null; tr = tr.nextElementSibling) {
-		var c = 0;
-		var td = tr.firstElementChild;
-		if (ed.multiselect)
-			td = td.nextElementSibling;
-		for ( ; td != null; td = td.nextElementSibling) {
-			if (c++ > 0) s += ",";
-			var t = td.textContent + zkDatatable.inputValues(td);
+	for (var i = 0; i < ed.filteredData.length; i++) {
+		var row = ed.filteredData[i];
+		var text = zkDatatable.getRowText(t, row);
+		for ( var j = 0; j < text.length; j++) {
+			if (j > 0) s += ",";
+			var t = text[j];
 			s += zkDatatable.quote(t);
 		}
 		s+="\n";
@@ -1247,8 +1558,8 @@ zkDatatable.onDragEnd = function(event) {
 	if (target != src) {
 		var targetPosition = target == null ?  
 			-1:
-			t.index.indexOf(target.id);
-		var srcPosition = t.index.indexOf(src.id);
+			target.data.position;
+		var srcPosition = src.data.position;
 		if (srcPosition >= 0)
 		{
 			zkau.send ({uuid: t.id, cmd: "onReorder", data : [srcPosition, targetPosition]}, 5);		

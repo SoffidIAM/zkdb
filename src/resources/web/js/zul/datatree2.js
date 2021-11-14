@@ -41,6 +41,10 @@ zkDatatree2.init = function (ed) {
 	if (ed.getAttribute("columns") != null && ed.getAttribute("columns").length > 0)
 		ed.columns = JSON.parse(ed.getAttribute("columns"));
 	ed.count = 0;
+	ed.pageSize = 50;
+	ed.nextPageMsg = ed.getAttribute("msgnextpage");
+	ed.previousPageMsg = ed.getAttribute("msgpreviouspage");
+	ed.refreshConter = 0;
 	if (!ed.pagers)
 		ed.pagers=[];
 	zkDatatree2.refresh(ed);
@@ -147,9 +151,14 @@ zkDatatree2.fixupColumns=function(ed) {
 		}
 		var tbody = document.getElementById(ed.id+"!tbody");
 		var label;
-		var iterator = document.evaluate("//div[starts-with(@class,'tree-label')]", tbody, 
-				null, XPathResult.UNORDERED_NODE_ITERATOR_TYPE, null);
 		var labels = [];
+		var iterator = document.evaluate(".//div[@style='' and @class='tree-itemholder']/div[@class='tree-item']/div[starts-with(@class,'tree-label')]", tbody, 
+				null, XPathResult.UNORDERED_NODE_ITERATOR_TYPE, null);
+		while ((label = iterator.iterateNext()) != null) {
+			labels.push(label);
+		}
+		iterator = document.evaluate(".//div[@style='' and @class='tree-itemholder']/div[starts-with(@class,'tree-label')]", tbody, 
+				null, XPathResult.UNORDERED_NODE_ITERATOR_TYPE, null);
 		while ((label = iterator.iterateNext()) != null) {
 			labels.push(label);
 		}
@@ -213,7 +222,10 @@ zkDatatree2.refresh = function (t) {
 		var tbd = document.createElement("div")
 		tbd.setAttribute("id", t.id+"!tbody");
 		tbd.setAttribute("class", "tbody")
+		tbd.currentPage = 0;
+		tbd.soffidVisibleChildren = 0;
 		t.appendChild(tbd);
+		zkDatatree2.addPagination(t, tbd);
 		if (t.maxheight)
 			tbd.style.maxHeight = t.maxheight;
 		var tf = document.createElement("div");
@@ -226,6 +238,28 @@ zkDatatree2.refresh = function (t) {
 	} catch (e) {
 		console.log(e)
 	}
+};
+
+zkDatatree2.addPagination=function(t, parent) {
+	var up = document.createElement("div");
+	up.setAttribute("class", "tree-itemholder page-up");
+	up.setAttribute("id" , t.id+"!row-up");
+	up.setAttribute("style", "display: none");
+	up.pager = true;
+	up.pagerUp = true;
+	up.innerText = t.previousPageMsg;
+	up.addEventListener("click", zkDatatree2.onPageUp);
+	parent.appendChild(up);
+
+	var down = document.createElement("div");
+	down.setAttribute("class", "tree-itemholder page-down");
+	down.setAttribute("id" , t.id+"!row-down");
+	down.setAttribute("style", "display: none");
+	down.pagerDown = true;
+	down.pager = true;
+	down.innerText = t.nextPageMsg;
+	down.addEventListener("click", zkDatatree2.onPageDown);
+	parent.appendChild(down);
 };
 
 zkDatatree2.createHeaders = function (ed, th) {
@@ -277,9 +311,77 @@ zkDatatree2.createFooter = function (ed) {
 	}
 	if (  ed.footer)
 	{
+		var body = document.getElementById(ed.id+"!tbody");
+		if (body != null && body.soffidVisibleChildren > ed.pageSize > 0) {
+			var first = 1 + body.currentPage * ed.pageSize;
+			var end = (body.currentPage + 1) * ed.pageSize;
+			if ( end > ed.soffidVisibleChildren)
+				end = ed.soffidVisibleChildren;
+			var span = document.createElement("span");
+			span.setAttribute("class", "tablepager");
+			footer.appendChild(span);
+
+			var t = document.createElement("span");
+			t.addEventListener("click", zkDatatree2.onFirstPageButton);
+			t.innerHTML = "&#x25c3;&#x25c3;";
+			span.appendChild(t);
+			
+			t = document.createElement("span");
+			t.addEventListener("click", zkDatatree2.onPreviousPageButton);
+			t.innerHTML = "&#x25c4;";
+			span.appendChild(t);
+
+			span.appendChild(document.createTextNode (" "+first + " - "+end+" "));
+			
+			t = document.createElement("span");
+			t.addEventListener("click", zkDatatree2.onNextPageButton);
+			t.innerHTML = "&#x25ba;";
+			span.appendChild(t);
+
+			t = document.createElement("span");
+			t.addEventListener("click", zkDatatree2.onLastPageButton);
+			t.innerHTML = "&#x25b9;&#x25b9;";
+			span.appendChild(t);
+
+		} 
 		footer.appendChild( document.createTextNode ( "Total rows: "+ ed.count ));
 	}
 };
+
+zkDatatree2.onFirstPageButton = function (event) {
+	var ed = event.target.parentElement.parentElement.parentElement;
+	var body = document.getElementById(ed.id+"!tbody");
+
+	body.currentPage = 0;
+	zkDatatree2.applyPaging(ed, body);
+}
+
+zkDatatree2.onLastPageButton = function (event) {
+	var ed = event.target.parentElement.parentElement.parentElement;
+	var body = document.getElementById(ed.id+"!tbody");
+	var pages = 1 + (body.soffidVisibleChildren - 1) / ed.pageSize;		
+	if (body.currentPage != pages ) {
+		body.currentPage = pages - 1;
+		zkDatatree2.applyPaging(ed, body);
+	}
+}
+zkDatatree2.onPreviousPageButton = function (event) {
+	var ed = event.target.parentElement.parentElement.parentElement;
+	var body = document.getElementById(ed.id+"!tbody");
+	if (body.currentPage > 0) {
+		body.currentPage --;
+		zkDatatree2.applyPaging(ed, body);
+	}
+}
+zkDatatree2.onNextPageButton = function (event) {
+	var ed = event.target.parentElement.parentElement.parentElement;
+	var body = document.getElementById(ed.id+"!tbody");
+	var pages = 1 + (body.soffidVisibleChildren - 1) / ed.pageSize;		
+	if (body.currentPage < pages - 1) {
+		body.currentPage ++;
+		zkDatatree2.applyPaging(ed, body);
+	}
+}
 
 zkDatatree2.createFilters = function (ed, th) {
 	var v ;
@@ -333,9 +435,9 @@ zkDatatree2.onFilter=function(ev) {
 }
 
 zkDatatree2.expandFirst=function(t, div) {
-	for (var row = div.firstElementChild; row != null; row = row.nextElementSibling)
+	for (var row = div.firstElementChild.nextElementSibling; row != div.lastElementChild; row = row.nextElementSibling)
 	{
-		if (!row.hidden) {
+		if (!row.hidden && !row.pager && !row.isTail) {
 			var treeitem = row.lastElementChild;
 			if (treeitem !=null && treeitem.classList.contains("tree-item")) {
 				var children = treeitem.lastElementChild;
@@ -358,10 +460,17 @@ zkDatatree2.expandFirst=function(t, div) {
  */
 zkDatatree2.doFilterLoop=function(t, div, filter, parentMatch) {
 	var r = {count: 0, visible: false, firstMatch: null};
-	for (var row = div.firstElementChild; row != null; row = row.nextElementSibling)
+	var count = 0;
+	var nextPage = div.lastElementChild;
+	if (nextPage.isTail)
+		nextPage = nextPage.previousElementSibling;
+	nextPage.style.display = "none";
+	div.firstElementChild.style.display = "none";
+	div.currentPage = 0;
+	for (var row = div.firstElementChild.nextElementSibling; row != div.lastElementChild; row = row.nextElementSibling)
 	{
 		var visible = true;
-		if ( !row.isTail) {
+		if ( !row.isTail && !row.pager) {
 			var label = row.lastElementChild;
 			var children = null;
 			if (label.classList.contains("tree-item")) {
@@ -370,18 +479,18 @@ zkDatatree2.doFilterLoop=function(t, div, filter, parentMatch) {
 			}
 			if (filter && !parentMatch) {
 				if (! label.classList.contains("no-columns")) {
-					var div = label.firstElementChild;
+					var div2 = label.firstElementChild;
 					for (var i = 0; i < filter.length; i++) {
 						if (filter[i].length > 0) {
-							if (div == null) {
+							if (div2 == null) {
 								visible = false;
 								break;
-							} else if ( !zkDatatree2.checkFilter(div, filter[i])) {
+							} else if ( !zkDatatree2.checkFilter(div2, filter[i])) {
 								visible = false;
 								break;
 							}
 						}
-						if (div != null) div = div.nextElementSibling;
+						if (div2 != null) div2 = div2.nextElementSibling;
 					}
 				} else {
 					visible = zkDatatree2.checkFilter(label, filter[0]);
@@ -407,10 +516,22 @@ zkDatatree2.doFilterLoop=function(t, div, filter, parentMatch) {
 				row.count = 0;
 			}
 			if ( visible ) {
+				count ++;
+				if (count == t.pageSize+1) {
+					nextPage.style.display = "";
+				}
 				r.visible = true;
 				r.count ++;
 				row.hidden = false;
-				row.style.display="";
+				if (count > t.pageSize) {
+					var m = count;
+					if (m > 2 * t.pageSize)
+						m = 2 * t.pageSize;
+					nextPage.innerText = t.nextPageMsg+" ( " + (t.pageSize + 1) + " - " + (m) + " / " + count + " )";				
+					row.style.display="none";
+				} else {
+					row.style.display="";
+				}
 				anyVisible = true;
 			} else {
 				row.hidden = true;
@@ -418,6 +539,7 @@ zkDatatree2.doFilterLoop=function(t, div, filter, parentMatch) {
 			}
 		}
 	}
+	div.soffidVisibleChildren = count;
 	return r;
 }
 
@@ -435,6 +557,67 @@ zkDatatree2.doFilter=function(t) {
 	t.firstMatch = r.firstMatch;
 	zkDatatree2.createFooter(t);
 	zkDatatree2.updatePagers(t);
+	zkDatatree2.fixupColumns(t);
+}
+
+zkDatatree2.onPageUp=function(ev) {
+	var button = ev.currentTarget;
+	var children = button.parentElement;
+	var t = children.parentElement;
+	while ( t.getAttribute("z.type") != "zul.datatree2.Datatree2")
+		t = t.parentElement;
+	
+	if  (children.currentPage > 0) {
+		children.currentPage --;
+		zkDatatree2.applyPaging(t, children);
+	}
+}
+zkDatatree2.onPageDown=function(ev) {
+	var button = ev.currentTarget;
+	var children = button.parentElement;
+	var t = children.parentElement;
+	while ( t.getAttribute("z.type") != "zul.datatree2.Datatree2")
+		t = t.parentElement;
+	
+	var pages = children.soffidVisibleChildren / t.pageSize;		
+	
+	if  (children.currentPage < pages - 1) {
+		children.currentPage ++;
+		zkDatatree2.applyPaging(t, children);
+	}
+}
+zkDatatree2.applyPaging=function(t, children) {
+	var pages = children.soffidVisibleChildren / t.pageSize;		
+	
+	var first = children.currentPage * t.pageSize;
+	var last = first + t.pageSize;
+	var count = 0;
+	for (var child = children.firstElementChild; child != null; child = child.nextElementSibling) {
+		if (child.pager) {
+			if (child == children.firstElementChild ) {
+				child.style.display = children.currentPage > 0 ? "": "none";
+				child.innerText = t.previousPageMsg+" ( " + (first - t.pageSize + 1) + " - " + first + " )";				
+			}
+			else {
+				child.style.display = children.currentPage < pages - 1 ? "": "none";
+				var m = count;
+				if (m > last + t.pageSize + 1)
+					m = last + t.pageSize + 1;
+				child.innerText = t.nextPageMsg+" ( " + (last + 1) + " - " + (m) + " / " + count + " )";				
+			}
+		}
+		else if (! child.isTail) {
+			if (! child.hidden) {
+				if (count >= first && count < last)
+					child.style.display = "";
+				else
+					child.style.display = "none";
+				count ++;
+			}
+		}
+	}
+	zkDatatree2.fixupColumns(t);
+	zkDatatree2.createFooter(t);
 }
 
 zkDatatree2.createSortArrows=function(ed, td, column)
@@ -482,6 +665,7 @@ zkDatatree2.setData = function(ed, data) {
 		{
 			v.remove();
 		}
+		zkDatatree2.addPagination(ed, t);
 		// Generate rows
 		ed.index = [] ;
 		data = JSON.parse(data);
@@ -502,12 +686,19 @@ zkDatatree2.addBranch=function(t, value)
 {
 	var value = JSON.parse(value);
 	var row = zkDatatree2.addBranchInternal (t, value);
-	if (t.sortDirection != 0)
-		zkDatatree2.doSortRecursive(t, row.parentElement);
-	zkDatatree2.createFooter(t);
-	if (t.sortDirection != 0)
-		zkDatatree2.doSortRecursive(t, row.parentElement);
-	zkDatatree2.doFilter(t);
+	if (t.sortDirection != 0) {
+		var lastSort = row.parentElement.sortTs;
+		if (lastSort == null) lastSort = 1;
+		else lastSort ++;
+		row.parentElement.sortTs = lastSort;
+		window.setTimeout(() => {
+			if (row.parentElement.sortTs == lastSort) {
+				zkDatatree2.doSortRecursive(t, row.parentElement);
+				zkDatatree2.doFilter(t);
+				zkDatatree2.createFooter(t);
+			}
+		}, 100);
+	}
 }
 
 zkDatatree2.addBranchInternal=function(ed, value)
@@ -533,12 +724,34 @@ zkDatatree2.addBranchInternal=function(ed, value)
 	var div = document.createElement("div");
 	div.setAttribute("class", "tree-itemholder");
 	div.setAttribute("id" , ed.id+"!row"+newId);
+	div.soffid_page = 0;
+	div.setAttribute("style", "");
+	if (parentDiv.lastElementChild != null &&
+		parentDiv.soffidVisibleChildren == ed.pageSize) 
+	{
+		var nextPage = parentDiv.lastElementChild;
+		if (nextPage.isTail) nextPage = nextPage.previousElementSibling;
+		nextPage.style.display = "";
+	}
+	parentDiv.soffidVisibleChildren ++;
+	if (parentDiv.soffidVisibleChildren > ed.pageSize)
+	{
+		div.setAttribute("style", "display: none");
+		var nextPage = parentDiv.lastElementChild;
+		if (nextPage.isTail) nextPage = nextPage.previousElementSibling;
+		var first = parentDiv.currentPage * ed.pageSize;
+		var last = first + ed.pageSize;
+		var m = parentDiv.soffidVisibleChildren ;
+		if (m > last + ed.pageSize + 1)
+			m = last + ed.pageSize + 1;
+		nextPage.innerText = ed.nextPageMsg+" ( " + (last + 1) + " - " + (m) + " / " + parentDiv.soffidVisibleChildren + " )";				
+	}
 	div.value = value;
 	div.collapsed = true;
 	if ( parentDiv.lastElementChild != null && parentDiv.lastElementChild.isTail)
-		parentDiv.appendChild(div, parentDiv.lastElementChild);
+		parentDiv.insertBefore(div, parentDiv.lastElementChild.previousElementSibling);
 	else
-		parentDiv.appendChild(div);
+		parentDiv.insertBefore(div, parentDiv.lastElementChild);
 		
 	if ( ! value.leaf )
 	{
@@ -560,6 +773,8 @@ zkDatatree2.addBranchInternal=function(ed, value)
 		children.setAttribute("class", "tree-children");
 		container.appendChild(children);
 		children.setAttribute("id", ed.id+"!children"+newId);
+		zkDatatree2.addPagination(ed, children);
+		children.currentPage = children.soffidVisibleChildren = 0;
 		if (value.children)
 		{
 			if ( value.collapsed ) {
@@ -694,10 +909,12 @@ zkDatatree2.addChildren = function(ed, data) {
 		parentDiv.parentElement/* tree-item* */.parentElement/** tree-itemholder* */.value = value;
 		var v;
 		var tail;
-		while ((v = parentDiv.firstChild) != null ) {
-			if (v.isTail) break;
-			v.remove();
+		var previousPage = parentDiv.firstChild;
+		previousPage.style.display = "none";
+		while (! previousPage.nextElementSibling.pager) {
+			previousPage.nextElementSibling.remove();
 		}
+		previousPage.nextElementSibling.style.display = "none";
 		
 		parentDiv.classList.remove("waiting");
 		
@@ -804,6 +1021,10 @@ zkDatatree2.renderBranch=function(ed, div, value, newId) {
 	children.setAttribute("class", "tree-children");
 	container.appendChild(children);
 	children.setAttribute("id", ed.id+"!children"+newId);
+	
+	zkDatatree2.addPagination(ed, children);
+	children.currentPage = children.soffidVisibleChildren = 0;
+	
 	if (value.children)
 	{
 		if ( value.collapsed ) {
@@ -814,6 +1035,7 @@ zkDatatree2.renderBranch=function(ed, div, value, newId) {
 			div.collapsed = false;
 			fold.classList.add("open");
 		}
+		
 		for (var i = 0; i < value.children.length; i++) {
 			zkDatatree2.addBranchInternal(ed, value.children[i]);
 		}
@@ -938,7 +1160,7 @@ zkDatatree2.setAttr = function (ed, name, value) {
 
 zkDatatree2.findSelectedPositionLoop=function(t, container, id) {
 	for (var row = container.firstElementChild; row != null; row = row.nextElementSibling) {
-		if (!row.isTail && row.style.display != "none" ) {
+		if (!row.pager && !row.isTail && row.style.display != "none" ) {
 			t.selectedPosition ++;
 			if (id == row.id) {
 				return true;
@@ -1069,7 +1291,7 @@ zkDatatree2.onSort=function(ev) {
 zkDatatree2.doSortRecursive=function(ed, container) {
 	zkDatatree2.doSort(ed, container);
 	for (var child = container.firstElementChild; child != null; child = child.nextElementSibling) {
-		if ( !child.isTail) {
+		if ( !child.isTail && !child.pager) {
 			var item = child.lastElementChild;
 			if (item.getAttribute("class") == "tree-item")
 				zkDatatree2.doSortRecursive (ed, item.lastElementChild);
@@ -1091,8 +1313,15 @@ zkDatatree2.doSort=function(ed, container) {
 	var children = [...container.children];
 	zkDatatree2.quickSort(children,
 			(a,b) => {
+				if (a.pager && a.pagerUp) return -1;
+				if (b.pager && b.pagerUp) return +1;
+				
 				if (a.isTail) return +1;
 				if (b.isTail) return -1;
+				
+				if (a.pager) return +1;
+				if (b.pager) return -1;
+				
 				var r;
 				
 				var v1 = zkDatatree2.extractValue(ed, a);
@@ -1160,9 +1389,15 @@ zkDatatree2.deleteRow=function(ed, pos)
 							pos.length-1);
 			}
 			
+			ed.refreshCounter ++;
+			var counter = ed.refreshCounter;
+			window.setTimeout( function() {
+				if (counter == ed.refreshCounter) {
+					zkDatatree2.doFilter(ed);
+					zkDatatree2.findSelectedPosition(ed);
+				}
+			}, 100);
 			
-			zkDatatree2.doFilter(ed);
-			zkDatatree2.findSelectedPosition(ed);
 		}
 	}
 }
@@ -1240,13 +1475,13 @@ zkDatatree2.next=function(t)
 			if (!row.value.leaf) {
 				var container = row.lastElementChild.lastElementChild;
 				if (container.style.display != 'none' && 
-						container.firstElementChild != null &&
-						! container.firstElementChild.isTail) 
-					next = container.firstElementChild;
+						container.firstElementChild.nextElementSibling != null &&
+						! container.firstElementChild.nextElementSibling.pager ) 
+					next = container.firstElementChild.nextElementSibling;
 			}
 			if (next == null) {
 				next = row;
-				while (next.nextElementSibling == null || next.nextElementSibling.isTail)
+				while (next.nextElementSibling == null || next.nextElementSibling.isTail || next.nextElementSibling.pager)
 					next = next.parentElement/* tree-children */.parentElement/* tree-item */.parentElement/* tree-item */;
 				next = next.nextSibling;
 			}
@@ -1288,13 +1523,14 @@ zkDatatree2.previous=function(t)
 				next = next.parentElement/* tree-children */.parentElement/* tree-item */.parentElement/* tree-item */;
 			} else {
 				next = next.previousElementSibling;
-				while ( next.value == null ||  !next.value.leaf) {
+				while ( next.value == null ||  !next.value.leaf ) {
 					var container = next.lastElementChild.lastElementChild;
 					if (container.style.display == 'none')
 						break;
 					else {
 						var next2 = container.lastElementChild;
-						if (next2 != null && next2.isTail) next2 = next2.previousElementSibling;
+						while (next2 != null && (next2.isTail || next2.pager)) 
+							next2 = next2.previousElementSibling;
 						if (next2 != null) next = next2;
 						else break;
 					}

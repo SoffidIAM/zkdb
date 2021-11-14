@@ -13,6 +13,7 @@ import java.util.List;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.json.JSONWriter;
+import org.zkoss.util.resource.Labels;
 import org.zkoss.xel.ExpressionFactory;
 import org.zkoss.xel.Expressions;
 import org.zkoss.xml.HTMLs;
@@ -87,9 +88,17 @@ public class DataTree2 extends XulElement implements XPathSubscriber,
 
 	private ExpressionFactory expf;
 	private String columns;
+	private String nextPageMsg;
+	private String previousPageMsg;
 	
 	public DataTree2 () {
 		setSclass("datatree");
+		nextPageMsg = Labels.getLabel("zkdb.datatable.nextPage");
+		if (nextPageMsg == null || nextPageMsg.isEmpty())
+			nextPageMsg = "Next page";
+		previousPageMsg = Labels.getLabel("zkdb.datatable.previousPageMsg");
+		if (previousPageMsg == null || previousPageMsg.isEmpty())
+			previousPageMsg = "Previous page";
 	}
     public String getDataPath() {
         return treeBinder.getDataPath();
@@ -131,6 +140,8 @@ public class DataTree2 extends XulElement implements XPathSubscriber,
 		HTMLs.appendAttribute(sb, "foldBar", getDesktop().getExecution().encodeURL(foldbar));
 		HTMLs.appendAttribute(sb, "foldBackground", getDesktop().getExecution().encodeURL(foldbackgroud));
 		HTMLs.appendAttribute(sb, "foldUnfold", getDesktop().getExecution().encodeURL(foldunfold));
+		HTMLs.appendAttribute(sb, "msgnextpage", nextPageMsg);
+		HTMLs.appendAttribute(sb, "msgpreviouspage", previousPageMsg);
 
 		return sb.toString();
 
