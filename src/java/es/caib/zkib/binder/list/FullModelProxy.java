@@ -75,6 +75,8 @@ public class FullModelProxy implements ModelProxy, XPathSubscriber, ListModelExt
 	 * @see es.caib.seycon.net.web.zul.binder.ModelProxy#getElementAt(int)
 	 */
 	public Object getElementAt(int index) {
+		if (index < 0 || index >= v.size())
+			return null;
 		Integer i = (Integer) v.get(index);
 		if ( i == null)
 			return null;

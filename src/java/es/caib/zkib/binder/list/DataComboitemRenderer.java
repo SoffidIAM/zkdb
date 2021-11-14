@@ -31,6 +31,7 @@ public class DataComboitemRenderer implements ComboitemRenderer, Serializable {
 	}
 
 	public void render(Comboitem item, Object data) throws Exception {
+		if (data == null) return;
 		try {
 			String xPath;
 			
