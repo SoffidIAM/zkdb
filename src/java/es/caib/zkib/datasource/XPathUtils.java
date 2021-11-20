@@ -133,7 +133,7 @@ public class XPathUtils {
 		if (ctxComponent instanceof DataSource)
 			return getDsValue ((DataSource) ctxComponent, xpath);
 
-		if (ctxComponent instanceof BindContext)
+		if (ctxComponent instanceof BindContext && ((BindContext) ctxComponent).getDataSource() != null)
 			return getCtxValue ((BindContext) ctxComponent, xpath);
 
 		BindContext ctx = getComponentContext((Component) ctxComponent);
