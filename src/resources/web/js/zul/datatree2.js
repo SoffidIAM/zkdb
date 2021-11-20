@@ -1519,7 +1519,8 @@ zkDatatree2.previous=function(t)
 			var next = row;
 			if (next.classList.contains("tree-item"))
 				next = next.parentElement; /* tree-container */
-			if (next.previousElementSibling == null) {
+			if (next.previousElementSibling == null ||
+				next.previousElementSibling.pager) {
 				next = next.parentElement/* tree-children */.parentElement/* tree-item */.parentElement/* tree-item */;
 			} else {
 				next = next.previousElementSibling;

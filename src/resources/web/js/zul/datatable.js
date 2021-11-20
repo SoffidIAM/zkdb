@@ -36,7 +36,6 @@ zkDatatable.init = function (ed) {
 	ed.enablefilter = "false" != ed.getAttribute("enablefilter");
 	ed.footer = ed.getAttribute("footer") != "false";
 	ed.reorder = ed.getAttribute("reorder") != "false";
-	ed.index = [];
 	ed.nextRowId = 0;
 	ed.maxheight = ed.getAttribute("maxheight");
 	ed.selectedPosition = 0;
@@ -536,7 +535,6 @@ zkDatatable.setData = function(ed, data) {
 			v.remove();
 		}
 		// Generate rows
-		ed.index = [] ;
 		data = JSON.parse(data);
 		ed.data = [];
 		ed.sortedData = [];
@@ -803,7 +801,7 @@ zkDatatable.sendClientAction=function(el,event, args)
 	while (target.tagName != 'TR')
 		target = target.parentNode;
 	var t = target.parentNode/* tbody */.parentNode/* bodydiv */.parentNode/* table */;
-	var data = tr.data;
+	var data = target.data;
 	if (data.position >= 0)
 	{
 		zkau.send ({uuid: t.id, cmd: "onSelect", data : [data.position]}, 5);		
@@ -1172,7 +1170,7 @@ zkDatatable.setSelectedMulti=function(t, pos) {
 	t.selectedTr = null;
 	for (var i = 0; i < pos.length; i++)
 	{
-		var rowid =  t.index[pos[i]];
+		var rowid =  t.data[pos[i]].trid;
 		var row = document.getElementById(rowid);
 		if (row)
 		{
@@ -1326,14 +1324,15 @@ zkDatatable.doSort=function(ed) {
 
 zkDatatable.deleteRow=function(ed, pos)
 {
-	if (ed.index[pos])
+	if (ed.data[pos])
 	{
-		var id = ed.index[pos];
+		var data = ed.data[pos];
+		var id = data.trid;
 		var row = document.getElementById(id);
 		if (row == ed.selectedTr)
 			ed.selectedTr = null;
 		row.remove();
-		ed.index.splice(pos,1);
+		ed.data.splice(pos,1);
 		zkDatatable.createFooter(ed);
 		zkDatatable.fixupColumns(ed);
 		ed.count --;
@@ -1404,7 +1403,7 @@ zkDatatable.next=function(t)
 				cb.checked = true;
 				zkDatatable.sendSelect(t, true);
 			} else {
-				var position = t.index.indexOf(next.id);
+				var position = next.data.position;
 				if (position >= 0)
 				{
 					var req = {uuid: t.id, cmd: "onSelect", data : [position]};
@@ -1439,7 +1438,7 @@ zkDatatable.previous=function(t)
 				cb.checked = true;
 				zkDatatable.sendSelect(t, true);
 			} else {
-				var position = t.index.indexOf(next.id);
+				var position = next.data.position;
 				if (position >= 0)
 				{
 					var req = {uuid: t.id, cmd: "onSelect", data : [position]};

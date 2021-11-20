@@ -1612,6 +1612,29 @@ zkDataCommon.openSearchPopup = function (input, databox) {
 		img.setAttribute("src", databox.getAttribute("waiticon"));
 		img.setAttribute("class", "databox-wait");
 		div.appendChild(img);
+		var rect = input.getBoundingClientRect();
+		var left = input.offsetLeft;
+		var top = input.offsetTop;
+		var offsetParent = input.offsetParent;
+		var parent = input.parentElement;
+		while (parent != null) {
+			left -= parent.scrollLeft;
+			top -= parent.scrollTop;
+			if (parent == offsetParent) {
+				var transform = getComputedStyle(parent)["transform"];
+				if (transform != "none") {
+					break;
+				} else {
+					left += parent.offsetLeft;
+					top += parent.offsetTop;				
+				}
+				offsetParent = parent.offsetParent;
+			}
+			parent = parent.parentElement;
+		}
+		div.style.position="fixed";
+		div.style.left = ""+left+"px";
+		div.style.top = ""+top+"px";
 	} else {
 		for (var e = input.popup.firstElementChild; 
 			e != input.popup.lastElementChild.previousElementSibling;
