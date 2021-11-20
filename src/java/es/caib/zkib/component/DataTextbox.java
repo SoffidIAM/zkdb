@@ -190,7 +190,10 @@ public class DataTextbox extends org.zkoss.zul.Textbox implements XPathSubscribe
 		
 		if (isMultiline())
 		{
-			wh.write("<textarea id=\"").write(uuid).write("\" z.type=\"zul.datasource.DataTxbox\"")
+			wh.write("<textarea id=\"").write(uuid).write("\" z.type=\"zul.datasource.DataTxbox\" "
+					+ "data-gramm='false' "
+					+ "data-gramm_editor='false' "
+					+ "data-enable-grammarly='false' ")
 			.write(getOuterAttrs()).write(getInnerAttrs())
 			.write(">")
 			.write(getAreaText())
