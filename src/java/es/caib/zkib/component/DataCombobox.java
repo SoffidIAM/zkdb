@@ -146,21 +146,26 @@ public class DataCombobox extends org.zkoss.zul.Combobox implements XPathSubscri
 		{
 			Object value = valueBinder.getValue();
 			String label = value == null? null: value.toString();
-			if (value != null)
-			{
-				Iterator it = getItems().iterator();
-				while (it.hasNext())
+			try {
+				duringOnUpdate = true;
+				if (value != null)
 				{
-					Comboitem item = (Comboitem) it.next();
-					if (value.equals(item.getValue()))
+					Iterator it = getItems().iterator();
+					while (it.hasNext())
 					{
-						label = item.getLabel();
-						setSelectedItem(item);
-						return;
+						Comboitem item = (Comboitem) it.next();
+						if (value.equals(item.getValue()))
+						{
+							label = item.getLabel();
+							setSelectedItem(item);
+							return;
+						}
 					}
 				}
+				super.setValue(label);
+			} finally {
+				duringOnUpdate = false;
 			}
-			super.setValue(label);
 		}
 	}
 
@@ -313,7 +318,10 @@ public class DataCombobox extends org.zkoss.zul.Combobox implements XPathSubscri
 
 	public void setText(String value) throws WrongValueException {
 		super.setText(value);
-		updateValueBinder ();
+		if (! duringOnUpdate )
+		{
+			updateValueBinder ();
+		}
 	}
 
 	/* (non-Javadoc)
@@ -322,7 +330,10 @@ public class DataCombobox extends org.zkoss.zul.Combobox implements XPathSubscri
 
 	public void setValue(String value) throws WrongValueException {
 		super.setValue(value);
-		updateValueBinder ();
+		if (! duringOnUpdate )
+		{
+			updateValueBinder ();
+		}
 	}
 
 	public boolean effectiveDisabled = false;
