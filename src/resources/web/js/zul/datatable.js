@@ -24,7 +24,8 @@ zkDatatable.init = function (ed) {
 		try {
 			ed.columns = JSON.parse(c);
 		} catch (error) {
-			alert("Error decoding table descriptor "+c+": "+error);
+			console.log("Error decoding table descriptor "+c);
+			console.log(error);
 			ed.columns = [];
 		}
 	}
@@ -267,7 +268,7 @@ zkDatatable.createFooter = function (ed) {
 	if (  ed.footer)
 	{
 		var msg = ed.getAttribute("msgrows")+ ": "+ ed.filteredData.length;
-		if (ed.pages > 0 && ed.pageSize > 0) {
+		if (ed.pages > 1 && ed.pageSize > 0) {
 			var first = 1 + ed.currentPage * ed.pageSize;
 			var end = (ed.currentPage + 1) * ed.pageSize;
 			if ( end > ed.filteredData.length)
@@ -436,6 +437,8 @@ zkDatatable.doFilter=function(t) {
 			t.count ++; 
 			if (row.position == t.selectedServerPosition)
 				t.selectedPosition = t.count;
+		} else {
+			row.selected = false;
 		}
 	}
 
@@ -447,6 +450,9 @@ zkDatatable.doFilter=function(t) {
 		if (t.currentPage > t.pages) t.currentPage = t.pages - 1;
 		first = t.currentPage * t.pageSize;
 		end = (t.currentPage + 1) * t.pageSize;
+	} else {
+		t.pages = 1;
+		t.currentPage = 0;
 	}
 	var body = document.getElementById(t.id+"!tbody");
 	if (body) {
@@ -683,6 +689,23 @@ zkDatatable.fillRow=function(ed, tr, data)
 		zk.listen(tr, "dragstart", zkDatatable.onDragStart);
 		zk.listen(tr, "dragend", zkDatatable.onDragEnd);
 	}
+	tr.data = data;
+	var value = data.value;
+	if (value['$class']) {
+		if (data.selected) {
+			tr.setAttribute("class", "selected "+value['$class']);
+		}
+		else {
+			tr.setAttribute("class", value['$class']);
+		}
+	} else {
+		if (data.selected) {
+			tr.setAttribute("class", "selected");
+		}
+		else {
+			tr.setAttribute("class", "");
+		}
+	}
 	if (ed.multiselect)
 	{
 		var td = document.createElement("td");
@@ -690,18 +713,11 @@ zkDatatable.fillRow=function(ed, tr, data)
 		tr.appendChild(td);
 		var cb = document.createElement("input");
 		cb.setAttribute("type", "checkbox");
+		cb.checked = data.selected;
 		cb.addEventListener("input", zkDatatable.onSelect)
 		cb.addEventListener("click", zkDatatable.dontBubble)
 		td.appendChild(cb);
 		td.addEventListener("click", zkDatatable.onSelectCell)
-	}
-	tr.data = data;
-	var value = data.value;
-	if (value['$class']) {
-		if (tr.classList.contains("selected"))
-			tr.setAttribute("class", "selected "+value['$class']);
-		else
-			tr.setAttribute("class", value['$class']);
 	}
 	var generateData = data.html == null;
 	if (generateData) {
@@ -778,16 +794,11 @@ zkDatatable.updateRow=function(ed, pos, value)
 			if (tr)
 			{
 				var v ;
-				var selected;
-				if ( ed.multiselect)
-					selected = tr.firstChild.firstChild.checked;
 				while ((v = tr.firstChild) != null )
 				{
 					v.remove();
 				}
 				zkDatatable.fillRow(ed, tr, data);
-				if ( ed.multiselect)
-					tr.firstChild.firstChild.checked = selected;
 			}
 			zkDatatable.fixupColumns(ed);
 		}
@@ -888,22 +899,17 @@ zkDatatable.refreshRows = function(ed) {
 	}
 	
 	for (var i = 0; i < ed.data.length; i++) {
-		data[i].text = data[i].html = null;		
+		ed.data[i].text = ed.data[i].html = null;		
 	}
 
 	var t = document.getElementById(ed.id+"!tbody");
 	for (var tr = t.firstElementChild; tr != null; tr = tr.nextElementSibling) 
 	{
-		var selected;
-		if ( ed.multiselect)
-			selected = tr.firstChild.firstChild.checked;
 		while ((v = tr.firstChild) != null )
 		{
 			v.remove();
 		}
 		zkDatatable.fillRow(ed, tr, tr.data);
-		if ( ed.multiselect)
-			tr.firstChild.firstChild.checked = selected;
 	}
 	zkDatatable.fixupColumns(ed);
 }
@@ -919,7 +925,8 @@ zkDatatable.setAttr = function (ed, name, value) {
 			ed.columns = JSON.parse(value);
 			zkDatatable.refreshRows(ed);
 		} catch (error) {
-			alert("Error decoding table descriptor "+value+": "+error);
+			console.log("Error decoding table descriptor "+value);
+			console.log(error);
 		}
 		return true;
 	case "footer":
@@ -975,13 +982,22 @@ zkDatatable.onSelectRow=function(ev) {
 				var cb2 = row.firstElementChild/* td */.firstElementChild/* input */;
 				cb2.checked = false;
 				row.classList.remove("selected");
+				row.data.selected = false;
+			}
+			else
+			{
+				for (var i = 0; i < t.filteredData.length; i++) {
+					t.filteredData[i].selected = false;
+				}
 			}
 			cb.checked = true;
 			target.classList.add("selected");
+			target.data.selected = true;
 			t.selectedServerPosition = target.data.position;
 			t.selectedTr = target;
 		} else {
 			t.selectedTr = zkDatatable.findSelectedTr(t);
+			target.data.selected = false;
 			cb.checked = false;
 			target.classList.remove("selected");			
 		}
@@ -992,8 +1008,10 @@ zkDatatable.onSelectRow=function(ev) {
 		if (row != null)
 		{
 			row.classList.remove("selected")
+			row.data.selected = false;
 		}
 		target.classList.add("selected");
+		target.data.selected = true;
 		t.selectedServerPosition = target.data.position;
 		t.selectedTr = target;
 		var position = target.data.position;
@@ -1045,6 +1063,9 @@ zkDatatable.onSelectAll=function(ev) {
 	var tbody = document.getElementById(table.id+"!tbody");
 	var row;
 	table.selectedTr = null;
+	for (var i = 0; i < table.filteredData.length; i++) {
+		table.filteredData[i].selected = cb.checked;
+	}
 	for (row = tbody.firstElementChild; row != null; row = row.nextElementSibling)
 	{
 		if (table.selectedTr == null)
@@ -1081,6 +1102,7 @@ zkDatatable.selectRow=function(cb) {
 	{
 		var cb2 = table.firstElementChild/* thead */.firstElementChild/* tr */.firstElementChild/* td */.firstElementChild;
 		cb2.checked = false;
+		row.data.selected = false;
 		row.classList.remove("selected");
 		table.selectedTr = zkDatatable.findSelectedTr(table);
 		table.selectedPosition = 0;
@@ -1088,6 +1110,7 @@ zkDatatable.selectRow=function(cb) {
 		table.selectedTr = row;
 		table.selectedServerPosition = row.data.position;
 		row.classList.add("selected");
+		row.data.selected = true;
 		table.selectedPosition = table.pageSize * table.currentPage ;
 		for (var row2 = row.parentElement.firstElementChild; row2 != null; row2 = row2.nextElementSibling) {
 			if (!row2.pager)
@@ -1101,13 +1124,18 @@ zkDatatable.selectRow=function(cb) {
 /** Selected by the server * */
 zkDatatable.setSelected=function(t, pos) {
 	var tbody = document.getElementById(t.id+"!tbody");
+	for (var i = 0; i < t.filteredData.length; i++) {
+		t.filteredData[i].selected = false
+	}
 	for (var row = tbody.firstElementChild; row != null; row = row.nextElementSibling)
 	{
 		row.classList.remove("selected")
-		if ( t.multiselect && !row.pager)
-		{
-			var cb = row.firstElementChild/* td */.firstElementChild/* input */;
-			cb.checked = false;
+		if (!row.pager) {
+			if ( t.multiselect)
+			{
+				var cb = row.firstElementChild/* td */.firstElementChild/* input */;
+				cb.checked = false;
+			}
 		}
 	}
 	t.selectedTr = null;
@@ -1123,6 +1151,7 @@ zkDatatable.setSelected=function(t, pos) {
 					var cb = row.firstElementChild/* td */.firstElementChild/* input */;
 					cb.checked = true;
 				}
+				row.data.selected = true;
 				row.classList.add("selected");
 				t.selectedTr = row;
 			}
@@ -1140,6 +1169,9 @@ zkDatatable.setSelected=function(t, pos) {
 /** Cleared by the server * */
 zkDatatable.clearSelection=function(t, pos) {
 	var tbody = document.getElementById(t.id+"!tbody");
+	for (var i = 0; i < t.filteredData.length; i++) {
+		t.filteredData[i].selected = false
+	}
 	for (var row = tbody.firstElementChild; row != null; row = row.nextElementSibling)
 	{
 		row.classList.remove("selected")
@@ -1161,6 +1193,8 @@ zkDatatable.setSelectedMulti=function(t, pos) {
 	for (var row = tbody.firstElementChild; row != null; row = row.nextElementSibling)
 	{
 		row.classList.remove("selected")
+		if (row.data)
+			row.data.selected = false;
 		if ( t.multiselect )
 		{
 			var cb = row.firstElementChild/* td */.firstElementChild/* input */;
@@ -1170,7 +1204,9 @@ zkDatatable.setSelectedMulti=function(t, pos) {
 	t.selectedTr = null;
 	for (var i = 0; i < pos.length; i++)
 	{
-		var rowid =  t.data[pos[i]].trid;
+		var data = t.data[pos[i]];
+		data.selected = false;
+		var rowid =  data.trid;
 		var row = document.getElementById(rowid);
 		if (row)
 		{
@@ -1190,20 +1226,12 @@ zkDatatable.setSelectedMulti=function(t, pos) {
 
 zkDatatable.sendSelect=function(table, singleSelect) {
 	var selected=[];
-	var tbody = document.getElementById(table.id+"!tbody"); 
-	for (var row = tbody.firstElementChild; row != null; row = row.nextElementSibling)
-	{
-		var cb2 = row.firstElementChild/* td */.firstElementChild/* input */;
-		if (cb2 && cb2.checked)
-		{
-			var position = row.data.position;
-			if (position >= 0)
-			{
-				selected.push(position);
-			}	
+	for (var i = 0; i < table.filteredData.length; i++) {
+		var data = table.filteredData[i];
+		if (data.selected) {
+			selected.push(data.position);			
 		}
 	}
-	
 	if (singleSelect && selected.length == 1) {
 		var req = {uuid: table.id, cmd: "onSelect", data : [ selected[0] ]};
 		zkau.send (req, 5);		
@@ -1329,14 +1357,28 @@ zkDatatable.deleteRow=function(ed, pos)
 		var data = ed.data[pos];
 		var id = data.trid;
 		var row = document.getElementById(id);
+		var paging = ed.filteredData.length > ed.pageSize;
 		if (row == ed.selectedTr)
 			ed.selectedTr = null;
 		row.remove();
 		ed.data.splice(pos,1);
-		zkDatatable.createFooter(ed);
-		zkDatatable.fixupColumns(ed);
-		ed.count --;
-		zkDatatable.findSelectedPosition(ed);
+		var pos2 = ed.filteredData.indexOf(data);
+		if (pos2 >= 0)
+			ed.filteredData.splice( pos2, 1 );
+		pos2 = ed.sortedData.indexOf(data);
+		if (pos2 >= 0)
+			ed.sortedData.splice( pos2, 1 );
+		for (var i = 0; i < ed.data.length; i++) {
+			if (ed.data[i].position > data.position)
+				ed.data[i].position --;
+		}
+		if (paging) {
+			zkDatatable.doFilter(ed);
+		} else {
+			zkDatatable.createFooter(ed);
+			zkDatatable.fixupColumns(ed);
+			zkDatatable.findSelectedPosition(ed);
+		}
 	}
 }
 
@@ -1391,12 +1433,14 @@ zkDatatable.next=function(t)
 			next = next.nextSibling;
 		if (next) {
 			if (! next.classList.contains("selected") && row.classList.contains("selected")) {
+				row.data.selected = false;
 				row.classList.remove("selected");
 				if (t.multiselect) {
 					var cb = row.firstElementChild/* td */.firstElementChild/* input */;
 					cb.checked = false;
 				}
 				next.classList.add("selected");
+				next.data.selected = true;
 			}
 			if (t.multiselect) {
 				var cb = next.firstElementChild/* td */.firstElementChild/* input */;
@@ -1427,11 +1471,13 @@ zkDatatable.previous=function(t)
 		if (next) {
 			if (! next.classList.contains("selected") && row.classList.contains("selected")) {
 				row.classList.remove("selected");
+				row.data.selected = false;
 				if (t.multiselect) {
 					var cb = row.firstElementChild/* td */.firstElementChild/* input */;
 					cb.checked = false;
 				}
 				next.classList.add("selected");
+				next.data.selected = true;
 			}
 			if (t.multiselect) {
 				var cb = next.firstElementChild/* td */.firstElementChild/* input */;
@@ -1547,13 +1593,19 @@ zkDatatable.onDragEnd = function(event) {
 	var target = zkDatatable.draggedBefore;
 	var t = src.table;
 	if (t.multiselect) {
-		if (src.firstElementChild/*td*/.firstElementChild/*input*/.checked)
+		if (src.firstElementChild/*td*/.firstElementChild/*input*/.checked) {
+			zkDatatable.dragging.data.selected = true;					
 			zkDatatable.dragging.classList.add("selected");
-		else
+		}
+		else {
+			zkDatatable.dragging.data.selected = false;		
 			zkDatatable.dragging.classList.remove("selected");
+		}
 	}
-	else
+	else {
 		zkDatatable.dragging.classList.remove("selected");
+		zkDatatable.dragging.data.selected = false;		
+	}
 	if (target != src) {
 		var targetPosition = target == null ?  
 			-1:
