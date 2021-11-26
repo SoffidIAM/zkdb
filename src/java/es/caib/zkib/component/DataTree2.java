@@ -85,9 +85,10 @@ public class DataTree2 extends XulElement implements XPathSubscriber,
 	String foldbar = "/img/foldBar.svg";
 	String foldbackgroud = "/img/foldBackground.svg";
 	String foldunfold = "/img/foldUnfold.svg";
+	boolean rendered = true;
 
 	private ExpressionFactory expf;
-	private String columns;
+	private JSONArray columns;
 	private String nextPageMsg;
 	private String previousPageMsg;
 	
@@ -130,7 +131,16 @@ public class DataTree2 extends XulElement implements XPathSubscriber,
 	public String getInnerAttrs() {
 		StringBuffer sb = new StringBuffer ( super.getInnerAttrs() );
 		
-		HTMLs.appendAttribute(sb, "columns", columns);
+		if (columns != null) {
+			JSONArray a = new JSONArray();
+			for (int i = 0; i < columns.length(); i++)
+			{
+				JSONObject o = columns.getJSONObject(i);
+				if (!o.optBoolean("hidden"))
+					a.put(o);
+			}
+			HTMLs.appendAttribute(sb, "columns", a.toString());
+		}
 		HTMLs.appendAttribute(sb, "header", header);
 		HTMLs.appendAttribute(sb, "enablefilter", enablefilter);
 		HTMLs.appendAttribute(sb, "sortable", sortable);
@@ -149,12 +159,26 @@ public class DataTree2 extends XulElement implements XPathSubscriber,
 
 	public void setColumns(String columns) {
 		try {
-			this.columns = new Yaml2Json().transform(columns);
+			this.columns = new JSONArray( new Yaml2Json().transform(columns));
+			JSONArray a = new JSONArray();
+			for (int i = 0; i < this.columns.length(); i++)
+			{
+				JSONObject o = this.columns.getJSONObject(i);
+				if (!o.optBoolean("hidden"))
+					a.put(o);
+			}
+			smartUpdate("columns", a.toString());
+			if (model != null && rendered) {
+				StringWriter sb = new StringWriter();
+				JSONWriter writer = new JSONWriter(sb);
+				TreeModelProxyNode root = (TreeModelProxyNode) model.getRoot();
+				dump (model, root, writer, openLevels, new LinkedList<Integer>());
+				smartUpdate("data", sb.toString());
+			}
 		} catch (IOException e) {
 			throw new UiException("Unable to parse JSON descriptor "+columns);
 		}
 		
-		smartUpdate("columns", this.columns);
 	}
 
 	public void setFinders(String columns) throws Exception {
@@ -292,12 +316,16 @@ public class DataTree2 extends XulElement implements XPathSubscriber,
 						renderValue(node, writer, value, template);
 						writer.endObject();
 						for (int i = 0; i < columnsArray.length(); i++) {
-							writer.object();
-							JSONObject column = columnsArray.getJSONObject(i);
-							String value2 = column.optString("value");
-							String template2 = column.optString("template");
-							renderValue(node, writer, value2, template2);
-							writer.endObject();
+							if (columns == null ||  
+									columns.length() > i &&
+									!columns.getJSONObject(i).optBoolean("hidden")) {
+								writer.object();
+								JSONObject column = columnsArray.getJSONObject(i);
+								String value2 = column.optString("value");
+								String template2 = column.optString("template");
+								renderValue(node, writer, value2, template2);
+								writer.endObject();
+							}
 						}
 						writer.endArray();
 					} else {
@@ -467,12 +495,16 @@ public class DataTree2 extends XulElement implements XPathSubscriber,
 				renderValue(node, writer, value, template);
 				writer.endObject();
 				for (int i = 0; i < columnsArray.length(); i++) {
-					writer.object();
-					JSONObject column = columnsArray.getJSONObject(i);
-					String value2 = column.optString("value");
-					String template2 = column.optString("template");
-					renderValue(node, writer, value2, template2);
-					writer.endObject();
+					if (columns == null ||  
+							columns.length() > i &&
+							! columns.getJSONObject(i).optBoolean("hidden")) {
+						writer.object();
+						JSONObject column = columnsArray.getJSONObject(i);
+						String value2 = column.optString("value");
+						String template2 = column.optString("template");
+						renderValue(node, writer, value2, template2);
+						writer.endObject();
+					}
 				}
 				writer.endArray();
 			} else {
@@ -1009,6 +1041,7 @@ public class DataTree2 extends XulElement implements XPathSubscriber,
 	
 
 	public void afterCompose() {
+		rendered = true;
 	}
 
     public DataSource getDataSource() {
@@ -1140,5 +1173,27 @@ public class DataTree2 extends XulElement implements XPathSubscriber,
 	}
 	public void download () {
 		response("download", new AuInvoke(this, "downloadCsv", ""));
+	}
+	public JSONArray getFinders() {
+		return finders;
+	}
+	public void setFinders(JSONArray finders) throws Exception {
+		this.finders = finders;
+		applyModel();
+	}
+	public JSONArray getColumns() {
+		return columns;
+	}
+	
+	@Override
+	public void invalidate() {
+		super.invalidate();
+		if (model != null) {
+			StringWriter sb = new StringWriter();
+			JSONWriter writer = new JSONWriter(sb);
+			TreeModelProxyNode root = (TreeModelProxyNode) model.getRoot();
+			dump (model, root, writer, openLevels, new LinkedList<Integer>());
+			response("setData", new AuInvoke(this, "setData", sb.toString()));
+		}
 	}
 }

@@ -181,7 +181,7 @@ zkDatatree2.fixupLabelColumns=function(tree, label) {
 	
 	var total = label.getBoundingClientRect().width;
 	var div = div0;
-	if (div.tagName == "DIV") { // Labels with columns only
+	if (div != null && div.tagName == "DIV") { // Labels with columns only
 		div0.style.width = "0px"; 		
 		for (var i = 0; i < tree.columns.length; i++) {
 			if (div != null) div = div.nextElementSibling;
@@ -1140,6 +1140,13 @@ zkDatatree2.setAttr = function (ed, name, value) {
 		} catch (error) {
 			alert("Error decoding table descriptor "+value+": "+error);
 		}
+		return true;
+	case "data":
+		window.setTimeout(() => {
+			var header = document.getElementById(ed.id+"!thead");
+			zkDatatree2.createHeaders (ed, header);
+			zkDatatree2.setData(ed, value); 
+		},50 );
 		return true;
 	case "footer":
 		ed.footer = (value != "false");
