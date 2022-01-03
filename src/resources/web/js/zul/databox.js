@@ -250,7 +250,7 @@ zkDataList.addElement = function(e, parent, pos) {
 		var split = option.indexOf(":");
 		if (split >= 0) {
 			key = option.substring(0,split).trim();
-			key = decodeURIComponent(key.replaceAll("+"," "));
+			key = decodeURIComponent(key.replace("+"," "));
 			label = option.substring(split+1).trim();
 		} else {
 			key = label = option;

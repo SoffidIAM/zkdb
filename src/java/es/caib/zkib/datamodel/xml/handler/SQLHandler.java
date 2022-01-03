@@ -1,31 +1,12 @@
 package es.caib.zkib.datamodel.xml.handler;
 
 import java.sql.Connection;
-import java.sql.Date;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
-import java.sql.SQLException;
-import java.sql.Types;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.Vector;
 
-import javax.naming.Context;
-import javax.naming.InitialContext;
-import javax.naming.NamingException;
-import javax.servlet.jsp.el.ELException;
-
-import org.omg.CosNaming.NamingContext;
 import org.w3c.dom.Element;
 
 import es.caib.zkib.datamodel.DataContext;
-import es.caib.zkib.datamodel.xml.Interpreter;
 import es.caib.zkib.datamodel.xml.ParseException;
-import es.caib.zkib.datamodel.xml.definition.MethodDefinition;
-import es.caib.zkib.datamodel.xml.definition.ParameterDefinition;
-import es.caib.zkib.datasource.DataSource;
 
 public class SQLHandler extends AbstractSQLHandler implements PersistenceHandler {
 	private String update, insert, delete;
