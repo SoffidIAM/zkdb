@@ -117,6 +117,7 @@ zkDatatable.refresh = function (t) {
 		var th = document.createElement("table");
 		th.setAttribute("id", t.id+"!thead");
 		th.setAttribute("class", "thead")
+		th.style.position="relative";
 		t.appendChild(th);
 		var tbd = document.createElement("div")
 		tbd.setAttribute("id", t.id+"!tbodydiv");
@@ -124,6 +125,9 @@ zkDatatable.refresh = function (t) {
 		t.appendChild(tbd);
 		if (t.maxheight)
 			tbd.style.maxHeight = t.maxheight;
+		tbd.addEventListener("scroll", (ev) => {
+			th.style.left="-"+tbd.scrollLeft+"px";
+		});
 		var tb = document.createElement("table");
 		tb.setAttribute("id", t.id+"!tbody");
 		tb.setAttribute("class", "tbody")
@@ -983,9 +987,6 @@ zkDatatable.onSelectRow=function(ev) {
 				cb2.checked = false;
 				row.classList.remove("selected");
 				row.data.selected = false;
-			}
-			else
-			{
 				for (var i = 0; i < t.filteredData.length; i++) {
 					t.filteredData[i].selected = false;
 				}
@@ -1201,11 +1202,14 @@ zkDatatable.setSelectedMulti=function(t, pos) {
 			cb.checked =false;
 		}
 	}
+	for (var i = 0; i < t.filteredData.length; i++) {
+		t.filteredData[i].selected = false
+	}
 	t.selectedTr = null;
 	for (var i = 0; i < pos.length; i++)
 	{
 		var data = t.data[pos[i]];
-		data.selected = false;
+		data.selected = true;
 		var rowid =  data.trid;
 		var row = document.getElementById(rowid);
 		if (row)
