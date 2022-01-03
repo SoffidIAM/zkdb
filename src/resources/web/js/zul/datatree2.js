@@ -1386,14 +1386,16 @@ zkDatatree2.deleteRow=function(ed, pos)
 			toRemove.remove();
 			
 			for (var sibling = parentDiv.firstElementChild; sibling != null; sibling = sibling.nextElementSibling) {
+				if ( !sibling.pager) {
 				var siblingId = sibling.id;
-				siblingId = siblingId.substring( ed.id.length+4/* !row */+parentId.length+1);
-				siblingId = parseInt (siblingId);
-				if (siblingId > pos[pos.length-1])
-					zkDatatree2.renameIds (ed,
-							parentId+"."+siblingId,
-							parentId+"."+(siblingId-1),
-							pos.length-1);
+					siblingId = siblingId.substring( ed.id.length+4/* !row */+parentId.length+1);
+					siblingId = parseInt (siblingId);
+					if (siblingId > pos[pos.length-1])
+						zkDatatree2.renameIds (ed,
+								parentId+"."+siblingId,
+								parentId+"."+(siblingId-1),
+								pos.length-1);
+				}
 			}
 			
 			ed.refreshCounter ++;
@@ -1419,7 +1421,7 @@ zkDatatree2.renameIds=function (ed, oldId, newId, index) {
 	{
 		children.id = ed.id+"!children"+newId;
 		for (var child = children.firstElementChild; child != null; child = child.nextElementSibling) {
-			if (child.id) {
+			if (!child.pager && child.id) {
 				var lastStep = child.id.substring(child.id.lastIndexOf("."));
 				zkDatatree2.renameIds (ed, oldId + lastStep, newId + lastStep);
 			}
