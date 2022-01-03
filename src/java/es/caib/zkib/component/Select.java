@@ -345,25 +345,32 @@ public class Select extends XulElement implements XPathSubscriber, AfterCompose 
      * 
      */
     private void syncSelectedItem() {
-    	if (valueBinder.getDataPath() != null) {
+    	if (valueBinder.getDataPath() != null && valueBinder.isValid() &&  !valueBinder.isVoid()) {
     		Object value = valueBinder.getValue();
     		selectedValue = value;
     		if (model == null) {
     			smartUpdate("selected", selectedValue == null ? null:
     				selectedValue.toString());
     		} else {
+    			
     			for (int i =  0; i < model.getSize(); i++) {
     				Object o = model.getElementAt(i);
     				if (o != null)
     				{
     					Object key = JXPathContextFactory.newInstance().newContext(null, o).getValue(keyPath);
-    					if (key != null && key.equals(value)) {
+    					if (key == null ? value == null : key.equals(value)) {
     						smartUpdate("selected", Integer.toString(i));
     						return;
     					}
     				}
     			}
-    			smartUpdate("selected", null);
+   				Object o = model.getElementAt(0);
+				if (o != null)
+				{
+					Object key = JXPathContextFactory.newInstance().newContext(null, o).getValue(keyPath);
+					valueBinder.setValue(key);
+				}
+    			smartUpdate("selected", "0");
     		}
     		
     	}
