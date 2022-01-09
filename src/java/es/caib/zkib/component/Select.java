@@ -349,7 +349,7 @@ public class Select extends XulElement implements XPathSubscriber, AfterCompose 
     		Object value = valueBinder.getValue();
     		selectedValue = value;
     		if (model == null) {
-    			smartUpdate("selected", selectedValue == null ? null:
+    			smartUpdate("selected", selectedValue == null ? "":
     				selectedValue.toString());
     		} else {
     			

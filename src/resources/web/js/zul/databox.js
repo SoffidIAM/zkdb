@@ -273,6 +273,8 @@ zkDataList.addElement = function(e, parent, pos) {
         zk.addClass(sel, "readonly")
         sel.setAttribute("disabled","disabled")
     }
+	else if (e.getAttribute("placeholder") != null)
+		sel.setAttribute("placeholder", e.getAttribute("placeholder"));
 }
 
 zkDataList.init = function (e) {
@@ -510,6 +512,12 @@ zkDataNameDescription.addElement = function(e, parent, pos) {
         zk.addClass(i, "text-disd")
         i.setAttribute("disabled","disabled")
     }
+	if (!e.readOnly && !e.disabled) {
+		if (e.getAttribute("placeholder") != null)
+			i.setAttribute("placeholder", e.getAttribute("placeholder"));
+		else if (e.getAttribute("label") != null)
+			i.setAttribute("placeholder", e.getAttribute("label"));		
+	}
     
     if (rowValue[2] && rowValue[2].length > 0) {
     	var w = document.getElementById($uuid(parent)+"!Warning");
@@ -669,6 +677,13 @@ zkDataDescription.addElement = function(e, parent, pos) {
         zk.addClass(i, "text-disd")
         i.setAttribute("disabled","disabled")
     }
+	if (!e.disabeld && !e.readOnly) {
+		if (e.getAttribute("placeholder") != null)
+			i.setAttribute("placeholder", e.getAttribute("placeholder"));
+		else if (e.getAttribute("label") != null)
+			i.setAttribute("placeholder", e.getAttribute("label"));
+		
+	}
     if (rowValue != null && rowValue[2] != null && rowValue[2].length > 0) {
     	var w = document.getElementById($uuid(parent)+"!Warning");
     	if (w)
