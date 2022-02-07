@@ -219,7 +219,11 @@ public class XmlDataNode extends DataNode {
 	public Object getParentId() throws IllegalAccessException, InvocationTargetException, NoSuchMethodException {
 		if (definition.getParentProperty() == null)
 			return null;
-		return PropertyUtils.getProperty(ctx.getData(), definition.getParentProperty());
+		Object parent = PropertyUtils.getProperty(ctx.getData(), definition.getParentProperty());
+		if (parent == null || parent.toString().isEmpty())
+			return null;
+		else
+			return parent;
 	}
 
 	public Object getCurrentId() throws IllegalAccessException, InvocationTargetException, NoSuchMethodException {

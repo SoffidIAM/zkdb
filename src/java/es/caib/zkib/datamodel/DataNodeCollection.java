@@ -318,7 +318,7 @@ public class DataNodeCollection implements List, DataModelCollection, Serializab
 			return parentId == null;
 		
 		if (parent.getChildProperty() != null && parent.getChildProperty().equals(node.getChildProperty())) { // Same class
-			return parentId.equals(parent.getCurrentId());
+			return parentId == null ? parent.getCurrentId() == null : parentId.equals(parent.getCurrentId());
 		}
 		return false;
 	}

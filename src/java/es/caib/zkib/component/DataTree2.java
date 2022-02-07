@@ -73,6 +73,7 @@ public class DataTree2 extends XulElement implements XPathSubscriber,
 	private transient TreeDataListener _dataListener;
 	private static final String ADD_CHILDREN_EVENT = "onAddChildren"; //$NON-NLS-1$
 	private static final String SELECT_EVENT = "onSelect"; //$NON-NLS-1$
+	private static final String REORDER_EVENT = "onReorder"; //$NON-NLS-1$
 	private static final String CLIENT_ACTION_EVENT = "onClientAction"; //$NON-NLS-1$
 	boolean enablefilter = true;
 	int sortDirection = +1;
@@ -86,7 +87,8 @@ public class DataTree2 extends XulElement implements XPathSubscriber,
 	String foldbackgroud = "/img/foldBackground.svg";
 	String foldunfold = "/img/foldUnfold.svg";
 	boolean rendered = true;
-
+	boolean reorder = false;
+	
 	private ExpressionFactory expf;
 	private JSONArray columns;
 	private String nextPageMsg;
@@ -797,6 +799,23 @@ public class DataTree2 extends XulElement implements XPathSubscriber,
     	}
 	}
     
+    public Object getElementAt(int position[]) {
+    	if (model != null && dsImpl != null) {
+    		String path = model.getXPath(position);
+    		return treeBinder.getDataSource().getJXPathContext().getValue(path);
+    	}
+    	else
+    		return null;
+    }
+    
+    public Object getXpathAt(int position[]) {
+    	if (model != null && dsImpl != null) {
+    		return model.getXPath(position);
+    	}
+    	else
+    		return null;
+    }
+    
 	public JXPathContext getJXPathContext() {
         if (dsImpl == null)
             return null;
@@ -1061,6 +1080,8 @@ public class DataTree2 extends XulElement implements XPathSubscriber,
 	public Command getCommand(String cmdId) {
 		if (SELECT_EVENT.equals(cmdId))
 			return _onSelectCommand;
+		if (REORDER_EVENT.equals(cmdId))
+			return _onReorderCommand;
 		if (CLIENT_ACTION_EVENT.equals(cmdId))
 			return _onClientActionCommand;
 		if (ADD_CHILDREN_EVENT.equals(cmdId))
@@ -1079,6 +1100,24 @@ public class DataTree2 extends XulElement implements XPathSubscriber,
 			table.selectedItem = selectedItem;
 			table.updateDataSource();
 			Events.postEvent(new Event("onSelect", table, table.selectedItem));
+		}
+		
+	};
+
+	private static Command _onReorderCommand  = new ComponentCommand (REORDER_EVENT, 0) {
+		protected void process(AuRequest request) {
+			final DataTree2 table = (DataTree2) request.getComponent();
+			JSONArray a = new JSONArray(request.getData()[0] );
+			int []selectedItem = new int[ a.length() ];
+			for ( int pos = 0; pos < a.length(); pos ++)
+				selectedItem[pos] = a.getInt(pos);
+			
+			a = new JSONArray(request.getData()[1] );
+			int []newParent = new int[ a.length() ];
+			for ( int pos = 0; pos < a.length(); pos ++)
+				newParent[pos] = a.getInt(pos);
+			
+			Events.postEvent(new Event("onReorder", table, new int[][] { selectedItem, newParent}));
 		}
 		
 	};
@@ -1195,5 +1234,11 @@ public class DataTree2 extends XulElement implements XPathSubscriber,
 			dump (model, root, writer, openLevels, new LinkedList<Integer>());
 			response("setData", new AuInvoke(this, "setData", sb.toString()));
 		}
+	}
+	public boolean isReorder() {
+		return reorder;
+	}
+	public void setReorder(boolean reorder) {
+		this.reorder = reorder;
 	}
 }

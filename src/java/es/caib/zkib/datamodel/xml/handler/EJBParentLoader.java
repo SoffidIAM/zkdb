@@ -16,7 +16,6 @@ public class EJBParentLoader extends AbstractEJBHandler implements LoadParentHan
 	
 	public EJBParentLoader() {
 		super();
-		// TODO Auto-generated constructor stub
 	}
 	public Object loadParent(DataContext ctx) throws Exception {
 		return invokeMethod(ctx, finderMethod);
