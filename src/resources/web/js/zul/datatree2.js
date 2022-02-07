@@ -44,7 +44,8 @@ zkDatatree2.init = function (ed) {
 	ed.pageSize = 50;
 	ed.nextPageMsg = ed.getAttribute("msgnextpage");
 	ed.previousPageMsg = ed.getAttribute("msgpreviouspage");
-	ed.refreshConter = 0;
+	ed.reorder = ed.getAttribute("reorder") != "false";
+		ed.refreshConter = 0;
 	if (!ed.pagers)
 		ed.pagers=[];
 	zkDatatree2.refresh(ed);
@@ -228,6 +229,9 @@ zkDatatree2.refresh = function (t) {
 		zkDatatree2.addPagination(t, tbd);
 		if (t.maxheight)
 			tbd.style.maxHeight = t.maxheight;
+		zk.listen(tbd, "dragover", zkDatatree2.onDragover);
+		zk.listen(tbd, "drop", zkDatatree2.onDrop);
+
 		var tf = document.createElement("div");
 		tf.setAttribute("class", "tfoot")
 		tf.setAttribute("id", t.id+"!tfoot");
@@ -810,7 +814,11 @@ zkDatatree2.renderRow=function(tree, container, value) {
 	var label = document.createElement("div");
 	label.setAttribute("class", "tree-label");
 	label.value = value;
-	
+	if (tree.reorder)
+		label.setAttribute("draggable", true);
+	label.tree = tree;
+	zk.listen(label, "dragstart", zkDatatree2.onDragStart);
+	zk.listen(label, "dragend", zkDatatree2.onDragEnd);
 	container.insertBefore(label, container.firstChild);
 	
 	var style = "tree-label";
@@ -1649,3 +1657,51 @@ zkDatatree2.quote = function(t) {
 	return "\""+t.replace(/"/g, "\\\"")+"\"";
 }
 
+/************ DRAG & DROP SUPPORT */
+zkDatatree2.onDragover=function(event) {
+	var row = zkDatatree2.dragging;
+	var tree = row.tree;
+	var currentTree = event.currentTarget/*div.tbody*/.parentElement/*div.datatable*/;
+	if (tree == currentTree) {
+		if (tree.previousDrag) {
+			tree.previousDrag.classList.remove("drag-highlight");
+			tree.previousDrag = null;
+		}
+		var tr = document.elementFromPoint(event.x, event.y);
+		while (tr != null && ! (tr.tagName == 'DIV' && tr.classList.contains("tree-label"))) {
+			tr = tr.parentElement;
+		}
+		if (tr != null && tr.tree == tree) {
+			if  (tr != row) {
+				tree.previousDrag = tr;
+				tree.previousDrag.classList.add("drag-highlight");
+			}
+		}
+		event.preventDefault();
+	}
+}
+
+zkDatatree2.onDragStart=function(event) {
+	zkDatatree2.dragging = event.currentTarget;
+	event.dataTransfer.setData("text/plain", JSON.stringify(event.currentTarget.value));
+	zkDatatree2.setSelected(event.currentTarget.tree, JSON.stringify(event.currentTarget.value.position));
+	zkDatatree2.dragging.classList.add("selected");
+}
+
+zkDatatree2.onDragEnd = function(event) {
+	var src = zkDatatree2.dragging;
+	var target = zkDatatree2.draggedBefore;
+	var tree = src.tree;
+	if (tree.previousDrag) {
+		tree.previousDrag.classList.remove("drag-highlight");
+		zkDatatree2.dragging.classList.remove("selected");
+		zkau.send ({uuid: tree.id, cmd: "onReorder", data : [
+			JSON.stringify( src.value.position ),
+			JSON.stringify( tree.previousDrag.value.position ) ]}, 5);		
+		tree.previousDrag = null;
+	}
+}
+
+zkDatatree2.onDrop = function(event) {
+	event.preventDefault();
+}
