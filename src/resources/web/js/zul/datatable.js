@@ -733,11 +733,12 @@ zkDatatable.fillRow=function(ed, tr, data)
 		var td = document.createElement("td");
 		tr.appendChild(td);
 		var col = ed.columns[column];
-		if (generateData) {
+		if (generateData || col.render) {
 			if (col.template)
 				td.innerHTML = zkDatatable.replaceExpressions(col.template, data.value);
-			else if (col.render)
+			else if (col.render) {
 				window[col.render](td, col, data.value);
+			}
 			else if (col.value)
 			{
 				var t = "";
@@ -758,9 +759,12 @@ zkDatatable.fillRow=function(ed, tr, data)
 			else
 				td.innerText = data.value[col.name];
 			data.text.push (td.innerText);
-			data.html.push (td.innerHTML);
+			data.html.push (td.innerHTML);				
 		} else {
-			td.innerHTML = data.html[column];
+			if (col.render)
+				window[col.render](td, col, data.value);
+			else
+				td.innerHTML = data.html[column];
 		}
 		if (col.className) {
 			td.setAttribute("class", zkDatatable.replaceExpressions(col.className, data.value));
@@ -1588,7 +1592,7 @@ zkDatatable.onDragover=function(event) {
 zkDatatable.onDragStart=function(event) {
 	zkDatatable.dragging = event.currentTarget;
 	zkDatatable.draggedBefore = event.currentTarget;
-	event.dataTransfer.setData("text/plain", event.currentTarget.id);
+	event.dataTransfer.setData("text/plain", JSON.stringify(event.currentTarget.data));
 	zkDatatable.dragging.classList.add("selected");
 }
 
