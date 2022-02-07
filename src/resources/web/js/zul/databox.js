@@ -250,7 +250,7 @@ zkDataList.addElement = function(e, parent, pos) {
 		var split = option.indexOf(":");
 		if (split >= 0) {
 			key = option.substring(0,split).trim();
-			key = decodeURIComponent(key.replace("+"," "));
+			key = decodeURIComponent(key.replace(/\+/g, " "));
 			label = option.substring(split+1).trim();
 		} else {
 			key = label = option;
@@ -1743,7 +1743,7 @@ zkDataCommon.highlightSearchResult=function(child, text, criteria) {
 
 zkDataCommon.addSearchResult=function(div, data, clear) {
 	var databox = div.input.databox;
-	var criteria = div.searchCriteria.toLowerCase().replace(/.,-/, " ").split(" ");
+	var criteria = div.searchCriteria.toLowerCase().replace(/.,-/g, " ").split(" ");
 	if (clear) {
 		while (div.firstElementChild != div.lastElementChild.previousElementSibling)
 			div.firstElementChild.remove();
