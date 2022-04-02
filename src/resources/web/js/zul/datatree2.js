@@ -1613,6 +1613,8 @@ zkDatatree2.downloadTreeItemHolder = function (ed, level, treeitemHolder) {
 	if (treeitemHolder.getAttribute("class") == "tree-tail")
 		return s;
 	var item = treeitemHolder.lastElementChild;
+	if (item == null)
+		return s; //Page up or down
 	if (item.getAttribute("class") == "tree-item") {
 		s += zkDatatree2.downloadTreeLabel (ed, level, item.firstElementChild);
 		var treeChildren = item.lastElementChild;

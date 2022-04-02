@@ -578,7 +578,7 @@ zkDataNameDescription.onContinueSearchResponse = function(ed, id, data) {
 	var div = document.getElementById(id);
 	if (div) {
 		var data = JSON.parse(data);
-		zkDataCommon.addSearchResult(div, data, true);
+		zkDataCommon.addSearchResult(div, data, false);
 	}
 }
 
@@ -586,7 +586,7 @@ zkDataNameDescription.onStartSearchResponse = function(ed, id, data) {
 	var div = document.getElementById(id);
 	if (div) {
 		var data = JSON.parse(data);
-		zkDataCommon.addSearchResult(div, data, false);
+		zkDataCommon.addSearchResult(div, data, true);
 	}
 }
 
@@ -1385,7 +1385,10 @@ zkDataCommon.onblur = function(A) {
     	setTimeout(()=>{
     		try{
     			if(el.popup && !zkDataCommon.inSearchPopup) {
-    				el.popup.remove(); el.popup=null;
+    				el.popup.remove(); 
+					el.popup=null;
+					clearInterval(zkDataCommon.intervalEvent);
+					zkDataCommon.popup = null;
     			}
     		} catch(e) {
     			
@@ -1611,12 +1614,25 @@ zkDataCommon.cleanup = function (e) {
 		zkDatasource.unregisterInput(e.zkDatasource, e);
 }
 
+
+zkDataCommon.onScroll=function(e) {
+   if (zkDataCommon.popup != null) {
+		var rect = zkDataCommon.popup.input.getBoundingClientRect();
+		var left = rect.left;
+		var top = rect.bottom;
+		zkDataCommon.popup.style.left != ""+left+"px";
+		zkDataCommon.popup.style.top = ""+top+"px";
+   }	
+}
+
+// Global event listener
+document.addEventListener('scroll', zkDataCommon.onScroll);
+
 zkDataCommon.openSearchPopup = function (input, databox) {
 	if (!input.popup) {
 		var div = document.createElement("div");
 		div.setAttribute("id", input.getAttribute("id")+"-popup")
 		div.setAttribute("class", "databox-popup");
-		input.parentElement.insertBefore(div, input);
 		input.popup = div;
 		div.input = input;
 		var ss = document.createElement("div");
@@ -1628,28 +1644,16 @@ zkDataCommon.openSearchPopup = function (input, databox) {
 		img.setAttribute("class", "databox-wait");
 		div.appendChild(img);
 		var rect = input.getBoundingClientRect();
-		var left = input.offsetLeft;
-		var top = input.offsetTop;
-		var offsetParent = input.offsetParent;
-		var parent = input.parentElement;
-		while (parent != null) {
-			left -= parent.scrollLeft;
-			top -= parent.scrollTop;
-			if (parent == offsetParent) {
-				var transform = getComputedStyle(parent)["transform"];
-				if (transform != "none") {
-					break;
-				} else {
-					left += parent.offsetLeft;
-					top += parent.offsetTop;				
-				}
-				offsetParent = parent.offsetParent;
-			}
-			parent = parent.parentElement;
-		}
+		var left = rect.left;
+		var top = rect.bottom;
+		var parent = document.body;
+		parent.insertBefore(div, parent.firstElementChild);
 		div.style.position="fixed";
 		div.style.left = ""+left+"px";
 		div.style.top = ""+top+"px";
+		zkDataCommon.popup = div;
+		zkDataCommon.intervalEvent  = setInterval(zkDataCommon.onScroll, 500);
+		div.input = input;
 	} else {
 		for (var e = input.popup.firstElementChild; 
 			e != input.popup.lastElementChild.previousElementSibling;
@@ -1669,19 +1673,26 @@ zkDataCommon.openSearchPopup = function (input, databox) {
 zkDataCommon.onFocusSearchPopup = function(evt) {
 }
 zkDataCommon.onBlurSearchPopup = function(evt) {
-//	console.log("on blur search popup");
-//	console.log(evt);
 	zkDataCommon.inSearchPopup = false;
 	var menu = evt.currentTarget.parentElement;
 	menu.remove(); 
 	menu.input.popup=null;
+	clearInterval(zkDataCommon.intervalEvent);
+	zkDataCommon.popup = null;
 }
 zkDataCommon.onSelectValue=function(evt) {
 	var opt = evt.currentTarget;
 	var menu = opt.parentElement;
 	zkDataCommon.inSearchPopup = false;
 	zkDataCommon.onSelectValue2(opt);
-	setTimeout(()=>{try{menu.remove(); menu.input.popup=null;} catch(e) {}}, 150);		
+	setTimeout(()=>{
+		try{
+			menu.remove(); 
+			menu.input.popup=null;
+			clearInterval(zkDataCommon.intervalEvent);
+			zkDataCommon.popup = null;
+		} catch(e) {}
+	}, 150);		
 }
 
 zkDataCommon.onSelectValue2=function(opt) {
