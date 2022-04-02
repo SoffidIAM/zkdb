@@ -314,6 +314,15 @@ public class DataNodeCollection implements List, DataModelCollection, Serializab
 	private boolean sameParent(DataNode node) throws IllegalAccessException, InvocationTargetException, NoSuchMethodException {
 		Object parentId = node.getParentId();
 		DataModelNode parent = node.getParent();
+		DataModelCollection c = parent.getContainer();
+		if (c == null)
+			parent = null;
+		else if (c instanceof DataNodeCollection && parent instanceof DataNode) {
+			DataNodeCollection coll = ((DataNodeCollection) c).findTreeRoot((DataNode) parent);
+			if (coll != this && coll != findTreeRoot((DataNode) getParentDataNode()))
+				parent = null;
+		} else
+			parent = null;
 		if (parent == null)
 			return parentId == null;
 		
@@ -782,11 +791,13 @@ public class DataNodeCollection implements List, DataModelCollection, Serializab
 	public void reorderOnTree(XmlDataNode node) throws IllegalAccessException, InvocationTargetException, NoSuchMethodException, Exception {
 		
 		if (! sameParent(node)) {
-			onDelete(node);
+			boolean _transient = node.isTransient();
 			node.setTransient(true);
+			onDelete(node);
 			DataNodeCollection coll = findTreeRoot(node);
 			coll.treeElements.remove(node.getCurrentId());
 			coll.addTreeElement(node, true, true);
+			node.setTransient(_transient);
 		}
 		
 	}

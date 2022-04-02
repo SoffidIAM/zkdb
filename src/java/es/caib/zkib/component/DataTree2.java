@@ -147,6 +147,7 @@ public class DataTree2 extends XulElement implements XPathSubscriber,
 		HTMLs.appendAttribute(sb, "enablefilter", enablefilter);
 		HTMLs.appendAttribute(sb, "sortable", sortable);
 		HTMLs.appendAttribute(sb, "sortDirection", sortDirection);
+		HTMLs.appendAttribute(sb, "reorder", reorder);
 		HTMLs.appendAttribute(sb, "footer", footer);
 		HTMLs.appendAttribute(sb, "maxheight", maxheight);
 		HTMLs.appendAttribute(sb, "foldBar", getDesktop().getExecution().encodeURL(foldbar));
@@ -1060,6 +1061,9 @@ public class DataTree2 extends XulElement implements XPathSubscriber,
 	
 
 	public void afterCompose() {
+		if ("true".equals(getAttribute("reorder"))) {
+			setReorder(true);
+		}
 		rendered = true;
 	}
 

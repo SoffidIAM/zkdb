@@ -394,11 +394,11 @@ zkDatatable.isVisibleRow=function(t, row) {
 	{
 		var filter = t.columns[column].currentFilter;
 		var col = t.columns[column];
-		if (filter) {
+		if (filter && filter.length > 0) {
 			var text = zkDatatable.getRowText(t,row)[column]; 
 			for (var f = 0; f < filter.length; f++)
 			{
-				if (text.toLowerCase().indexOf(filter[f]) < 0)
+				if (text != null && new String(text).toLowerCase().indexOf(filter[f]) < 0)
 				{
 					visible = false;
 					break;
@@ -838,7 +838,7 @@ zkDatatable.evaluateInContext = function (js, context) {
 	try {
 		return function() { with (context) {return eval(js);} }.call(context);		
 	} catch (e) {
-		console.log(e);
+	//	console.log(e);
 		return "";
 	}
 }
@@ -1341,6 +1341,8 @@ zkDatatable.doSort=function(ed) {
 							v1 = new String(v1).toLowerCase();
 						if (isNaN(v2))
 							v2 = new String(v2).toLowerCase();
+						if (v1 == null) v1 = "";
+						if (v2 == null) v2 = "";
 						if (v1 < v2) r = -1;
 						else if (v1 > v2) r = +1;
 						else r = 0; 
