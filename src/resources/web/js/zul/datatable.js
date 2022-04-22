@@ -1307,55 +1307,58 @@ zkDatatable.doSort=function(ed) {
 	ed.sortedData = [...ed.data];
 	if (sortColumn >= 0) {
 		var col = ed.columns[ed.sortColumn];
-		var value = ed.columns[ed.sortColumn].value;
-		var direction = ed.sortDirection;
-		var tbody = document.getElementById(ed.id+"!tbody");
-		zkDatatable.quickSort(ed.sortedData,
-				(a,b) => {
-					var r;
-					if (value) {
-						var v1,v2;
-						if (a.value.hasOwnProperty(value)) 
-							v1 = a.value[value];
-						else {
-							with (a.value) { 
-								try {
-									v1 = zkDatatable.evaluateInContext (value, a.value)
-								} catch(e) {
-									v1=""
+		if (col) {
+			var value = ed.columns[ed.sortColumn].value;
+			var direction = ed.sortDirection;
+			var tbody = document.getElementById(ed.id+"!tbody");
+			zkDatatable.quickSort(ed.sortedData,
+					(a,b) => {
+						var r;
+						if (value) {
+							var v1,v2;
+							if (a.value.hasOwnProperty(value)) 
+								v1 = a.value[value];
+							else {
+								with (a.value) { 
+									try {
+										v1 = zkDatatable.evaluateInContext (value, a.value)
+									} catch(e) {
+										v1=""
+									}
 								}
 							}
-						}
-						if (b.value.hasOwnProperty(value)) 
-							v2 = b.value[value];
-						else {
-							with (b.value) { 
-								try {
-									v2 = zkDatatable.evaluateInContext (value, b.value)
-								} catch(e) {
-									v2=""
+							if (b.value.hasOwnProperty(value)) 
+								v2 = b.value[value];
+							else {
+								with (b.value) { 
+									try {
+										v2 = zkDatatable.evaluateInContext (value, b.value)
+									} catch(e) {
+										v2=""
+									}
 								}
 							}
+							if (isNaN(v1))
+								v1 = new String(v1).toLowerCase();
+							if (isNaN(v2))
+								v2 = new String(v2).toLowerCase();
+							if (v1 == null) v1 = "";
+							if (v2 == null) v2 = "";
+							if (v1 < v2) r = -1;
+							else if (v1 > v2) r = +1;
+							else r = 0; 
+						} else {
+							var v1 = zkDatatable.getRowText(ed,a)[sortColumn]; 
+							var v2 = zkDatatable.getRowText(ed,b)[sortColumn]; 
+							if (v1 < v2) r = -1;
+							else if (v1 > v2) r = +1;
+							else r = 0; 
 						}
-						if (isNaN(v1))
-							v1 = new String(v1).toLowerCase();
-						if (isNaN(v2))
-							v2 = new String(v2).toLowerCase();
-						if (v1 == null) v1 = "";
-						if (v2 == null) v2 = "";
-						if (v1 < v2) r = -1;
-						else if (v1 > v2) r = +1;
-						else r = 0; 
-					} else {
-						var v1 = zkDatatable.getRowText(ed,a)[sortColumn]; 
-						var v2 = zkDatatable.getRowText(ed,b)[sortColumn]; 
-						if (v1 < v2) r = -1;
-						else if (v1 > v2) r = +1;
-						else r = 0; 
+						return r*direction;
 					}
-					return r*direction;
-				}
-			);
+				);
+			
+		}
 	}
 	zkDatatable.doFilter(ed);
 }
