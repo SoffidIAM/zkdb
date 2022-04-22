@@ -29,7 +29,7 @@ public class DataDatebox extends org.zkoss.zul.Datebox implements XPathSubscribe
 	protected boolean time;
 	
 	protected String getDefaultFormat() {
-		return DEFAULT_FORMAT;
+		return DateFormats.getDateFormatString();
 	}
 
 	protected DateFormat getDateFormat(String fmt) {
