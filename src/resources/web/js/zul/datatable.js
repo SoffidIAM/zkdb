@@ -633,7 +633,6 @@ zkDatatable.addRowInternal=function(ed, data)
 	tr.id = ed.id+"!row."+(ed.nextRowId++);
 	data.trid = tr.id;
 	
-	t.appendChild(tr);
 	
 	try {
 		zkDatatable.fillRow(ed, tr, data);
@@ -642,6 +641,7 @@ zkDatatable.addRowInternal=function(ed, data)
 		console.log(data);
 		console.log(e);
 	}
+	t.appendChild(tr);
 }
 
 
