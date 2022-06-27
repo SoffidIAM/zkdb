@@ -25,7 +25,7 @@
 					v.add (c2);
 					v.add (c3);
 					
-					for (int i = 0; i &lt; 5094; i++) {
+					for (int i = 0; i &lt; 994; i++) {
 						Country c4 = new Country ();
 						c4.name="Country "+i;
 						c4.abbreviation="c"+i;

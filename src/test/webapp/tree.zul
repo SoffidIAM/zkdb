@@ -439,6 +439,10 @@ div.datatree div.tbody div.tree-label div.tree-cell {
 	padding-right: 4px;
 }
 
+div.datatree div.tbody div.tree-label.drag-highlight {
+	background-color: lightyellow;
+}
+
 div.datatree div.thead div.filter-cell input.filter {
 	width: calc( 100% - 28px );
 	margin-left: 18px;
@@ -458,6 +462,7 @@ div.datatree div.tbody div.tree-label {
 		width="100%" dataPath="/mydata:/"
 		header="Objects" 
 		openLevels="1"
+		reorder="true"
 		enablefilter="true"
 		maxheight="500px">
 		<attribute name="columns">

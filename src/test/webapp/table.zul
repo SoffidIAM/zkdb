@@ -1,7 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <zk>
 	<style>
-	
+
+	div.databox-popup {
+		display: block;
+		border: 1px solid gray;
+		background-color: lightyellow;
+		padding: 8px;
+	}	
 	img.dataimage {
 		min-height: 100px;
 		max-height: 200px;
