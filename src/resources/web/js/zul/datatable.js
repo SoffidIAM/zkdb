@@ -1550,7 +1550,7 @@ zkDatatable.downloadCsv=function(ed) {
 }
 
 zkDatatable.quote = function(t) {
-	return "\""+t.replace(/"/g, "\\\"")+"\"";
+	return "\""+new String(t).replace(/"/g, "\\\"")+"\"";
 }
 
 zkDatatable.inputValues = function(td) {

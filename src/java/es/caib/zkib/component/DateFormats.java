@@ -2,6 +2,9 @@ package es.caib.zkib.component;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.time.chrono.IsoChronology;
+import java.time.format.DateTimeFormatterBuilder;
+import java.time.format.FormatStyle;
 
 import org.zkoss.util.Locales;
 import org.zkoss.util.TimeZones;
@@ -25,7 +28,14 @@ public class DateFormats {
 		DateFormat df;
 		if (f == null)
 		{
-			df = DateFormat.getDateInstance(DateFormat.SHORT, Locales.getCurrent());
+			String formatPattern =
+				    DateTimeFormatterBuilder.getLocalizedDateTimePattern(
+				        FormatStyle.SHORT, 
+				        null, 
+				        IsoChronology.INSTANCE, 
+				        Locales.getCurrent());
+			formatPattern = formatPattern.replaceAll("\\byy\\b", "yyyy");
+			df = new SimpleDateFormat(formatPattern);
 		} else {
 			df = new SimpleDateFormat(f[0], Locales.getCurrent());
 		}
@@ -37,7 +47,14 @@ public class DateFormats {
 		DateFormat df;
 		if (f == null)
 		{
-			df = DateFormat.getDateTimeInstance(DateFormat.SHORT,  DateFormat.SHORT, Locales.getCurrent());
+			String formatPattern =
+				    DateTimeFormatterBuilder.getLocalizedDateTimePattern(
+				        FormatStyle.SHORT, 
+				        FormatStyle.SHORT, 
+				        IsoChronology.INSTANCE, 
+				        Locales.getCurrent());
+			formatPattern = formatPattern.replaceAll("\\byy\\b", "yyyy");
+			df = new SimpleDateFormat(formatPattern);
 		} else {
 			df = new SimpleDateFormat(f[0]+" "+f[1], Locales.getCurrent());
 		}
