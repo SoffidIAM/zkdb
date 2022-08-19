@@ -8,6 +8,7 @@ import java.util.Base64;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -58,6 +59,13 @@ public class Databox extends InputElement implements XPathSubscriber, AfterCompo
 	boolean noadd = false;
 	boolean noremove = false;
 	Integer rows = null;
+	String uploadMessage = "Upload";
+	String downloadMessage = "Download";
+	String clearMessage = "Clear";
+	String uploadIcon = null;
+	String downloadIcon = null;
+	String clearIcon = null;
+	boolean fileMenu = false;
 	
 	public enum Type {
 		STRING,
@@ -69,7 +77,8 @@ public class Databox extends InputElement implements XPathSubscriber, AfterCompo
 		LIST,
 		IMAGE,
 		HTML,
-		PASSWORD, 
+		PASSWORD,
+		BINARY,
 		SEPARATOR
 	};
 
@@ -104,6 +113,8 @@ public class Databox extends InputElement implements XPathSubscriber, AfterCompo
 	}
 	
 	public Object translateToUserInterface(Object o) {
+		if (type == Type.BINARY) 
+			return null;
 		return o;
 	}
 
@@ -319,6 +330,15 @@ public class Databox extends InputElement implements XPathSubscriber, AfterCompo
 			HTMLs.appendAttribute(sb, "onLabel", Messages.get(MZul.YES));
 			HTMLs.appendAttribute(sb, "offLabel", Messages.get(MZul.NO));
 		}
+		if (type == Type.BINARY) {
+			HTMLs.appendAttribute(sb, "uploadmessage", uploadMessage);
+			HTMLs.appendAttribute(sb, "downloadmessage", downloadMessage);
+			HTMLs.appendAttribute(sb, "clearmessage", clearMessage);
+			HTMLs.appendAttribute(sb, "uploadicon", getDesktop().getExecution().encodeURL( uploadIcon));
+			HTMLs.appendAttribute(sb, "downloadicon", getDesktop().getExecution().encodeURL(downloadIcon));
+			HTMLs.appendAttribute(sb, "clearicon", getDesktop().getExecution().encodeURL(clearIcon));
+			HTMLs.appendAttribute(sb, "filemenu", fileMenu);
+		}
 		final String fmt = getFormat();
 		if (fmt != null && fmt.length() != 0)
 			HTMLs.appendAttribute(sb, "z.fmt", fmt);
@@ -337,14 +357,12 @@ public class Databox extends InputElement implements XPathSubscriber, AfterCompo
 			}
 			JSONArray array;
 			if (value instanceof Collection) {
-				array = new JSONArray((Collection) value);
+				array = new JSONArray();
+				for (Iterator<Object> it = ((Collection)value).iterator(); it.hasNext();)
+					array.put(normalize(  translateToUserInterface( it.next() ) ));
 			} else {
 				array = new JSONArray();
-				array.put(value);
-			}
-			for (int i = 0; i < array.length(); i++) {
-				String name = array.optString(i);
-				array.put(i, normalize(  translateToUserInterface( name ) ));
+				array.put( normalize(  translateToUserInterface( value ) ));
 			}
 			stringValue = array.toString();
 		} else {
@@ -482,6 +500,12 @@ public class Databox extends InputElement implements XPathSubscriber, AfterCompo
 			.write(getOuterAttrs()).write(getInnerAttrs())
 			.write("></div>");
 		}
+		else if (type == Type.IMAGE)
+		{
+			wh.write("<div id=\"").write(uuid).write("\" z.type=\"zul.databox.DataImage\"")
+			.write(getOuterAttrs()).write(getInnerAttrs())
+			.write("></div>");
+		}
 		else if (type == Type.PASSWORD)
 		{
 			wh.write("<div id=\"").write(uuid).write("\" z.type=\"zul.databox.DataPassword\"")
@@ -491,6 +515,12 @@ public class Databox extends InputElement implements XPathSubscriber, AfterCompo
 		else if (type == Type.SEPARATOR)
 		{
 			wh.write("<div id=\"").write(uuid).write("\" z.type=\"zul.databox.DataSeparator\"")
+			.write(getOuterAttrs()).write(getInnerAttrs())
+			.write("></div>");
+		}
+		else if (type == Type.BINARY)
+		{
+			wh.write("<div id=\"").write(uuid).write("\" z.type=\"zul.databox.DataBinary\"")
 			.write(getOuterAttrs()).write(getInnerAttrs())
 			.write("></div>");
 		}
@@ -590,6 +620,14 @@ public class Databox extends InputElement implements XPathSubscriber, AfterCompo
 		if (_onOpenSelectCommand.getId().equals(cmdId))
 			return _onOpenSelectCommand;
 		
+		// Binary commants
+		if (_onDownloadCommand.getId().equals(cmdId))
+			return _onDownloadCommand;
+		if (_onUploadCommand.getId().equals(cmdId))
+			return _onUploadCommand;
+		if (_onClearCommand.getId().equals(cmdId))
+			return _onClearCommand;
+
 		return super.getCommand(cmdId);
 	}
 
@@ -644,6 +682,39 @@ public class Databox extends InputElement implements XPathSubscriber, AfterCompo
 		}
 	};
 
+	private static Command _onUploadCommand = new ComponentCommand("onUpload", 0) {
+		@Override
+		protected void process(AuRequest request) {
+			Databox db = (Databox) request.getComponent();
+			Integer pos = null;
+			if (request.getData().length > 0 && request.getData()[0] != null && !request.getData()[0].isEmpty())
+				pos = Integer.parseInt(request.getData()[0]);
+			db.onUpload(pos);
+		}
+	};
+
+	private static Command _onDownloadCommand = new ComponentCommand("onDownload", 0) {
+		@Override
+		protected void process(AuRequest request) {
+			Databox db = (Databox) request.getComponent();
+			Integer pos = null;
+			if (request.getData().length > 0 && request.getData()[0] != null && !request.getData()[0].isEmpty())
+				pos = Integer.parseInt(request.getData()[0]);
+			db.onDownload(pos);
+		}
+	};
+
+	private static Command _onClearCommand = new ComponentCommand("onClear", 0) {
+		@Override
+		protected void process(AuRequest request) {
+			Databox db = (Databox) request.getComponent();
+			Integer pos = null;
+			if (request.getData().length > 0 && request.getData()[0] != null && !request.getData()[0].isEmpty())
+				pos = Integer.parseInt(request.getData()[0]);
+			db.onClear(pos);
+		}
+	};
+
 	protected void onItemChange(Object value, Integer pos) {
 		duringClientChange = true;
 		try {
@@ -690,6 +761,15 @@ public class Databox extends InputElement implements XPathSubscriber, AfterCompo
 		} finally {
 			duringClientChange = false;
 		}
+	}
+
+	protected void onUpload(Integer pos) {
+	}
+
+	protected void onDownload(Integer pos) {
+	}
+
+	protected void onClear(Integer pos) {
 	}
 
 	protected Object parseUiValue(Object value) {
@@ -960,6 +1040,62 @@ public class Databox extends InputElement implements XPathSubscriber, AfterCompo
 
 	public void setRows(Integer rows) {
 		this.rows = rows;
+	}
+
+	public String getUploadMessage() {
+		return uploadMessage;
+	}
+
+	public void setUploadMessage(String uploadMessage) {
+		this.uploadMessage = uploadMessage;
+	}
+
+	public String getDownloadMessage() {
+		return downloadMessage;
+	}
+
+	public void setDownloadMessage(String downloadMessage) {
+		this.downloadMessage = downloadMessage;
+	}
+
+	public String getClearMessage() {
+		return clearMessage;
+	}
+
+	public void setClearMessage(String clearMessage) {
+		this.clearMessage = clearMessage;
+	}
+
+	public String getUploadIcon() {
+		return uploadIcon;
+	}
+
+	public void setUploadIcon(String uploadIcon) {
+		this.uploadIcon = uploadIcon;
+	}
+
+	public String getDownloadIcon() {
+		return downloadIcon;
+	}
+
+	public void setDownloadIcon(String downloadIcon) {
+		this.downloadIcon = downloadIcon;
+	}
+
+	public String getClearIcon() {
+		return clearIcon;
+	}
+
+	public void setClearIcon(String clearIcon) {
+		this.clearIcon = clearIcon;
+	}
+
+	public boolean isFileMenu() {
+		return fileMenu;
+	}
+
+	public void setFileMenu(boolean fileMenu) {
+		this.fileMenu = fileMenu;
 	}
 }
 

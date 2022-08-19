@@ -13,6 +13,7 @@ zkDataDescription={};
 zkDataSwitch={};
 zkDataImage={};
 zkDataHtml={};
+zkDataBinary={};
 /********************* TEXT ELEMENT ********************/
 zkDataSeparator.addElement = function(e, parent, pos) {
 	parent.classList.add("separator")
@@ -1137,6 +1138,213 @@ zkDataImage.setAttr = function (ed, name, value) {
 	return zkDataCommon.setAttr(ed,name,value);
 }
 
+/********************* BINARY ELEMENT ********************/
+zkDataBinary.addElement = function(e, parent, pos) {
+	var rowValue = e.multivalue ? (pos < e.value.length? e.value[pos]: ""): e.value;
+
+	var span = document.createElement("span");
+	span.setAttribute("class", "binary");
+	parent.appendChild(span);
+	span.innerText = rowValue;
+
+	var b = document.createElement("button");
+	b.setAttribute("id", parent.id+"!input");
+	b.position = pos;
+	b.databox = e;
+	var hasValue = true;
+	if (e.multivalue) {
+		hasValue = pos < e.value.length; 
+	} else {
+		hasValue = e.value != null; 
+	}
+	b.setAttribute("type", "button");
+	b.setAttribute("class", "icon-button");
+	b.databoxid = e.getAttribute("id");
+	parent.appendChild(b);
+
+	zk.listen(b, "click", zkDataBinary.onOpenMenu);
+	zk.listen(b, "blur", zkDataBinary.onblur);
+    
+	var s = document.createElement("img");
+	s.setAttribute("class","selecticon")
+	if (e.disabled ) {
+		s.setAttribute("src", e.getAttribute("downloadicon"))
+		s.setAttribute("title", e.getAttribute("downloadmessage"));
+	}
+	else if (hasValue) {
+		s.setAttribute("src", e.getAttribute("selecticon"))
+	}
+	else
+	{
+		s.setAttribute("src", e.getAttribute("uploadicon"))
+		s.setAttribute("title", e.getAttribute("uploadmessage"));
+	}
+	b.appendChild(s);
+    /* set css class */
+    if (e.readOnly) {
+        zk.addClass(b, "readonly")
+        b.setAttribute("readonly","readonly")
+    }
+    if (e.disabled) {
+        zk.addClass(img, "disabled")
+        b.setAttribute("disabled","disabled")
+    }
+//	zkDataCommon.createRemoveIcon(e, parent, pos);
+}
+
+zkDataBinary.onblur = function(A) {
+    var el = zkau.evtel(A);
+    var B = el.databox;
+    var C = zkDataCommon._noonblur(el, B);
+    zkau.onblur(A, C);
+    if (el.popup) {
+    	setTimeout(()=>{
+    		try{
+    			if(el.popup) {
+					zkDataCommon.inSearchPopup = false;
+    				el.popup.remove(); 
+					el.popup=null;
+					zkDataCommon.popup = null;
+    			}
+    		} catch(e) {
+    			
+    		}
+    	}, 150);
+    }
+}
+
+zkDataBinary.onOpenMenu = function(event) {
+	var b = event.currentTarget;
+	var position = b.position;
+	var e = b.databox;
+	
+	b.focus();
+
+	var hasValue = true;
+	if (e.multivalue) {
+		hasValue = position < e.value.length; 
+	} else {
+		hasValue = e.value != null; 
+	}
+
+	if (e.disabled ) {
+        zkau.send({
+            uuid: e.id,
+            cmd: "onDownload",
+            data: [b.position]
+        }, 100)
+	}
+	else if (hasValue) {
+		zkDataBinary.openMenu(b, e, position);
+	}
+	else
+	{
+        zkau.send({
+            uuid: e.id,
+            cmd: "onUpload",
+            data: [b.position]
+        }, 100)
+	}
+}
+
+zkDataBinary.openMenu = function(button, box, position) {
+	if (!button.popup) {
+		var div = document.createElement("div");
+		div.setAttribute("id", button.getAttribute("id")+"-popup")
+		div.setAttribute("class", "databox-popup");
+		button.popup = div;
+		div.input = button;
+		var rect = button.getBoundingClientRect();
+		var left = rect.left;
+		var top = rect.bottom;
+		var parent = document.body;
+		parent.insertBefore(div, parent.firstElementChild);
+		div.style.position="fixed";
+		div.style.left = ""+left+"px";
+		div.style.top = ""+top+"px";
+		zkDataCommon.popup = div;
+		zkDataCommon.intervalEvent  = setInterval(zkDataCommon.onScroll, 500);
+		div.input = button;
+		zkDataCommon.inSearchPopup = true;
+		zkDataBinary.addOption(div, box.getAttribute("uploadicon"), box.getAttribute("uploadmessage"), zkDataBinary.uploadOption);
+		zkDataBinary.addOption(div, box.getAttribute("downloadicon"), box.getAttribute("downloadmessage"), zkDataBinary.downloadOption);
+		zkDataBinary.addOption(div, box.getAttribute("clearicon"), box.getAttribute("clearmessage"), zkDataBinary.clearOption);
+	}
+}
+
+zkDataBinary.addOption = function(div, icon, message, action) {
+	var option = document.createElement("div");
+	option.setAttribute("class", "upload-menu-option");
+	if (icon) {
+		var img = document.createElement("img");
+		img.setAttribute("src", icon);
+		img.setAttribute("class", "upload-menu-icon");
+		option.appendChild(img);
+	}
+	var s = document.createElement("span");
+	s.setAttribute("class", "upload-menu-text");
+	s.innerText = message;
+	option.appendChild(s);
+	zk.listen(option, "click", action);
+	div.appendChild(option);
+}
+
+zkDataBinary.uploadOption = function(event) {
+	var popup = event.currentTarget.parentElement;
+	var input = popup.input;
+	var position = input.position;
+	var databox = input.databox;
+    zkau.send({
+        uuid: databox.id,
+        cmd: "onUpload",
+        data: [position]
+	}, 100);
+	input.popup.remove();
+	input.popup = null;
+}
+
+zkDataBinary.clearOption = function(event) {
+	var popup = event.currentTarget.parentElement;
+	var input = popup.input;
+	var position = input.position;
+	var databox = input.databox;
+    zkau.send({
+        uuid: databox.id,
+        cmd: "onClear",
+        data: [position]
+    }, 100);
+	input.popup.remove();
+	input.popup = null;
+}
+
+zkDataBinary.downloadOption = function(event) {
+	var popup = event.currentTarget.parentElement;
+	var input = popup.input;
+	var position = input.position;
+	var databox = input.databox;
+    zkau.send({
+        uuid: databox.id,
+        cmd: "onDownload",
+        data: [position]
+    }, 100);
+	input.popup.remove();
+	input.popup = null;
+}
+
+zkDataBinary.init = function (e) {
+	e.addInputElement = zkDataBinary.addElement;
+	zkDataCommon.init(e);
+};
+
+zkDataBinary.cleanup = zkDataBinary.onHide = function(B) {
+    var A = $real(B);
+	zkDataCommon.cleanup(e);
+}
+
+zkDataBinary.setAttr = function (ed, name, value) {
+	return zkDataCommon.setAttr(ed,name,value);
+}
+
 /********************* HTML ELEMENT ********************/
 zkDataHtml.addElement = function(e, parent, pos) {
 	var img = document.createElement("div");
@@ -1620,7 +1828,7 @@ zkDataCommon.onScroll=function(e) {
 		var rect = zkDataCommon.popup.input.getBoundingClientRect();
 		var left = rect.left;
 		var top = rect.bottom;
-		zkDataCommon.popup.style.left != ""+left+"px";
+		zkDataCommon.popup.style.left = ""+left+"px";
 		zkDataCommon.popup.style.top = ""+top+"px";
    }	
 }
