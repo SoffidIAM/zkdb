@@ -1496,6 +1496,7 @@ zkDataCommon.refresh=function(databox, value) {
 		databox.value = value;
 		var lastEmpty = false;
 		for (var i = 0; i < value.length; i++) {
+	   		zkDataCommon.addScroll(databox, container);
 			var div = document.createElement("div");
 			div.setAttribute("id", $uuid(databox)+"_"+i)
 			div.databoxid = $uuid(databox);
@@ -1513,6 +1514,7 @@ zkDataCommon.refresh=function(databox, value) {
 			div.setAttribute("id", $uuid(databox)+"_"+value.length)
 			div.databoxid = $uuid(databox);
 			container.appendChild(div);
+	   		zkDataCommon.addScroll(databox, container);
 			databox.addInputElement(databox, div, value.length);
 		}
 	} else {
@@ -1520,6 +1522,16 @@ zkDataCommon.refresh=function(databox, value) {
 		container.databoxid = $uuid(databox);
 		databox.addInputElement(databox, container, 0);
 	}
+}
+
+zkDataCommon.addScroll = function( databox, container ) {
+	var mr = databox.getAttribute("maxrows");
+	if (mr && mr == container.childElementCount) {
+		var h = container.getClientRects()[0].height;
+		container.style.maxHeight = "" + h + "px";
+		container.classList.add("scrollable");
+	}
+
 }
 
 zkDataCommon.onselect = function(A) {
@@ -1748,6 +1760,7 @@ zkDataCommon.updatedElement = function(el) {
     		
     		var div = document.createElement("div");
     		div.setAttribute("id", D.getAttribute("id")+"_"+pos)
+			zkDataCommon.addScroll(D, container);
     		container.appendChild(div);
     		div.databoxid = D.getAttribute("id");
     		if (D.getAttribute("noadd") != "true")

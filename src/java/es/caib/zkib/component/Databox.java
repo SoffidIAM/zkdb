@@ -53,6 +53,7 @@ public class Databox extends InputElement implements XPathSubscriber, AfterCompo
 	boolean readonly;
 	boolean multiline;
 	Integer maxlength;
+	Integer maxrows;
 	boolean composed = false;
 	boolean duringClientChange = false;
 	boolean hyperlink = false;
@@ -271,6 +272,8 @@ public class Databox extends InputElement implements XPathSubscriber, AfterCompo
 			HTMLs.appendAttribute(sb, "value", stringValue);
 		}
 		HTMLs.appendAttribute(sb, "label", label);
+		if (maxrows != null)
+			HTMLs.appendAttribute(sb, "maxrows", maxrows);
 		if (isDisabled())
 			HTMLs.appendAttribute(sb, "disabled", isDisabled());
 		if (readonly)
@@ -1096,6 +1099,14 @@ public class Databox extends InputElement implements XPathSubscriber, AfterCompo
 
 	public void setFileMenu(boolean fileMenu) {
 		this.fileMenu = fileMenu;
+	}
+
+	public Integer getMaxrows() {
+		return maxrows;
+	}
+
+	public void setMaxrows(Integer maxrows) {
+		this.maxrows = maxrows;
 	}
 }
 
