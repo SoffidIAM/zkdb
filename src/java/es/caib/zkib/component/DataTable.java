@@ -13,6 +13,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -67,6 +68,8 @@ public class DataTable extends XulElement implements XPathSubscriber,
 	/**
 	 * 
 	 */
+	boolean incrementalrefresh = false;
+	LinkedList<Long> rowIds = new LinkedList<>();
 	private static final long serialVersionUID = 1L;
 	String columns = null;
 	private String dataPath;
@@ -132,7 +135,7 @@ public class DataTable extends XulElement implements XPathSubscriber,
 
     public void setDataPath(String bind) {
     	dataPath = bind;
-        applyDataPath();
+        applyDataPath(true);
     }
 
     @Override
@@ -194,9 +197,10 @@ public class DataTable extends XulElement implements XPathSubscriber,
 	}
 
     /**
+     * @param sendData 
      * 
      */
-    private void applyDataPath() {
+    private void applyDataPath(boolean sendData) {
         ListModel oldListModel = getModel();
         if (oldListModel != null && oldListModel instanceof ModelProxy)
             ((ModelProxy) oldListModel).unsubscribe();
@@ -204,7 +208,7 @@ public class DataTable extends XulElement implements XPathSubscriber,
        	collectionBinder.setDataPath(dataPath);
 
        	ListModel lm = collectionBinder.createModel();
-        setModel(lm);
+        setModel(lm, sendData);
 
         updateDataSource();
 	
@@ -235,6 +239,10 @@ public class DataTable extends XulElement implements XPathSubscriber,
 	}
 
 	public void setModel(ListModel model) {
+		setModel(model, true);
+	}
+	
+	public void setModel(ListModel model, boolean sendData) {
 		if (model != null) {
 			if (this.model != model) {
 				if (this.model != null) {
@@ -242,7 +250,7 @@ public class DataTable extends XulElement implements XPathSubscriber,
 				}
 				this.model = model;
 
-				if (columns != null)
+				if (columns != null && sendData)
 					sendModelData();
 				initDataListener();
 			}
@@ -250,14 +258,22 @@ public class DataTable extends XulElement implements XPathSubscriber,
 		} else if (this.model != null) {
 			this.model.removeListDataListener(_dataListener);
 			this.model = null;
-			response("setData", new AuInvoke(this, "setData", "[]"));
+			if (sendData)
+				response("setData", new AuInvoke(this, "setData", "[]"));
 		}
 	}
 	
 	public void sendModelData() {
+		if (incrementalrefresh)
+			rowIds.clear();
 		StringBuffer sb = new StringBuffer("[");
 		for (int i = 0; i < model.getSize();  i++)
 		{
+			if (incrementalrefresh)
+			{
+				Long id = getRowId(i);
+				rowIds.add(id);
+			}
 			String s = getClientValue(i);
 			if ( sb.length() > 1)
 				sb.append(",");
@@ -265,6 +281,18 @@ public class DataTable extends XulElement implements XPathSubscriber,
 		}
 		sb.append("]");
 		response("setData", new AuInvoke(this, "setData", sb.toString()));
+	}
+
+	private Long getRowId(int i) {
+		Long id = null;
+		try {
+			Object ob = model.getElementAt(i);
+			if (ob instanceof DataNode)
+				ob = ((DataNode)ob).getInstance();
+			id = (Long) PropertyUtils.getProperty(ob, "id");
+		} catch (Exception e) { // Ignore
+		}
+		return id;
 	}
 
 	/** Initializes _dataListener and register the listener to the model
@@ -288,6 +316,10 @@ public class DataTable extends XulElement implements XPathSubscriber,
 			StringBuffer sb = new StringBuffer("[");
 			for (int i = event.getIndex0(); i <= event.getIndex1(); i++) 
 			{
+				if (incrementalrefresh) {
+					Long id = getRowId(event.getIndex0());
+					rowIds.add(i, id);
+				}
 		        try {
 		            String value = getClientValue(i);
 		            if (sb.length() > 1) sb.append(",");
@@ -304,6 +336,8 @@ public class DataTable extends XulElement implements XPathSubscriber,
 			ModelProxy dm = (ModelProxy) getModel();
 			for (int i = event.getIndex0(); i <= event.getIndex1(); i++) 
 			{
+				if (incrementalrefresh)
+					rowIds.remove(event.getIndex0());
 		        try {
 		            response("remove_"+i, new AuInvoke(this, "deleteRow", Integer.toString(i)));
 		        } catch (Exception e) {
@@ -315,6 +349,10 @@ public class DataTable extends XulElement implements XPathSubscriber,
         	ModelProxy dm = (ModelProxy) getModel();
         	for (int i = event.getIndex0(); i <= event.getIndex1(); i++)
         	{
+				if (incrementalrefresh) {
+					Long id = getRowId(i);
+					rowIds.set(i, id);
+				}
 	            String value = getClientValue(i);
 	            response("update_"+i, new AuInvoke(this, "updateRow", Integer.toString(i), value));
         	}
@@ -323,6 +361,10 @@ public class DataTable extends XulElement implements XPathSubscriber,
 	}
 
 	public void updateClientRow(int i) {
+		if (incrementalrefresh) {
+			Long id = getRowId(i);
+			rowIds.set(i, id);
+		}
 		if (updateRowEvent) {
             String value = getClientValue(i);
             response("update_"+i, new AuInvoke(this, "updateRow", Integer.toString(i), value));
@@ -731,10 +773,88 @@ public class DataTable extends XulElement implements XPathSubscriber,
             }
         }
         if (event instanceof XPathRerunEvent) {
-            applyDataPath();
-       		setSelectedIndex(-1);
-            syncSelectedItem();
+        	if (incrementalrefresh && getModel() instanceof ModelProxy) {
+        		doIncrementalRefresh();
+        	} else {
+        		applyDataPath(true);
+        		setSelectedIndex(-1);
+        		syncSelectedItem();
+        	}
         }
+	}
+
+	private void doIncrementalRefresh() {
+		Long selectedId = selectedIndex >= 0 ? rowIds.get(selectedIndex) : null;
+		int selectedPos = -1;
+		LinkedList<Long> l = new LinkedList<Long> (rowIds);
+		rowIds = new LinkedList<>();
+		applyDataPath(false);
+		ModelProxy model = (ModelProxy) getModel();
+		for (int i = 0; i < model.getSize();  i++)
+		{
+			Long id = getRowId(i);
+			rowIds.add(id);
+		}
+		ListIterator<Long> itNew = rowIds.listIterator(), itOld = l.listIterator();
+		while (itNew.hasNext() || itOld.hasNext()) {
+			int c = compare (itNew, itOld);
+			if (c == 0) {
+				int pos = itNew.nextIndex();
+				itNew.next();
+				Long id = itOld.next();
+				if (selectedId != null && selectedId.equals(id)) 
+					selectedPos = pos;
+				if (updateRowEvent) {
+		            String value = getClientValue(pos);
+		            response(null, new AuInvoke(this, "updateRow", Integer.toString(pos), value));
+				}
+			}
+			if (c < 0) { // Remove
+				int i = itNew.nextIndex();
+				response(null, new AuInvoke(this, "deleteRowIncremental", Integer.toString(i)));
+				itOld.next();
+			}
+			if (c > 0) { // Add
+				int i = itNew.nextIndex();
+	            String value = getClientValue(i);
+				response(null, new AuInvoke(this, "addRowIncremental", Integer.toString(i), value));
+				itNew.next();
+			}
+		}
+		setSelectedIndex(selectedPos);
+		syncSelectedItem();
+	}
+
+	private int compare(ListIterator<Long> itNew, ListIterator<Long> itOld) {
+		int steps;
+		if (! itNew.hasNext()) return -1; // Remove
+		if (! itOld.hasNext()) return +1; // Add
+		
+		Long n = itNew.next();
+		Long o = itOld.next();
+		steps = 1;
+		try {
+			if (n == null) return +1; // Add
+			if (o == null) return -1;  // Remove
+			if (n.equals(o)) return 0;
+			steps = 1;
+			while (itNew.hasNext() || itOld.hasNext()) {
+				if (! itOld.hasNext()) return +1; // add
+				if (! itNew.hasNext()) return -1; // Remove
+				Long n2 = itNew.next();
+				Long o2 = itOld.next();
+				steps ++;
+				if (n.equals(o2)) return -1; // Found new in old list -> Remove from old
+				if (o.equals(n2)) return +1; // Found old in new list -> Add from new
+			}
+			return -1; // Does not matter. Remove from old
+		} finally {
+			while (steps > 0) {
+				itOld.previous();
+				itNew.previous();
+				steps --;
+			}
+		}
 	}
 
 	public Command getCommand(String cmdId) {
@@ -936,5 +1056,13 @@ public class DataTable extends XulElement implements XPathSubscriber,
 
 	public void setPreviousPageMsg(String previousPageMsg) {
 		this.previousPageMsg = previousPageMsg;
+	}
+
+	public boolean isIncrementalrefresh() {
+		return incrementalrefresh;
+	}
+
+	public void setIncrementalrefresh(boolean incrementalrefresh) {
+		this.incrementalrefresh = incrementalrefresh;
 	}
 }
