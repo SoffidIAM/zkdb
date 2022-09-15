@@ -570,8 +570,8 @@ zkDatatable.addRow=function(ed, pos, value)
 {
 	pos = parseInt(pos);
 	value = JSON.parse(value);
-	var data = { value: value, position: pos++, ts: new Date().getTime(), displayed: true};
-	ed.data.push(data);
+	var data = { value: value, position: pos, ts: new Date().getTime(), displayed: true};
+	ed.data.splice(pos, 0, data);
 	if (!ed.enablefilter && ed.data.length > ed.pageSize)
 	{
 		ed.enablefilter = true;
@@ -591,6 +591,17 @@ zkDatatable.addRow=function(ed, pos, value)
 		ed.count++;
 	}
 	zkDatatable.prepareSort(ed, false);
+}
+
+zkDatatable.addRowIncremental=function(ed, pos, value)
+{
+	pos = parseInt(pos);
+	var data = ed.data;
+	for ( var i = 0; i < data.length; i++) {
+		if (data[i].position >= pos)
+			data[i].position ++;
+	}
+	zkDatatable.addRow(ed,pos,value);
 }
 
 zkDatatable.addRows=function(ed, pos, values)
@@ -791,7 +802,7 @@ zkDatatable.updateRow=function(ed, pos, value)
 	value = JSON.parse(value);
 	var t = document.getElementById(ed.id+"!tbody");
 	var data = ed.data[pos];
-	if (data) {
+	if (data && data.value != value) {
 		data.value = value;
 		data.text = null;
 		data.html = null;
@@ -1395,7 +1406,15 @@ zkDatatable.deleteRow=function(ed, pos)
 	}
 }
 
-
+zkDatatable.deleteRowIncremental=function(ed, pos) {
+	zkDatatable.deleteRow(ed, pos);
+	pos = parseInt(pos);
+	var data = ed.data;
+	for ( var i = 0; i < data.length; i++) {
+		if (data[i] && data[i].position > pos)
+			data[i].position --;
+	}	
+}
 
 zkDatatable.quickSort = function (
   arrayToSort,
