@@ -1527,9 +1527,11 @@ zkDataCommon.refresh=function(databox, value) {
 zkDataCommon.addScroll = function( databox, container ) {
 	var mr = databox.getAttribute("maxrows");
 	if (mr && mr == container.childElementCount) {
-		var h = container.getClientRects()[0].height;
-		container.style.maxHeight = "" + h + "px";
-		container.classList.add("scrollable");
+		try {
+			var h = container.getClientRects()[0].height;
+			container.style.maxHeight = "" + h + "px";
+			container.classList.add("scrollable");			
+		} catch (error) {} // Ignore if not visible
 	}
 
 }
