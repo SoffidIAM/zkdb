@@ -70,6 +70,7 @@ zkDatatree2.init = function (ed) {
 	} catch (e) {
 		// Not available in IE
 	}
+	if (ed.tmp_data) {zkDatatree2.setData(ed, ed.tmp_data); ed.tmp_data = null;}
 };
 
 zkDatatree2.registerPager=function(ed, pager) {
@@ -682,6 +683,8 @@ zkDatatree2.setData = function(ed, data) {
 		if (ed.sortDirection != 0)
 			zkDatatree2.doSortRecursive(ed, t);
 		zkDatatree2.doFilter(ed);
+	} else {
+		ed.tmp_data = data;
 	}
 }
 
