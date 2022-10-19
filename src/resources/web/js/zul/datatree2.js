@@ -727,6 +727,7 @@ zkDatatree2.addBranchInternal=function(ed, value)
 	} else {
 		parentDiv = document.getElementById(ed.id+"!tbody");
 	}
+	if (parentDiv == null) return;
 	
 	var div = document.createElement("div");
 	div.setAttribute("class", "tree-itemholder");
