@@ -593,7 +593,7 @@ public class DataTree2 extends XulElement implements XPathSubscriber,
 			Object v;
 			try {
 				v = ctx.getValue(node.getPointer().asPath()+"/"+value);
-			} catch (JXPathNotFoundException e) {
+			} catch (Exception e) {
 				v = null;
 			}
 			v = formatObject(v);
