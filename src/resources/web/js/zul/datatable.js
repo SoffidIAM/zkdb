@@ -1381,27 +1381,29 @@ zkDatatable.deleteRow=function(ed, pos)
 		var data = ed.data[pos];
 		var id = data.trid;
 		var row = document.getElementById(id);
-		var paging = ed.filteredData.length > ed.pageSize;
-		if (row == ed.selectedTr)
-			ed.selectedTr = null;
-		row.remove();
-		ed.data.splice(pos,1);
-		var pos2 = ed.filteredData.indexOf(data);
-		if (pos2 >= 0)
-			ed.filteredData.splice( pos2, 1 );
-		pos2 = ed.sortedData.indexOf(data);
-		if (pos2 >= 0)
-			ed.sortedData.splice( pos2, 1 );
-		for (var i = 0; i < ed.data.length; i++) {
-			if (ed.data[i].position > data.position)
-				ed.data[i].position --;
-		}
-		if (paging) {
-			zkDatatable.doFilter(ed);
-		} else {
-			zkDatatable.createFooter(ed);
-			zkDatatable.fixupColumns(ed);
-			zkDatatable.findSelectedPosition(ed);
+		if (row) {
+			var paging = ed.filteredData.length > ed.pageSize;
+			if (row == ed.selectedTr)
+				ed.selectedTr = null;
+			row.remove();
+			ed.data.splice(pos,1);
+			var pos2 = ed.filteredData.indexOf(data);
+			if (pos2 >= 0)
+				ed.filteredData.splice( pos2, 1 );
+			pos2 = ed.sortedData.indexOf(data);
+			if (pos2 >= 0)
+				ed.sortedData.splice( pos2, 1 );
+			for (var i = 0; i < ed.data.length; i++) {
+				if (ed.data[i].position > data.position)
+					ed.data[i].position --;
+			}
+			if (paging) {
+				zkDatatable.doFilter(ed);
+			} else {
+				zkDatatable.createFooter(ed);
+				zkDatatable.fixupColumns(ed);
+				zkDatatable.findSelectedPosition(ed);
+			}			
 		}
 	}
 }
