@@ -2095,10 +2095,10 @@ zk.formatDate = function(val, fmt) {
                 txt += val.getHours() % 12;
                 break;
             case 'm':
-                txt += val.getMinutes();
+                txt += zk.formatFixed(val.getMinutes(),2);
                 break;
             case 's':
-                txt += val.getSeconds();
+                txt += zk.formatFixed(val.getSeconds(),2);
                 break;
             case 'a':
                 txt += val.getHours() >= 12 ? "PM": "AM";
