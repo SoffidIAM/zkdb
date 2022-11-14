@@ -48,4 +48,6 @@ public interface DataModelCollection {
 	public boolean updateBeforeParent();
 
 	public void reorderOnTree(XmlDataNode current) throws Exception;
+	
+	public void setMaxSize(int maxSize);
 }

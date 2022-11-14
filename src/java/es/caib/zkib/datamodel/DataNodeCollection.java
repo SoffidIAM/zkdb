@@ -42,6 +42,7 @@ public class DataNodeCollection implements List, DataModelCollection, Serializab
 	DataContext ctx;
 	Future<?> delayedList = null;
 	int lastDelayedListMember;
+	Integer maxSize = null;
 
 	private boolean _refreshInCourse = false;
 	private boolean _dirty = true;
@@ -119,6 +120,8 @@ public class DataNodeCollection implements List, DataModelCollection, Serializab
 					Iterator it = coll.iterator();
 					while (it.hasNext())
 					{
+						if (maxSize != null && maxSize.intValue() <= elements.size())
+							throw new RowsLimitExceededException();
 					    Object obj = it.next();
 					    populate (obj, false);
 						lastDelayedListMember++;
@@ -749,6 +752,8 @@ public class DataNodeCollection implements List, DataModelCollection, Serializab
 				    Object obj = it.next();
 					if ( i >= lastDelayedListMember)
 					{
+						if (maxSize != null && maxSize.intValue() <= elements.size())
+							throw new RowsLimitExceededException();
 					    populate (obj, true);
 						lastDelayedListMember++;
 					}
@@ -816,6 +821,11 @@ public class DataNodeCollection implements List, DataModelCollection, Serializab
 		}
 		else
 			return null;
+	}
+
+	@Override
+	public void setMaxSize(int maxSize) {
+		this.maxSize = Integer.valueOf(maxSize);
 	}
 }
 
