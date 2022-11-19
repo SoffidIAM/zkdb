@@ -1730,7 +1730,7 @@ zkDataCommon.onkeydown = function(A) {
       , B = $uuid(D)
       , C = $e(B)
       , E = Event.keyCode(A);
-    if ((E == 13 && zkau.asap(C, "onOK")) || (E == 27 && zkau.asap(C, "onCancel"))) {
+    if (E == 13  || E == 27) {
         zkDataCommon.updateChange(el, D, false)
     }
 }
