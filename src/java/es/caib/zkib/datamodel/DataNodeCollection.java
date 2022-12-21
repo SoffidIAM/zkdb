@@ -116,6 +116,13 @@ public class DataNodeCollection implements List, DataModelCollection, Serializab
 					if (treeElements != null)
 						treeElements.clear();
 					delayedList = coll instanceof Future ? (Future) coll: null;
+					if (delayedList != null && maxSize != null) {
+						try {
+							delayedList.getClass().getMethod("setMaxSize", Integer.class).invoke(delayedList, maxSize);
+						} catch (NoSuchMethodException e) {
+							// Ignore
+						}
+					}
 					lastDelayedListMember = 0;
 					Iterator it = coll.iterator();
 					while (it.hasNext())
@@ -738,28 +745,37 @@ public class DataNodeCollection implements List, DataModelCollection, Serializab
 				try {
 					delayedList.get();
 				} catch (ExecutionException e) {
-					throw new UiException(e.getCause());
+					if (e.getCause() instanceof RuntimeException) {
+						fetchFromFuture(); // Probably list is full
+						throw (RuntimeException) e.getCause();
+					}
+					else
+						throw new UiException(e.getCause());
 				} catch (InterruptedException e) {
 					// Ignore
 				}
 			}
 			else
 			{
-				Iterator it = ((Collection) delayedList).iterator();
-				int i = 0;
-				while (it.hasNext())
-				{
-				    Object obj = it.next();
-					if ( i >= lastDelayedListMember)
-					{
-						if (maxSize != null && maxSize.intValue() <= elements.size())
-							throw new RowsLimitExceededException();
-					    populate (obj, true);
-						lastDelayedListMember++;
-					}
-					i++;
-				}
+				fetchFromFuture();
 			}
+		}
+	}
+
+	private void fetchFromFuture() throws RowsLimitExceededException, Exception {
+		Iterator it = ((Collection) delayedList).iterator();
+		int i = 0;
+		while (it.hasNext())
+		{
+		    Object obj = it.next();
+			if ( i >= lastDelayedListMember)
+			{
+				if (maxSize != null && maxSize.intValue() <= elements.size())
+					throw new RowsLimitExceededException();
+			    populate (obj, true);
+				lastDelayedListMember++;
+			}
+			i++;
 		}
 	}
 
