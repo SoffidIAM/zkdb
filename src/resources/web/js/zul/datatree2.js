@@ -1711,3 +1711,26 @@ zkDatatree2.onDragEnd = function(event) {
 zkDatatree2.onDrop = function(event) {
 	event.preventDefault();
 }
+
+zkDatatree2.setFilter = function(t,data) {
+	if (t.enablefilter) {
+		var d = JSON.parse(data);
+		var head = document.getElementById(t.id+"!tfilter");
+		if (head) {
+			var col = head.firstElementChild;
+			var filter = [];
+			for (var i = 0; i < head.childElementCount; i++) {
+				var tb = col.firstElementChild;
+				tb.value=d[i]; 
+				if (d[i] && d[i].trim().length > 0)
+					filter.push (d[i].toLowerCase().split(" "));
+				else
+					filter.push([]);
+				col = col.nextElementSibling;
+			}
+			t.filter = filter;
+			zkDatatree2.doFilter(t);
+		} 		
+	}	
+	
+}

@@ -1245,4 +1245,11 @@ public class DataTree2 extends XulElement implements XPathSubscriber,
 	public void setReorder(boolean reorder) {
 		this.reorder = reorder;
 	}
+	
+	public void setFilters(String[] f) {
+		JSONArray a = new JSONArray();
+		for (String ff: f) a.put(ff);
+		response("setFilter", new AuInvoke(this, "setFilter", a.toString()));
+	}
+
 }
