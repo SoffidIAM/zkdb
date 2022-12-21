@@ -77,6 +77,9 @@ zkDataText.addElement = function(e, parent, pos) {
 	i.databox = e;
 	if (e.multivalue) {
 		if (pos < e.value.length) i.defaultValue = i.value = e.value[pos];
+		else i.defaultValue = i.value ="";
+	} else if (e.value == null) {
+		i.defaultValue = i.value = e.value = "";
 	} else {
 		i.defaultValue = i.value = e.value;
 	}
@@ -186,6 +189,9 @@ zkDataPassword.addElement = function(e, parent, pos) {
 	i.databox = e;
 	if (e.multivalue) {
 		if (pos < e.value.length) i.defaultValue = i.value = e.value[pos];
+		else i.defaultValue = i.value ="";
+	} else if (e.value == null) {
+		i.defaultValue = i.value = e.value = "";
 	} else {
 		i.defaultValue = i.value = e.value;
 	}
@@ -775,6 +781,9 @@ zkDataDate.addElement = function(e, parent, pos) {
 	i.setAttribute("id", parent.id+"!real");
 	if (e.multivalue) {
 		if (pos < e.value.length) i.defaultValue = i.value = e.value[pos];
+		else i.defaultValue = i.value ="";
+	} else if (e.value == null) {
+		i.defaultValue = i.value = e.value = "";
 	} else {
 		i.defaultValue = i.value = e.value;
 	}
