@@ -565,7 +565,6 @@ zkDatatable.setData = function(ed, data) {
 	}
 }
 
-
 zkDatatable.addRow=function(ed, pos, value)
 {
 	pos = parseInt(pos);

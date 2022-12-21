@@ -1065,4 +1065,5 @@ public class DataTable extends XulElement implements XPathSubscriber,
 	public void setIncrementalrefresh(boolean incrementalrefresh) {
 		this.incrementalrefresh = incrementalrefresh;
 	}
+	
 }
