@@ -310,7 +310,7 @@ public class TreeModelProxyNode implements XPathSubscriber, Serializable {
 		{
 			ChildXPathQuery query = queries[i];
 			String queryPath = XPathUtils.concat(thisPath,query.getXPath());
-			if (path.startsWith(queryPath)) {
+			if (path.startsWith(queryPath+"[") || path.startsWith(queryPath+"/")) {
 				String path2 = path.substring(thisPath.length());
 				if (!path2.startsWith("/"))
 					path2 = "/" + path2;

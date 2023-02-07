@@ -25,22 +25,18 @@ public class SimpleDataNode extends DataNode {
 	}
 
 	public Object getParentId() throws IllegalAccessException, InvocationTargetException, NoSuchMethodException {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 	public Object getCurrentId() throws IllegalAccessException, InvocationTargetException, NoSuchMethodException {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 	public String getChildProperty() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 	public Object loadParentObject() throws Exception {
-		// TODO Auto-generated method stub
 		return null;
 	}
 

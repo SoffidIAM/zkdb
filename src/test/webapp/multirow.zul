@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<zk>
+
+	<databox label="Binary" type="STRING" multiValue="true"	maxrows="5" selectIcon="/img/collapse.png" uploadIcon="/img/foldBar.svg"/>	
+	
+
+</zk>

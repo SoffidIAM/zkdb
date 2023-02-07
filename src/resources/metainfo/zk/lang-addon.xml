@@ -19,9 +19,12 @@
   <javascript src="~./js/ext/codemirror/addon/hint/java-hint.js" />
 
   <javascript src="~./js/ext/ResizeSensor.js" />
+  <javascript src="~./js/ext/flatpickr/flatpickr.js" />
+  <javascript src="~./js/ext/flatpickr/locales.js" />
 
   <stylesheet href="~./js/ext/codemirror/lib/codemirror.css" type="text/css"/>
   <stylesheet href="~./js/ext/codemirror/addon/hint/show-hint.css" type="text/css"/>
+  <stylesheet href="~./js/ext/flatpickr/flatpickr.min.css" type="text/css"/>
 
 	 <zscript>
 		 import es.caib.zkib.component.*;

@@ -792,22 +792,11 @@ zkDataDate.addElement = function(e, parent, pos) {
 	
 	// button
 	if (! e.readOnly && !e.disabled) {
-		var span = document.createElement("span")
-		span.setAttribute("class", "zbtnbk");
-		parent.appendChild(span);
-		var b = document.createElement("img");
-		b.setAttribute("id", parent.id+"!btn");
-		b.setAttribute("src", e.getAttribute("calendaricon"));
-		span.appendChild(b);
-		zk.listen(b, "click", function (evt) {if (!i.disabled && !zk.dragging) zkDataDate.onbutton(parent, evt);});
-		
-		var dd = document.createElement("div");
-		dd.setAttribute("class", "dateboxpp");
-		dd.setAttribute("id", parent.id+"!pp");
-		dd.style.display = "none";
-		dd.setAttribute("tabindex", "-1");
-		parent.appendChild(dd);
-		zk.listen(dd, "click", zkDataDate.closepp);
+	    var options = { allowInput: true};
+	    options.enableTime = "true" == e.getAttribute("time");
+		options.dateFormat = e.getAttribute('z.fmt');
+		options.locale = e.getAttribute("datelocale");
+		e.flatpickr = flatpickr(i, options);
 	}
 	zkDataCommon.createRemoveIcon(e, parent, pos);
 	zkDataCommon.registerInput (e, i);
@@ -819,8 +808,7 @@ zkDataDate.addElement = function(e, parent, pos) {
     zk.listen(i, "blur", zkDataCommon.onblur);
     zk.listen(i, "select", zkDataCommon.onselect);
     zk.listen(i, "keydown", zkDataCommon.onkeydown);
-    zk.listen(i, "input", zkDataCommon.oninput);
-    
+    zk.listen(i, "input", zkDataCommon.oninput);    
 }
 
 zkDataDate.cleanup = zkDataDate.onHide = function(B) {
