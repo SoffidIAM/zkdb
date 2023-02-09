@@ -1191,6 +1191,7 @@ zkDatatable.setSelected=function(t, pos) {
 		t.selectedPosition = 0;
 		zkDatatable.updatePagers(t);
 	}
+	zkDatatable.clearMasterCheck(t);
 }
 
 /** Cleared by the server * */
@@ -1211,6 +1212,7 @@ zkDatatable.clearSelection=function(t, pos) {
 	t.selectedTr = null;
 	t.selectedPosition = 0;
 	zkDatatable.updatePagers(t);
+	zkDatatable.clearMasterCheck(t);
 }
 
 zkDatatable.setSelectedMulti=function(t, pos) {
@@ -1253,6 +1255,15 @@ zkDatatable.setSelectedMulti=function(t, pos) {
 			zkDatatable.findSelectedPosition(t);
 	} 
 	zkDatatable.updatePagers(t);
+	zkDatatable.clearMasterCheck(t);
+}
+
+zkDatatable.clearMasterCheck=function(t){
+	if (t.multiselect) {
+		var h = document.getElementById(t.id+"!thead");
+		var check = h.firstElementChild.firstElementChild.firstElementChild;
+		check.checked=false;
+	}
 }
 
 zkDatatable.sendSelect=function(table, singleSelect) {
@@ -1416,6 +1427,7 @@ zkDatatable.deleteRow=function(ed, pos)
 				zkDatatable.fixupColumns(ed);
 				zkDatatable.findSelectedPosition(ed);
 			}			
+			ed.count --;
 		}
 	}
 }
