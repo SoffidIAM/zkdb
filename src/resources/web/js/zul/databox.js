@@ -795,7 +795,9 @@ zkDataDate.addElement = function(e, parent, pos) {
 	    var options = { allowInput: true};
 	    options.enableTime = "true" == e.getAttribute("time");
 		options.dateFormat = e.getAttribute('z.fmt');
+		options.time_24hr = e.getAttribute('z.fmt').indexOf("H") >= 0;
 		options.locale = e.getAttribute("datelocale");
+		options.onChange = () => {zkDataCommon.onblur(i);};
 		e.flatpickr = flatpickr(i, options);
 	}
 	zkDataCommon.createRemoveIcon(e, parent, pos);
@@ -829,10 +831,14 @@ zkDataDate.validate = function (cmp) {
 	var inp = $e(cmp.id+"!real");
 	if (inp.value) {
 		var fmt = getZKAttr(cmp, "fmt");
-		var d = zk.parseDate(inp.value, fmt, getZKAttr(cmp, "lenient") == "false");
-		if (!d) return msgzul.DATE_REQUIRED+fmt;
+		try {
+			var d = cmp.flatpickr.parseDate(inp.value);
+			if (!d) return msgzul.DATE_REQUIRED+fmt;
+			inp.value = cmp.flatpickr.zk.formatDate(d); //meta might not be ready
+		} catch (err) {
+			if (!d) return msgzul.DATE_REQUIRED+fmt;
+		}
 
-		inp.value = zk.formatDate(d, fmt); //meta might not be ready
 	}
 	return null;
 };

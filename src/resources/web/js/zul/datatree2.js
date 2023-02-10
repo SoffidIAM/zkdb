@@ -318,8 +318,8 @@ zkDatatree2.createFooter = function (ed) {
 	{
 		var body = document.getElementById(ed.id+"!tbody");
 		if (body != null && body.soffidVisibleChildren > ed.pageSize > 0) {
-			var first = 1 + body.currentPage * ed.pageSize;
-			var end = (body.currentPage + 1) * ed.pageSize;
+			var first = Math.floor( 1.5 + body.currentPage * ed.pageSize );
+			var end = Math.floor(0.5 + (body.currentPage + 1) * ed.pageSize);
 			if ( end > ed.soffidVisibleChildren)
 				end = ed.soffidVisibleChildren;
 			var span = document.createElement("span");

@@ -273,8 +273,8 @@ zkDatatable.createFooter = function (ed) {
 	{
 		var msg = ed.getAttribute("msgrows")+ ": "+ ed.filteredData.length;
 		if (ed.pages > 1 && ed.pageSize > 0) {
-			var first = 1 + ed.currentPage * ed.pageSize;
-			var end = (ed.currentPage + 1) * ed.pageSize;
+			var first = Math.floor(1.5 + ed.currentPage * ed.pageSize);
+			var end = Math.floor(0.5+(ed.currentPage + 1) * ed.pageSize);
 			if ( end > ed.filteredData.length)
 				end = ed.filteredData.length;
 			var span = document.createElement("span");

@@ -371,12 +371,18 @@ public class Databox extends InputElement implements XPathSubscriber, AfterCompo
 				.replace("E", "l")
 				.replace("w", "W" )
 				.replace("u", "w")
+				.replace("hh", "G")
+				.replace("KK", "G")
+				.replace("K", "h")
 				.replace("a", "K")
 				.replace("HH", "H")
 				.replace("kk", "H")
 				.replace("k", "H")
 				.replace("ss", "S")
-				.replace("s", "S");
+				.replace("s", "S")
+				.replace("Z", "")
+				.replace("X", "")
+				.replace("z", "");
 	}
 
 	public String wrapValue() {
@@ -476,7 +482,10 @@ public class Databox extends InputElement implements XPathSubscriber, AfterCompo
 	}
 
 	protected TimeZone getTimeZone() {
-		return TimeZones.getCurrent();
+		if (time)
+			return TimeZones.getCurrent();
+		else
+			return TimeZone.getDefault();
 	}
 
 	@Override
