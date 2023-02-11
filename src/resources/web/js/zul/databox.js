@@ -1236,11 +1236,13 @@ zkDataHtml.setAttr = function (ed, name, value) {
 }
 /************* Common methods ******************/
 zkDataCommon.selectText=function(e) {
-	var div = databox.getAttribute("label") ? e.firstElementChild.nextElementSibling : e.firstElementChild;
-	for (var ch = div.firstElementChild; ch != null; ch = ch.nextElementSibling) {
-		if (ch.tagName == 'INPUT') {
-			ch.setSelectionRange(0, ch.value.length)
-			break;
+	if (! e.readOnly) {
+		var div = databox.getAttribute("label") ? e.firstElementChild.nextElementSibling : e.firstElementChild;
+		for (var ch = div.firstElementChild; ch != null; ch = ch.nextElementSibling) {
+			if (ch.tagName == 'INPUT') {
+				ch.setSelectionRange(0, ch.value.length)
+				break;
+			}
 		}
 	}
 }
@@ -1364,7 +1366,7 @@ zkDataCommon.refresh=function(databox, value) {
 				lastEmpty = (v == null || v == "");
 			}
 		}
-		if ( ! databox.readonly && !lastEmpty && databox.getAttribute("noadd") != "true") {
+		if ( ! databox.readOnly && !lastEmpty && databox.getAttribute("noadd") != "true") {
 			var div = document.createElement("div");
 			div.setAttribute("id", $uuid(databox)+"_"+value.length)
 			div.databoxid = $uuid(databox);
@@ -1629,7 +1631,8 @@ zkDataCommon.updatedElement = function(el) {
 zkDataCommon.onfocus = function(A) {
     var el = zkau.evtel(A);
     var B = el.databox;
-	el.setSelectionRange(0, el.value.length)
+	if (!B.readOnly)
+		el.setSelectionRange(0, el.value.length)
 }
 ;
 
