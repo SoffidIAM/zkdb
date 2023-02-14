@@ -11,11 +11,13 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.TimeZone;
 
 import org.json.JSONArray;
 import org.json.JSONStringer;
 import org.zkoss.image.AImage;
 import org.zkoss.mesg.Messages;
+import org.zkoss.util.Locales;
 import org.zkoss.util.TimeZones;
 import org.zkoss.util.resource.Labels;
 import org.zkoss.xml.HTMLs;
@@ -67,6 +69,7 @@ public class Databox extends InputElement implements XPathSubscriber, AfterCompo
 	String downloadIcon = null;
 	String clearIcon = null;
 	boolean fileMenu = false;
+	boolean time = false;
 	
 	public enum Type {
 		STRING,
@@ -272,6 +275,8 @@ public class Databox extends InputElement implements XPathSubscriber, AfterCompo
 			HTMLs.appendAttribute(sb, "value", stringValue);
 		}
 		HTMLs.appendAttribute(sb, "label", label);
+		if (type == Type.DATE)
+			HTMLs.appendAttribute(sb, "time", time);
 		if (maxrows != null)
 			HTMLs.appendAttribute(sb, "maxrows", maxrows);
 		if (isDisabled())
@@ -344,8 +349,40 @@ public class Databox extends InputElement implements XPathSubscriber, AfterCompo
 		}
 		final String fmt = getFormat();
 		if (fmt != null && fmt.length() != 0)
-			HTMLs.appendAttribute(sb, "z.fmt", fmt);
+			HTMLs.appendAttribute(sb, "z.fmt", getJavascriptFormat(fmt));
+		if (type == Type.DATE) {
+			HTMLs.appendAttribute(sb, "datelocale", Locales.getCurrent().getLanguage());
+		}
 		return sb.toString();
+	}
+
+	private String getJavascriptFormat(String fmt) {
+		return fmt.replace("yyyy", "Y")
+				.replace("yy", "y")
+				.replace("mm", "i")
+				.replace("m", "i")
+				.replace("MMMM", "F")
+				.replace("MMM", "!!!!!")
+				.replace("MM", "m")
+				.replace("M", "n")
+				.replace("!!!!!", "M")
+				.replace("dd", "d")
+				.replace("EEE", "D")
+				.replace("E", "l")
+				.replace("w", "W" )
+				.replace("u", "w")
+				.replace("hh", "G")
+				.replace("KK", "G")
+				.replace("K", "h")
+				.replace("a", "K")
+				.replace("HH", "H")
+				.replace("kk", "H")
+				.replace("k", "H")
+				.replace("ss", "S")
+				.replace("s", "S")
+				.replace("Z", "")
+				.replace("X", "")
+				.replace("z", "");
 	}
 
 	public String wrapValue() {
@@ -407,7 +444,7 @@ public class Databox extends InputElement implements XPathSubscriber, AfterCompo
 						return DateFormats.getDateTimeFormat().format((Date)name);
 					else {
 						SimpleDateFormat df = new SimpleDateFormat( format );
-						df.setTimeZone(TimeZones.getCurrent());
+						df.setTimeZone(getTimeZone());
 						return df.format((Date)name);
 					}
 				}
@@ -416,7 +453,7 @@ public class Databox extends InputElement implements XPathSubscriber, AfterCompo
 						return DateFormats.getDateTimeFormat().format(((Calendar)name).getTime());
 					else {
 						SimpleDateFormat df = new SimpleDateFormat( format );
-						df.setTimeZone(TimeZones.getCurrent());
+						df.setTimeZone(getTimeZone());
 						return df.format(((Calendar)name).getTime());
 					}					
 				}
@@ -442,6 +479,13 @@ public class Databox extends InputElement implements XPathSubscriber, AfterCompo
 				return null;
 			}
 		}
+	}
+
+	protected TimeZone getTimeZone() {
+		if (time)
+			return TimeZones.getCurrent();
+		else
+			return TimeZone.getDefault();
 	}
 
 	@Override
@@ -786,7 +830,7 @@ public class Databox extends InputElement implements XPathSubscriber, AfterCompo
 						value = DateFormats.getDateTimeFormat().parse(value.toString());
 					else {
 						SimpleDateFormat df = new SimpleDateFormat(format);
-						df.setTimeZone(TimeZones.getCurrent());
+						df.setTimeZone(getTimeZone());
 						value = df.parse(value.toString());
 					}
 				} catch (ParseException e) {
@@ -795,6 +839,13 @@ public class Databox extends InputElement implements XPathSubscriber, AfterCompo
 		}
 		if (type == Type.BOOLEAN)
 			value = value != null && "true".equals(value.toString());
+		if (type == Type.NUMBER) {
+			String s = value.toString();
+			if (s.contains("e") || s.contains(".") || s.contains(","))
+				value = Double.parseDouble(s);
+			else
+				value = Long.parseLong(s);
+		}
 		return value;
 	}
 
@@ -1107,6 +1158,14 @@ public class Databox extends InputElement implements XPathSubscriber, AfterCompo
 
 	public void setMaxrows(Integer maxrows) {
 		this.maxrows = maxrows;
+	}
+
+	public boolean isTime() {
+		return time;
+	}
+
+	public void setTime(boolean time) {
+		this.time = time;
 	}
 }
 

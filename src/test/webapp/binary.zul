@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<zk>
+
+	<databox label="Binary" type="BINARY" fileMenu="true" uploadMessage="UPLOAD" downloadMessage="DOWNLOAD" clearMessage="CLEAR" 
+		selectIcon="/img/collapse.png" uploadIcon="/img/foldBar.svg"/>	
+	
+
+</zk>

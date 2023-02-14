@@ -74,6 +74,7 @@ public class DataCombobox extends org.zkoss.zul.Combobox implements XPathSubscri
 	
 	public DataCombobox() {
 		super();
+		setImage("/img/move-down.svg");
 	}
 
 	public String getBind() {

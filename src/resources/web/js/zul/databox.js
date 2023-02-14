@@ -135,6 +135,7 @@ zkDataText.addElement = function(e, parent, pos) {
     }
 }
 
+zkDataText.selectText=function(e) {zkDataCommon.selectText(e);}
 zkDataText.init = function (e) {
 	e.addInputElement = zkDataText.addElement;
 	zkDataCommon.init(e);
@@ -153,6 +154,7 @@ zkDataText.setAttr = function (ed, name, value) {
 }
 
 /********************* PASSWORD ELEMENT ********************/
+zkDataPassword.selectText=function(e) {zkDataCommon.selectText(e);}
 zkDataPassword.addElement = function(e, parent, pos) {
 	var f = document.createElement("form");
 	parent.appendChild(f);
@@ -226,6 +228,7 @@ zkDataPassword.cleanup = zkDataPassword.onHide = zkDataText.cleanup;
 
 zkDataPassword.setAttr = zkDataText.setAttr;
 /********************* LISTBOX ELEMENT ********************/
+zkDataList.selectText=function(e) {}
 zkDataList.addElement = function(e, parent, pos) {
 	var sel = document.createElement("select");
 	if (e.required && !e.readOnly && !e.disabled)
@@ -308,6 +311,7 @@ zkDataList.onselect = function(ev) {
 }
 
 /********************* SWITCH ********************/
+zkDataSwitch.selectText=function(e) {zkDataCommon.selectText(e);}
 zkDataSwitch.addElement = function(e, parent, pos) {
 	parent.position = pos;
 	parent.classList.add("switch");
@@ -447,48 +451,61 @@ zkDataSwitch.setAttr = function (ed, name, value) {
 
 
 /********************* NAME_DESCRIPTION ****************/
+zkDataNameDescription.selectText=function(e) {zkDataCommon.selectText(e);}
 zkDataNameDescription.addElement = function(e, parent, pos) {
 	var rowValue = e.multivalue ? (e.value != null && pos < e.value.length? e.value[pos]: null): e.value;
 	if (rowValue == null) rowValue = ["",""];
 	
-	var i = document.createElement("input");
-	if (e.required && !e.readOnly && !e.disabled)
-		i.setAttribute("class", "name required");
-	else
+	if (e.readOnly || e.disabled) {
+		var i = document.createElement("span");
 		i.setAttribute("class", "name");
-
-
-	i.setAttribute("id", parent.id+"!input");
-	if (e.getAttribute("maxlength"))
-		i.maxlen=e.getAttribute("maxlength");
-	if (e.getAttribute("maxlength")) {
-		i.style.maxWidth = (Number(e.getAttribute("maxlength"))+2)+"ch";
-	}
-	i.position = pos;
-	i.databox = e;
-	i.defaultValue = i.value = rowValue[0];
+		i.setAttribute("id", parent.id+"!input");
+		i.position = pos;
+		i.databox = e;
+		i.defaultValue = i.value = rowValue[0];
+		i.innerText = rowValue[0];
+		parent.appendChild(i);
+	} else {
+		var i = document.createElement("input");
+		if (e.required && !e.readOnly && !e.disabled)
+			i.setAttribute("class", "name required");
+		else
+			i.setAttribute("class", "name");
 	
-	parent.appendChild(i);
 	
-	if (e.getAttribute("selecticon") && !e.readOnly && !e.disabled) {
-		var b = document.createElement("button");
-		b.setAttribute("type", "button");
-		b.setAttribute("class", "icon-button");
-		b.position = pos;
-		b.databoxid = e.getAttribute("id");
-		parent.appendChild(b);
-		zk.listen(b, "click", zkDataCommon.onOpenSelect);
-		var s = document.createElement("img");
-		s.setAttribute("class","selecticon")
-		s.setAttribute("src", e.getAttribute("selecticon"))
-		b.appendChild(s);
-		if (e.getAttribute("selecticon2") != null) {
-			s.classList.add("menu2std");
-			s = document.createElement("img");
-			s.setAttribute("class","selecticon menu2rev")
-			s.setAttribute("src", e.getAttribute("selecticon2"))
-			b.appendChild(s);
+		i.setAttribute("id", parent.id+"!input");
+		if (e.getAttribute("maxlength"))
+			i.maxlen=e.getAttribute("maxlength");
+		if (e.getAttribute("maxlength")) {
+			i.style.maxWidth = (Number(e.getAttribute("maxlength"))+2)+"ch";
 		}
+		i.position = pos;
+		i.databox = e;
+		i.defaultValue = i.value = rowValue[0];
+		
+		parent.appendChild(i);
+		
+		if (e.getAttribute("selecticon") && !e.readOnly && !e.disabled) {
+			var b = document.createElement("button");
+			b.setAttribute("type", "button");
+			b.setAttribute("class", "icon-button");
+			b.position = pos;
+			b.databoxid = e.getAttribute("id");
+			parent.appendChild(b);
+			zk.listen(b, "click", zkDataCommon.onOpenSelect);
+			var s = document.createElement("img");
+			s.setAttribute("class","selecticon")
+			s.setAttribute("src", e.getAttribute("selecticon"))
+			b.appendChild(s);
+			if (e.getAttribute("selecticon2") != null) {
+				s.classList.add("menu2std");
+				s = document.createElement("img");
+				s.setAttribute("class","selecticon menu2rev")
+				s.setAttribute("src", e.getAttribute("selecticon2"))
+				b.appendChild(s);
+			}
+		}
+		
 	}
 	
 	var l = document.createElement("span");
@@ -500,16 +517,17 @@ zkDataNameDescription.addElement = function(e, parent, pos) {
 	parent.appendChild(l);
 	
 	
-	zkDataCommon.createRemoveIcon(e, parent, pos);
-	zkDataCommon.registerInput (e, i);
-	/* add event listeners */
-    zk.listen(i, "focus", zkDataCommon.onfocus);
-    zk.listen(i, "blur", zkDataCommon.onblur);
-    zk.listen(i, "select", zkDataCommon.onselect);
-    zk.listen(i, "keydown", zkDataCommon.onkeydown);
-    zk.listen(i, "input", zkDataCommon.oninput);
-    zk.listen(i, "input", zkDataNameDescription.oninput);
-    
+	if (!e.readOnly && !e.disabled) {
+		zkDataCommon.createRemoveIcon(e, parent, pos);
+		zkDataCommon.registerInput (e, i);
+		/* add event listeners */
+	    zk.listen(i, "focus", zkDataCommon.onfocus);
+	    zk.listen(i, "blur", zkDataCommon.onblur);
+	    zk.listen(i, "select", zkDataCommon.onselect);
+	    zk.listen(i, "keydown", zkDataCommon.onkeydown);
+	    zk.listen(i, "input", zkDataCommon.oninput);
+	    zk.listen(i, "input", zkDataNameDescription.oninput);
+	}
     /* set css class */
     if (e.readOnly) {
         zk.addClass(i, "readonly")
@@ -610,6 +628,7 @@ zkDataNameDescription.onEndSearchResponse = function(ed, id, msg) {
 }
 
 /********************* DESCRIPTION ****************/
+zkDataDescription.selectText=function(e) {zkDataCommon.selectText(e);}
 zkDataDescription.addElement = function(e, parent, pos) {
 	var rowValue = e.multivalue ? (pos < e.value.length? e.value[pos]: ""): e.value;
 	var i = document.createElement("input");
@@ -684,7 +703,7 @@ zkDataDescription.addElement = function(e, parent, pos) {
         zk.addClass(i, "text-disd")
         i.setAttribute("disabled","disabled")
     }
-	if (!e.disabeld && !e.readOnly) {
+	if (!e.disabled && !e.readOnly) {
 		if (e.getAttribute("placeholder") != null)
 			i.setAttribute("placeholder", e.getAttribute("placeholder"));
 		else if (e.getAttribute("label") != null)
@@ -757,6 +776,7 @@ zkDataDescription.onEndSearchResponse = function(ed, id, msg) {
 	}
 }
 /********************* DATE ELEMENT ********************/
+zkDataDate.selectText=function(e) {zkDataCommon.selectText(e);}
 zkDataDate.addElement = function(e, parent, pos) {
 	parent.classList.add("datebox");
 	// input
@@ -792,22 +812,13 @@ zkDataDate.addElement = function(e, parent, pos) {
 	
 	// button
 	if (! e.readOnly && !e.disabled) {
-		var span = document.createElement("span")
-		span.setAttribute("class", "zbtnbk");
-		parent.appendChild(span);
-		var b = document.createElement("img");
-		b.setAttribute("id", parent.id+"!btn");
-		b.setAttribute("src", e.getAttribute("calendaricon"));
-		span.appendChild(b);
-		zk.listen(b, "click", function (evt) {if (!i.disabled && !zk.dragging) zkDataDate.onbutton(parent, evt);});
-		
-		var dd = document.createElement("div");
-		dd.setAttribute("class", "dateboxpp");
-		dd.setAttribute("id", parent.id+"!pp");
-		dd.style.display = "none";
-		dd.setAttribute("tabindex", "-1");
-		parent.appendChild(dd);
-		zk.listen(dd, "click", zkDataDate.closepp);
+	    var options = { allowInput: true};
+	    options.enableTime = "true" == e.getAttribute("time");
+		options.dateFormat = e.getAttribute('z.fmt');
+		options.time_24hr = e.getAttribute('z.fmt').indexOf("H") >= 0;
+		options.locale = e.getAttribute("datelocale");
+		options.onChange = () => {zkDataCommon.onblur(i);};
+		e.flatpickr = flatpickr(i, options);
 	}
 	zkDataCommon.createRemoveIcon(e, parent, pos);
 	zkDataCommon.registerInput (e, i);
@@ -818,9 +829,7 @@ zkDataDate.addElement = function(e, parent, pos) {
 	zk.listen(i, "focus", zkDataCommon.onfocus);
     zk.listen(i, "blur", zkDataCommon.onblur);
     zk.listen(i, "select", zkDataCommon.onselect);
-    zk.listen(i, "keydown", zkDataCommon.onkeydown);
-    zk.listen(i, "input", zkDataCommon.oninput);
-    
+    zk.listen(i, "input", zkDataCommon.oninput);    
 }
 
 zkDataDate.cleanup = zkDataDate.onHide = function(B) {
@@ -841,10 +850,14 @@ zkDataDate.validate = function (cmp) {
 	var inp = $e(cmp.id+"!real");
 	if (inp.value) {
 		var fmt = getZKAttr(cmp, "fmt");
-		var d = zk.parseDate(inp.value, fmt, getZKAttr(cmp, "lenient") == "false");
-		if (!d) return msgzul.DATE_REQUIRED+fmt;
+		try {
+			var d = cmp.flatpickr.parseDate(inp.value);
+			if (!d) return msgzul.DATE_REQUIRED+fmt;
+			inp.value = cmp.flatpickr.zk.formatDate(d); //meta might not be ready
+		} catch (err) {
+			if (!d) return msgzul.DATE_REQUIRED+fmt;
+		}
 
-		inp.value = zk.formatDate(d, fmt); //meta might not be ready
 	}
 	return null;
 };
@@ -899,188 +912,9 @@ zkDataDate.rmAttr = function (cmp, nm) {
 	return true;
 };
 
-zkDataDate.onkey = function (evt) {
-	var inp = Event.element(evt);
-	if (!inp) return true;
-
-	var uuid = $uuid(inp.id);
-	var pp = $e(uuid + "!pp");
-	if (!pp) return true;
-
-	var opened = $visible(pp);
-	if (Event.keyCode(evt) == 9) { //TAB; IE: close now to show covered SELECT
-		if (opened) zkDataDate.close(pp);
-		return true; //don't eat
-	}
-
-	if (Event.keyCode(evt) == 38 || Event.keyCode(evt) == 40) {//UP/DN
-		if (evt.altKey) {
-			if (Event.keyCode(evt) == 38) { //UP
-				if (opened) zkDataDate.close(pp);
-			} else {
-				if (!opened) zkDataDate.open(pp);
-			}
-			//FF: if we eat UP/DN, Alt+UP degenerate to Alt (select menubar)
-			if (zk.ie) {
-				Event.stop(evt);
-				return false;
-			}
-			return true;
-		}
-		if (!opened) {
-			zkDataDate.open(pp);
-			Event.stop(evt);
-			return false;
-		}
-	}
-
-	if (opened) {
-		var meta = zkau.getMeta(uuid);
-		if (meta) {
-			//Request 1551019: better responsive
-			if (Event.keyCode(evt) == 13) { //ENTER
-				meta.onchange();
-				return true;
-			}
-
-			var ofs = Event.keyCode(evt) == 37 ? -1: Event.keyCode(evt) == 39 ? 1:
-				Event.keyCode(evt) == 38 ? -7: Event.keyCode(evt) == 40 ? 7: 0;
-			if (ofs) {
-				meta.shift(ofs);
-				inp.value = meta.getDateString();
-				zk.asyncSelect(inp.id);
-				Event.stop(evt);
-				return false;
-			}
-		}
-	}
-	return true;
-};
-
-/* Whn the button is clicked on button. */
-zkDataDate.onbutton = function (cmp, evt) {
-	var pp = $e(cmp.id + "!pp");
-	if (pp) {
-		if (!$visible(pp)) zkDataDate.open(pp);
-		else zkDataDate.close(pp, true);
-
-		if (!evt) evt = window.event; //Bug 1911864
-		Event.stop(evt);
-	}
-};
-zkDataDate.dropdn = function (cmp, dropdown) {
-	var pp = $e(cmp.id + "!pp");
-	if (pp) {
-		if ("true" == dropdown) zkDataDate.open(pp);
-		else zkDataDate.close(pp, true);
-	}
-};
-
-zkDataDate.open = function (pp) {
-	pp = $e(pp);
-	zkau.closeFloats(pp); //including popups
-	zkau._dtbox.setFloatId(pp.id);
-
-	var uuid = $uuid(pp.id);
-	var cb = $e(uuid);
-	if (!cb) return;
-
-	var meta = zkau.getMeta(cb);
-	if (meta) meta.init();
-	else zkau.setMeta(cb, new zk.Cal(cb, pp));
-
-	pp.style.width = pp.style.height = "auto";
-	pp.style.position = "absolute"; //just in case
-	pp.style.overflow = "auto"; //just in case
-	pp.style.display = "block";
-	pp.style.zIndex = "88000";
-	//No special child, so no need to: zk.onVisiAt(pp);
-
-	//FF: Bug 1486840
-	//IE: Bug 1766244 (after specifying position:relative to grid/tree/listbox)
-	zk.setVParent(pp);	
-
-	//fix size
-	if (pp.offsetHeight > 200) {
-		pp.style.height = "200px";
-		pp.style.width = "auto"; //recalc
-	} else if (pp.offsetHeight < 10) {
-		pp.style.height = "10px"; //minimal
-	}
-	if (pp.offsetWidth < cb.offsetWidth) {
-		pp.style.width = cb.offsetWidth + "px";
-	} else {
-		var wd = zk.innerWidth() - 20;
-		if (wd < cb.offsetWidth) wd = cb.offsetWidth;
-		if (pp.offsetWidth > wd) pp.style.width = wd;
-	}
-
-	zk.position(pp, cb, "after-start");
-
-	setTimeout(()=>{zkDataDate._repos(uuid)}, 3);
-		//IE issue: we have to re-position again because some dimensions
-		//might not be correct here
-};
-/** Re-position the popup. */
-zkDataDate._repos = function (uuid) {
-	var cb = $e(uuid);
-	if (!cb) return;
-
-	var pp = $e(uuid + "!pp");
-	var inpId = cb.id + "!real";
-	var inp = $e(inpId);
-
-	zk.position(pp, cb, "after-start");
-	zkau.hideCovered();
-	zk.asyncFocus(inpId);
-};
-
-zkDataDate.close = function (pp, focus) {
-	var uuid = $uuid(pp.id);
-
-	pp.style.display = "none";
-	zk.unsetVParent(pp);
-
-	pp = $e(pp);
-	zkau._dtbox.setFloatId(null);
-	//No special child, so no need to: zk.onHideAt(pp);
-	zkau.hideCovered();
-
-	if (focus)
-		zk.asyncFocus(uuid + "!real");
-	
-	var el = $e(uuid);
-	var databox = $e(el.databoxid);
-	var input = $e(uuid+'!real');
-	zkDatasource.updatedElement(input);
-	zkDataCommon.updatedElement(input);
-	zkDataCommon.onupdate(input, databox, true);
-	
-};
-zkDataDate.closepp = function (evt) {
-	if (!evt) evt = window.event;
-	var pp = Event.element(evt);
-	if (pp.onclick) return;
-	for (; pp; pp = pp.parentNode) {
-		if (pp.id) {
-			if (pp.id.endsWith("!pp")) {
-				zkDataDate.close(pp, true);
-				return; //done
-			}
-		}
-	}
-};
-
-zk.FloatDatebox = Class.create();
-Object.extend(Object.extend(zk.FloatDatebox.prototype, zk.Float.prototype), {
-	_close: function (el) {
-		zkDataDate.close(el);
-	}
-});
-if (!zkau._dtbox)
-	zkau.floats.push(zkau._dtbox = new zk.FloatDatebox()); //hook to zkau.js
 
 /********************* IMAGE ELEMENT ********************/
+zkDataImage.selectText=function(e) {}
 zkDataImage.addElement = function(e, parent, pos) {
 	var img = document.createElement("img");
 	img.setAttribute("id", parent.id+"!input");
@@ -1148,6 +982,7 @@ zkDataImage.setAttr = function (ed, name, value) {
 }
 
 /********************* BINARY ELEMENT ********************/
+zkDataBinary.selectText=function(e) {}
 zkDataBinary.addElement = function(e, parent, pos) {
 	var rowValue = e.multivalue ? (pos < e.value.length? e.value[pos]: ""): e.value;
 
@@ -1355,6 +1190,7 @@ zkDataBinary.setAttr = function (ed, name, value) {
 }
 
 /********************* HTML ELEMENT ********************/
+zkDataHtml.selectText=function(e) {}
 zkDataHtml.addElement = function(e, parent, pos) {
 	var img = document.createElement("div");
 	img.setAttribute("id", parent.id+"!input");
@@ -1399,6 +1235,18 @@ zkDataHtml.setAttr = function (ed, name, value) {
 	return zkDataCommon.setAttr(ed,name,value);
 }
 /************* Common methods ******************/
+zkDataCommon.selectText=function(e) {
+	if (! e.readOnly) {
+		var div = databox.getAttribute("label") ? e.firstElementChild.nextElementSibling : e.firstElementChild;
+		for (var ch = div.firstElementChild; ch != null; ch = ch.nextElementSibling) {
+			if (ch.tagName == 'INPUT') {
+				ch.setSelectionRange(0, ch.value.length)
+				break;
+			}
+		}
+	}
+}
+
 zkDataCommon.createRemoveIcon=function(databox, parent, pos) {
 	if (databox.readOnly || databox.disabled || databox.getAttribute("noremove") == "true") return;
 	
@@ -1518,7 +1366,7 @@ zkDataCommon.refresh=function(databox, value) {
 				lastEmpty = (v == null || v == "");
 			}
 		}
-		if ( ! databox.readonly && !lastEmpty && databox.getAttribute("noadd") != "true") {
+		if ( ! databox.readOnly && !lastEmpty && databox.getAttribute("noadd") != "true") {
 			var div = document.createElement("div");
 			div.setAttribute("id", $uuid(databox)+"_"+value.length)
 			div.databoxid = $uuid(databox);
@@ -1783,6 +1631,8 @@ zkDataCommon.updatedElement = function(el) {
 zkDataCommon.onfocus = function(A) {
     var el = zkau.evtel(A);
     var B = el.databox;
+	if (!B.readOnly)
+		el.setSelectionRange(0, el.value.length)
 }
 ;
 

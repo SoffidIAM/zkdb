@@ -273,8 +273,8 @@ zkDatatable.createFooter = function (ed) {
 	{
 		var msg = ed.getAttribute("msgrows")+ ": "+ ed.filteredData.length;
 		if (ed.pages > 1 && ed.pageSize > 0) {
-			var first = 1 + ed.currentPage * ed.pageSize;
-			var end = (ed.currentPage + 1) * ed.pageSize;
+			var first = Math.floor(1.5 + ed.currentPage * ed.pageSize);
+			var end = Math.floor(0.5+(ed.currentPage + 1) * ed.pageSize);
 			if ( end > ed.filteredData.length)
 				end = ed.filteredData.length;
 			var span = document.createElement("span");
@@ -687,7 +687,7 @@ zkDatatable.getRowText=function(ed, data) {
 				t = "";
 			else
 				t = data.value[col.value] ;
-			data.text.push (zkDatatable.trimColumn(t));
+			data.text.push (t);
 		}
 		else
 			data.text.push(data.value[col.name]);
@@ -736,7 +736,8 @@ zkDatatable.fillRow=function(ed, tr, data)
 	var generateData = data.html == null;
 	if (generateData) {
 		data.text = [];
-		data.html = [];		
+		data.html = [];
+		data.title = [];		
 	}
 	for (var column =  0; column < ed.columns.length; column ++)
 	{
@@ -744,6 +745,7 @@ zkDatatable.fillRow=function(ed, tr, data)
 		tr.appendChild(td);
 		var col = ed.columns[column];
 		if (generateData || col.render) {
+			var title = null;
 			if (col.template)
 				td.innerHTML = zkDatatable.replaceExpressions(col.template, data.value);
 			else if (col.render) {
@@ -764,17 +766,27 @@ zkDatatable.fillRow=function(ed, tr, data)
 					t = "";
 				else
 					t = data.value[col.value] ;
-				td.innerText = zkDatatable.trimColumn(t);
+				var v = col.multiline ? t:  zkDatatable.trimColumn(t);
+				td.innerText = v;
+				if (v != t) {
+					title = t;
+					td.setAttribute("title", t);					
+				}
 			}
-			else
+			else {
 				td.innerText = data.value[col.name];
+			}
 			data.text.push (td.innerText);
-			data.html.push (td.innerHTML);				
+			data.html.push (td.innerHTML);
+			data.title.push(title);				
 		} else {
 			if (col.render)
 				window[col.render](td, col, data.value);
-			else
+			else {
 				td.innerHTML = data.html[column];
+				if (data.title[column] != null)				
+					td.setAttribute("title", data.title[column]);					
+			}
 		}
 		if (col.className) {
 			td.setAttribute("class", zkDatatable.replaceExpressions(col.className, data.value));
@@ -1179,6 +1191,7 @@ zkDatatable.setSelected=function(t, pos) {
 		t.selectedPosition = 0;
 		zkDatatable.updatePagers(t);
 	}
+	zkDatatable.clearMasterCheck(t);
 }
 
 /** Cleared by the server * */
@@ -1199,6 +1212,7 @@ zkDatatable.clearSelection=function(t, pos) {
 	t.selectedTr = null;
 	t.selectedPosition = 0;
 	zkDatatable.updatePagers(t);
+	zkDatatable.clearMasterCheck(t);
 }
 
 zkDatatable.setSelectedMulti=function(t, pos) {
@@ -1213,7 +1227,8 @@ zkDatatable.setSelectedMulti=function(t, pos) {
 		if ( t.multiselect )
 		{
 			var cb = row.firstElementChild/* td */.firstElementChild/* input */;
-			cb.checked =false;
+			if (cb && cb.checked)
+				cb.checked =false;
 		}
 	}
 	for (var i = 0; i < t.filteredData.length; i++) {
@@ -1240,6 +1255,15 @@ zkDatatable.setSelectedMulti=function(t, pos) {
 			zkDatatable.findSelectedPosition(t);
 	} 
 	zkDatatable.updatePagers(t);
+	zkDatatable.clearMasterCheck(t);
+}
+
+zkDatatable.clearMasterCheck=function(t){
+	if (t.multiselect) {
+		var h = document.getElementById(t.id+"!thead");
+		var check = h.firstElementChild.firstElementChild.firstElementChild;
+		check.checked=false;
+	}
 }
 
 zkDatatable.sendSelect=function(table, singleSelect) {
@@ -1403,6 +1427,7 @@ zkDatatable.deleteRow=function(ed, pos)
 				zkDatatable.fixupColumns(ed);
 				zkDatatable.findSelectedPosition(ed);
 			}			
+			ed.count --;
 		}
 	}
 }
