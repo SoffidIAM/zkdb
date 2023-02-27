@@ -35,6 +35,7 @@ zkDatatable.init = function (ed) {
 	ed.sortColumn = ed.getAttribute("sortColumn");
 	ed.sortDirection = ed.getAttribute("sortDirection");
 	ed.enablefilter = "false" != ed.getAttribute("enablefilter");
+	ed.hidefilter = "false" != ed.getAttribute("hidefilter");
 	ed.footer = ed.getAttribute("footer") != "false";
 	ed.reorder = ed.getAttribute("reorder") != "false";
 	ed.nextRowId = 0;
@@ -555,7 +556,7 @@ zkDatatable.setData = function(ed, data) {
 			ed.sortedData[i] = ed.data[i] = {value: data[i], position: i};
 		}
 		
-		if (!ed.enablefilter && ed.data.length > ed.pageSize)
+		if (!ed.enablefilter && ed.data.length > ed.pageSize && !ed.hidefilter)
 		{
 			ed.enablefilter = true;
 			zkDatatable.refresh(ed);
@@ -571,7 +572,7 @@ zkDatatable.addRow=function(ed, pos, value)
 	value = JSON.parse(value);
 	var data = { value: value, position: pos, ts: new Date().getTime(), displayed: true};
 	ed.data.splice(pos, 0, data);
-	if (!ed.enablefilter && ed.data.length > ed.pageSize)
+	if (!ed.enablefilter && ed.data.length > ed.pageSize && !ed.hidefilter)
 	{
 		ed.enablefilter = true;
 		zkDatatable.refresh(ed);
@@ -626,7 +627,7 @@ zkDatatable.addRows=function(ed, pos, values)
 		}
 	}
 
-	if (!ed.enablefilter && ed.data.length > ed.pageSize)
+	if (!ed.enablefilter && ed.data.length > ed.pageSize && !ed.hidefilter)
 	{
 		ed.enablefilter = true;
 		zkDatatable.refresh(ed);
@@ -1327,6 +1328,16 @@ zkDatatable.prepareSort=function(ed, force) {
 					zkDatatable.doSort(ed);
 				else if (force)
 					zkDatatable.doFilter(ed);
+				else {
+					if (ed.pageSize > 0 && ed.pageSize < ed.filteredData.length) {
+						ed.pages = Math.floor((ed.filteredData.length + ed.pageSize - 1) / ed.pageSize);
+						if (ed.currentPage == null) ed.currentPage = 0;
+						if (ed.currentPage > ed.pages) ed.currentPage = ed.pages - 1;
+					} else {
+						ed.pages = 1;
+						ed.currentPage = 0;
+					}
+				}
 				zkDatatable.createFooter(ed);
 				zkDatatable.fixupColumns(ed);
 				zkDatatable.findSelectedPosition(ed);				

@@ -63,8 +63,8 @@ public class Databox extends InputElement implements XPathSubscriber, AfterCompo
 	boolean noremove = false;
 	Integer rows = null;
 	String uploadMessage = "Upload";
-	String downloadMessage = "Download";
-	String clearMessage = "Clear";
+	String downloadMessage = es.caib.zkib.component.Messages.getString("Databox.1"); //$NON-NLS-1$
+	String clearMessage = es.caib.zkib.component.Messages.getString("Databox.2"); //$NON-NLS-1$
 	String uploadIcon = null;
 	String downloadIcon = null;
 	String clearIcon = null;
@@ -91,17 +91,17 @@ public class Databox extends InputElement implements XPathSubscriber, AfterCompo
 	
 	Type type = Type.STRING;
 	String icon;
-	String removeIcon = "~./img/remove.png";
-	String calendarIcon = "~./zul/img/caldrbtn.gif";
+	String removeIcon = "~./img/remove.png"; //$NON-NLS-1$
+	String calendarIcon = "~./zul/img/caldrbtn.gif"; //$NON-NLS-1$
 	String selectIcon = null;
 	String selectIcon2 = null;
-	String waitIcon = "/img/wait.gif"; 
-	String warningIcon = "~./img/warning.gif";
+	String waitIcon = "/img/wait.gif";  //$NON-NLS-1$
+	String warningIcon = "~./img/warning.gif"; //$NON-NLS-1$
 	String format;
 	boolean forceSelectIcon;
 
 	public Databox() {
-		setSclass("databox");
+		setSclass("databox"); //$NON-NLS-1$
 	}
 	
 	public void undo(){
@@ -140,8 +140,8 @@ public class Databox extends InputElement implements XPathSubscriber, AfterCompo
 			setValue(value);
 		else {
 			onItemChange(value, position);
-			response("set_value_"+position,
-					new AuInvoke(this, "setValue", position.toString(), 
+			response("set_value_"+position, //$NON-NLS-1$
+					new AuInvoke(this, "setValue", position.toString(),  //$NON-NLS-1$
 							normalize( translateToUserInterface( value ) ).toString()));
 		}
 	}
@@ -169,12 +169,12 @@ public class Databox extends InputElement implements XPathSubscriber, AfterCompo
 			refreshValue ();
 			DataSource ds = getTopDatasource();
 			if (ds instanceof Component)
-				smartUpdate("dsid", ((Component) ds).getUuid());
+				smartUpdate("dsid", ((Component) ds).getUuid()); //$NON-NLS-1$
 			else
-				smartUpdate("dsid", null);
+				smartUpdate("dsid", null); //$NON-NLS-1$
 		}
 		else
-			smartUpdate("dsid", null);
+			smartUpdate("dsid", null); //$NON-NLS-1$
 	}
 
 	public DataSource getTopDatasource() {
@@ -202,7 +202,7 @@ public class Databox extends InputElement implements XPathSubscriber, AfterCompo
 		if (binder.getDataPath() != null) {
 			Object newVal = binder.getValue();
 			if (newVal == null)
-				newVal = multiValue ? new LinkedList<Object>(): "";
+				newVal = multiValue ? new LinkedList<Object>(): ""; //$NON-NLS-1$
 				
 			this.value = newVal;
 				
@@ -214,7 +214,7 @@ public class Databox extends InputElement implements XPathSubscriber, AfterCompo
 
 		String stringValue = wrapValue();
 
-		smartUpdate("value", stringValue);
+		smartUpdate("value", stringValue); //$NON-NLS-1$
 	}
 	
 	public boolean effectiveDisabled = false;
@@ -260,129 +260,129 @@ public class Databox extends InputElement implements XPathSubscriber, AfterCompo
 	public String getInnerAttrs() {
 		final StringBuffer sb =
 			new StringBuffer(64).append(super.getInnerAttrs());
-		HTMLs.appendAttribute(sb, "placeholder", placeholder);
+		HTMLs.appendAttribute(sb, "placeholder", placeholder); //$NON-NLS-1$
 		if (binder.getDataPath() != null)
 		{
 			DataSource ds = getTopDatasource();
 			if (ds != null && ds instanceof Component)
-				HTMLs.appendAttribute(sb, "dsid", ((Component)ds).getUuid());
+				HTMLs.appendAttribute(sb, "dsid", ((Component)ds).getUuid()); //$NON-NLS-1$
 				
 		}
 		
 		if (value != null) {
 			String stringValue;
 			stringValue = wrapValue();
-			HTMLs.appendAttribute(sb, "value", stringValue);
+			HTMLs.appendAttribute(sb, "value", stringValue); //$NON-NLS-1$
 		}
-		HTMLs.appendAttribute(sb, "label", label);
+		HTMLs.appendAttribute(sb, "label", label); //$NON-NLS-1$
 		if (type == Type.DATE)
-			HTMLs.appendAttribute(sb, "time", time);
+			HTMLs.appendAttribute(sb, "time", time); //$NON-NLS-1$
 		if (maxrows != null)
-			HTMLs.appendAttribute(sb, "maxrows", maxrows);
+			HTMLs.appendAttribute(sb, "maxrows", maxrows); //$NON-NLS-1$
 		if (isDisabled())
-			HTMLs.appendAttribute(sb, "disabled", isDisabled());
+			HTMLs.appendAttribute(sb, "disabled", isDisabled()); //$NON-NLS-1$
 		if (readonly)
-			HTMLs.appendAttribute(sb, "readonly", readonly);
-		HTMLs.appendAttribute(sb, "multiline", multiline);
+			HTMLs.appendAttribute(sb, "readonly", readonly); //$NON-NLS-1$
+		HTMLs.appendAttribute(sb, "multiline", multiline); //$NON-NLS-1$
 		if (Boolean.TRUE.equals(multiline) && rows != null)
-			HTMLs.appendAttribute(sb, "rows", rows);
+			HTMLs.appendAttribute(sb, "rows", rows); //$NON-NLS-1$
 		
-		HTMLs.appendAttribute(sb, "multivalue", multiValue);
+		HTMLs.appendAttribute(sb, "multivalue", multiValue); //$NON-NLS-1$
 		if (multiValue) {
-			if (noadd) HTMLs.appendAttribute(sb, "noadd", noadd);
-			if (noremove) HTMLs.appendAttribute(sb, "noremove", noremove);
+			if (noadd) HTMLs.appendAttribute(sb, "noadd", noadd); //$NON-NLS-1$
+			if (noremove) HTMLs.appendAttribute(sb, "noremove", noremove); //$NON-NLS-1$
 		}
 		if (type == Databox.Type.NUMBER)
-			HTMLs.appendAttribute(sb, "number", true);
+			HTMLs.appendAttribute(sb, "number", true); //$NON-NLS-1$
 		if (hyperlink)
-			HTMLs.appendAttribute(sb, "hyperlink", true);
+			HTMLs.appendAttribute(sb, "hyperlink", true); //$NON-NLS-1$
 		if (required)
-			HTMLs.appendAttribute(sb, "required", required);
+			HTMLs.appendAttribute(sb, "required", required); //$NON-NLS-1$
 		if (maxlength != null)
-			HTMLs.appendAttribute(sb, "maxlength", maxlength);
-		HTMLs.appendAttribute(sb, "removeicon", getDesktop().getExecution().encodeURL(removeIcon));
+			HTMLs.appendAttribute(sb, "maxlength", maxlength); //$NON-NLS-1$
+		HTMLs.appendAttribute(sb, "removeicon", getDesktop().getExecution().encodeURL(removeIcon)); //$NON-NLS-1$
 		if (icon != null)
-			HTMLs.appendAttribute(sb, "icon", getDesktop().getExecution().encodeURL(icon));
+			HTMLs.appendAttribute(sb, "icon", getDesktop().getExecution().encodeURL(icon)); //$NON-NLS-1$
 		if (warningIcon != null)
-			HTMLs.appendAttribute(sb, "warningicon", getDesktop().getExecution().encodeURL(warningIcon));
+			HTMLs.appendAttribute(sb, "warningicon", getDesktop().getExecution().encodeURL(warningIcon)); //$NON-NLS-1$
 		if (waitIcon != null)
-			HTMLs.appendAttribute(sb, "waiticon", getDesktop().getExecution().encodeURL(waitIcon));
+			HTMLs.appendAttribute(sb, "waiticon", getDesktop().getExecution().encodeURL(waitIcon)); //$NON-NLS-1$
 		if (type == Type.DATE && calendarIcon != null)
-			HTMLs.appendAttribute(sb, "calendaricon", getDesktop().getExecution().encodeURL(calendarIcon));
+			HTMLs.appendAttribute(sb, "calendaricon", getDesktop().getExecution().encodeURL(calendarIcon)); //$NON-NLS-1$
 			
 		if (type == Type.NAME_DESCRIPTION || type == Type.DESCRIPTION || selectIcon != null)
-			HTMLs.appendAttribute(sb, "selecticon", getDesktop().getExecution().encodeURL(selectIcon == null ? "~./img/magnifier.png" : selectIcon));
+			HTMLs.appendAttribute(sb, "selecticon", getDesktop().getExecution().encodeURL(selectIcon == null ? "~./img/magnifier.png" : selectIcon)); //$NON-NLS-1$ //$NON-NLS-2$
 		if (selectIcon2 != null)
-			HTMLs.appendAttribute(sb, "selecticon2", getDesktop().getExecution().encodeURL(selectIcon2));
+			HTMLs.appendAttribute(sb, "selecticon2", getDesktop().getExecution().encodeURL(selectIcon2)); //$NON-NLS-1$
 		if (forceSelectIcon)
-			HTMLs.appendAttribute(sb, "forceSelecticon", "true");
+			HTMLs.appendAttribute(sb, "forceSelecticon", "true"); //$NON-NLS-1$ //$NON-NLS-2$
 		if (values != null && type == Type.LIST)
 		{
 			JSONArray jsonValues = new JSONArray(values);
 			if ( isMultiValue() ||
-					isRequired() && (value == null || "".equals(value))) {
+					isRequired() && (value == null || "".equals(value))) { //$NON-NLS-1$
 				JSONArray array2 = new JSONArray();
-				array2.put(":"+"- Select value -");
+				array2.put(":- "+es.caib.zkib.component.Messages.getString("Databox.0")+" -"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 				for (int i = 0; i < jsonValues.length(); i++)
 					array2.put(jsonValues.get(i));
 				jsonValues = array2;
 			}
-			HTMLs.appendAttribute(sb, "values", jsonValues.toString());
+			HTMLs.appendAttribute(sb, "values", jsonValues.toString()); //$NON-NLS-1$
 		}
 		
 		if (descriptions != null) {
-			HTMLs.appendAttribute(sb, "description", new JSONArray(descriptions).toString());
+			HTMLs.appendAttribute(sb, "description", new JSONArray(descriptions).toString()); //$NON-NLS-1$
 		}
 
 		if (type == Type.BOOLEAN) {
-			HTMLs.appendAttribute(sb, "onLabel", Messages.get(MZul.YES));
-			HTMLs.appendAttribute(sb, "offLabel", Messages.get(MZul.NO));
+			HTMLs.appendAttribute(sb, "onLabel", Messages.get(MZul.YES)); //$NON-NLS-1$
+			HTMLs.appendAttribute(sb, "offLabel", Messages.get(MZul.NO)); //$NON-NLS-1$
 		}
 		if (type == Type.BINARY) {
-			HTMLs.appendAttribute(sb, "uploadmessage", uploadMessage);
-			HTMLs.appendAttribute(sb, "downloadmessage", downloadMessage);
-			HTMLs.appendAttribute(sb, "clearmessage", clearMessage);
-			HTMLs.appendAttribute(sb, "uploadicon", getDesktop().getExecution().encodeURL( uploadIcon));
-			HTMLs.appendAttribute(sb, "downloadicon", getDesktop().getExecution().encodeURL(downloadIcon));
-			HTMLs.appendAttribute(sb, "clearicon", getDesktop().getExecution().encodeURL(clearIcon));
-			HTMLs.appendAttribute(sb, "filemenu", fileMenu);
+			HTMLs.appendAttribute(sb, "uploadmessage", uploadMessage); //$NON-NLS-1$
+			HTMLs.appendAttribute(sb, "downloadmessage", downloadMessage); //$NON-NLS-1$
+			HTMLs.appendAttribute(sb, "clearmessage", clearMessage); //$NON-NLS-1$
+			HTMLs.appendAttribute(sb, "uploadicon", getDesktop().getExecution().encodeURL( uploadIcon)); //$NON-NLS-1$
+			HTMLs.appendAttribute(sb, "downloadicon", getDesktop().getExecution().encodeURL(downloadIcon)); //$NON-NLS-1$
+			HTMLs.appendAttribute(sb, "clearicon", getDesktop().getExecution().encodeURL(clearIcon)); //$NON-NLS-1$
+			HTMLs.appendAttribute(sb, "filemenu", fileMenu); //$NON-NLS-1$
 		}
 		final String fmt = getFormat();
 		if (fmt != null && fmt.length() != 0)
-			HTMLs.appendAttribute(sb, "z.fmt", getJavascriptFormat(fmt));
+			HTMLs.appendAttribute(sb, "z.fmt", getJavascriptFormat(fmt)); //$NON-NLS-1$
 		if (type == Type.DATE) {
-			HTMLs.appendAttribute(sb, "datelocale", Locales.getCurrent().getLanguage());
+			HTMLs.appendAttribute(sb, "datelocale", Locales.getCurrent().getLanguage()); //$NON-NLS-1$
 		}
 		return sb.toString();
 	}
 
 	private String getJavascriptFormat(String fmt) {
-		return fmt.replace("yyyy", "Y")
-				.replace("yy", "y")
-				.replace("mm", "i")
-				.replace("m", "i")
-				.replace("MMMM", "F")
-				.replace("MMM", "!!!!!")
-				.replace("MM", "m")
-				.replace("M", "n")
-				.replace("!!!!!", "M")
-				.replace("dd", "d")
-				.replace("EEE", "D")
-				.replace("E", "l")
-				.replace("w", "W" )
-				.replace("u", "w")
-				.replace("hh", "G")
-				.replace("KK", "G")
-				.replace("K", "h")
-				.replace("a", "K")
-				.replace("HH", "H")
-				.replace("kk", "H")
-				.replace("k", "H")
-				.replace("ss", "S")
-				.replace("s", "S")
-				.replace("Z", "")
-				.replace("X", "")
-				.replace("z", "");
+		return fmt.replace("yyyy", "Y") //$NON-NLS-1$ //$NON-NLS-2$
+				.replace("yy", "y") //$NON-NLS-1$ //$NON-NLS-2$
+				.replace("mm", "i") //$NON-NLS-1$ //$NON-NLS-2$
+				.replace("m", "i") //$NON-NLS-1$ //$NON-NLS-2$
+				.replace("MMMM", "F") //$NON-NLS-1$ //$NON-NLS-2$
+				.replace("MMM", "!!!!!") //$NON-NLS-1$ //$NON-NLS-2$
+				.replace("MM", "m") //$NON-NLS-1$ //$NON-NLS-2$
+				.replace("M", "n") //$NON-NLS-1$ //$NON-NLS-2$
+				.replace("!!!!!", "M") //$NON-NLS-1$ //$NON-NLS-2$
+				.replace("dd", "d") //$NON-NLS-1$ //$NON-NLS-2$
+				.replace("EEE", "D") //$NON-NLS-1$ //$NON-NLS-2$
+				.replace("E", "l") //$NON-NLS-1$ //$NON-NLS-2$
+				.replace("w", "W" ) //$NON-NLS-1$ //$NON-NLS-2$
+				.replace("u", "w") //$NON-NLS-1$ //$NON-NLS-2$
+				.replace("hh", "G") //$NON-NLS-1$ //$NON-NLS-2$
+				.replace("KK", "G") //$NON-NLS-1$ //$NON-NLS-2$
+				.replace("K", "h") //$NON-NLS-1$ //$NON-NLS-2$
+				.replace("a", "K") //$NON-NLS-1$ //$NON-NLS-2$
+				.replace("HH", "H") //$NON-NLS-1$ //$NON-NLS-2$
+				.replace("kk", "H") //$NON-NLS-1$ //$NON-NLS-2$
+				.replace("k", "H") //$NON-NLS-1$ //$NON-NLS-2$
+				.replace("ss", "S") //$NON-NLS-1$ //$NON-NLS-2$
+				.replace("s", "S") //$NON-NLS-1$ //$NON-NLS-2$
+				.replace("Z", "") //$NON-NLS-1$ //$NON-NLS-2$
+				.replace("X", "") //$NON-NLS-1$ //$NON-NLS-2$
+				.replace("z", ""); //$NON-NLS-1$ //$NON-NLS-2$
 	}
 
 	public String wrapValue() {
@@ -424,16 +424,16 @@ public class Databox extends InputElement implements XPathSubscriber, AfterCompo
 		} else {
 			if (type == Type.PASSWORD) {
 				if ( name == null || name.toString().trim().isEmpty())
-					return "";
+					return ""; //$NON-NLS-1$
 				else
-					return "*Soffid*Secured*";
+					return "*Soffid*Secured*"; //$NON-NLS-1$
 			} else if ( type == Type.NAME_DESCRIPTION || type == Type.DESCRIPTION) {
 				try {
 					if (name == null || name.toString().trim().isEmpty())
-						return new JSONArray(new String[] {"", "", ""});
+						return new JSONArray(new String[] {"", "", ""}); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 					else {
 						String description = getDescription(translateFromUserInterface( name ).toString());
-						return new JSONArray(new String[] {name.toString(), description, description == null? "Wrong value": ""});
+						return new JSONArray(new String[] {name.toString(), description, description == null? es.caib.zkib.component.Messages.getString("Databox.3"): ""}); //$NON-NLS-1$ //$NON-NLS-2$
 					}
 				} catch (Exception e) {
 					return new JSONArray(new String[] {name.toString(), null, e.toString()});
@@ -463,16 +463,16 @@ public class Databox extends InputElement implements XPathSubscriber, AfterCompo
 				if (name instanceof byte[]) {
 					byte[] img = (byte[]) name;
 					if (img.length > 10) {
-						String sb = img[0] == '<' && img[1] == '?' ? "image/svg+xml" :
-							img[0] == 0x77 && img[1] == 0xd8 && img[2] == 0xff ?  "image/jpeg":
-							img[0] == 0x89 && img[1] == 0x50 && img[2] == 0x4e ?  "image/png":
-								"image/gif";
-						return "data:"+sb+";base64," + Base64.getEncoder().encodeToString(img);
+						String sb = img[0] == '<' && img[1] == '?' ? "image/svg+xml" : //$NON-NLS-1$
+							img[0] == 0x77 && img[1] == 0xd8 && img[2] == 0xff ?  "image/jpeg": //$NON-NLS-1$
+							img[0] == 0x89 && img[1] == 0x50 && img[2] == 0x4e ?  "image/png": //$NON-NLS-1$
+								"image/gif"; //$NON-NLS-1$
+						return "data:"+sb+";base64," + Base64.getEncoder().encodeToString(img); //$NON-NLS-1$ //$NON-NLS-2$
 					} else 
-						return "";
+						return ""; //$NON-NLS-1$
 				}
 				else
-					return "";
+					return ""; //$NON-NLS-1$
 			} else if (name != null) {
 				return name.toString();
 			} else {
@@ -495,81 +495,81 @@ public class Databox extends InputElement implements XPathSubscriber, AfterCompo
 		
 		if (type == Type.STRING)
 		{
-			wh.write("<div id=\"").write(uuid).write("\" z.type=\"zul.databox.DataText\"")
+			wh.write("<div id=\"").write(uuid).write("\" z.type=\"zul.databox.DataText\"") //$NON-NLS-1$ //$NON-NLS-2$
 			.write(getOuterAttrs()).write(getInnerAttrs())
-			.write("></div>");
+			.write("></div>"); //$NON-NLS-1$
 		}
 		else if (type == Type.NUMBER)
 		{
-			wh.write("<div id=\"").write(uuid).write("\" z.type=\"zul.databox.DataText\"")
+			wh.write("<div id=\"").write(uuid).write("\" z.type=\"zul.databox.DataText\"") //$NON-NLS-1$ //$NON-NLS-2$
 			.write(getOuterAttrs()).write(getInnerAttrs())
-			.write("></div>");
+			.write("></div>"); //$NON-NLS-1$
 		}
 		else if (type == Type.DATE)
 		{
-			wh.write("<div id=\"").write(uuid).write("\" z.type=\"zul.databox.DataDate\"")
+			wh.write("<div id=\"").write(uuid).write("\" z.type=\"zul.databox.DataDate\"") //$NON-NLS-1$ //$NON-NLS-2$
 			.write(getOuterAttrs()).write(getInnerAttrs())
-			.write("></div>");
+			.write("></div>"); //$NON-NLS-1$
 		}
 		else if (type == Type.DESCRIPTION)
 		{
-			wh.write("<div id=\"").write(uuid).write("\" z.type=\"zul.databox.DataDescription\"")
+			wh.write("<div id=\"").write(uuid).write("\" z.type=\"zul.databox.DataDescription\"") //$NON-NLS-1$ //$NON-NLS-2$
 			.write(getOuterAttrs()).write(getInnerAttrs())
-			.write("></div>");
+			.write("></div>"); //$NON-NLS-1$
 		}
 		else if (type == Type.HTML)
 		{
-			wh.write("<div id=\"").write(uuid).write("\" z.type=\"zul.databox.DataHtml\"")
+			wh.write("<div id=\"").write(uuid).write("\" z.type=\"zul.databox.DataHtml\"") //$NON-NLS-1$ //$NON-NLS-2$
 			.write(getOuterAttrs()).write(getInnerAttrs())
-			.write("></div>");
+			.write("></div>"); //$NON-NLS-1$
 		}
 		else if (type == Type.NAME_DESCRIPTION)
 		{
-			wh.write("<div id=\"").write(uuid).write("\" z.type=\"zul.databox.DataNameDescription\"")
+			wh.write("<div id=\"").write(uuid).write("\" z.type=\"zul.databox.DataNameDescription\"") //$NON-NLS-1$ //$NON-NLS-2$
 			.write(getOuterAttrs()).write(getInnerAttrs())
-			.write("></div>");
+			.write("></div>"); //$NON-NLS-1$
 		}
 		else if (type == Type.LIST)
 		{
-			wh.write("<div id=\"").write(uuid).write("\" z.type=\"zul.databox.DataList\"")
+			wh.write("<div id=\"").write(uuid).write("\" z.type=\"zul.databox.DataList\"") //$NON-NLS-1$ //$NON-NLS-2$
 			.write(getOuterAttrs()).write(getInnerAttrs())
-			.write("></div>");
+			.write("></div>"); //$NON-NLS-1$
 		}
 		else if (type == Type.BOOLEAN)
 		{
-			wh.write("<div id=\"").write(uuid).write("\" z.type=\"zul.databox.DataSwitch\"")
+			wh.write("<div id=\"").write(uuid).write("\" z.type=\"zul.databox.DataSwitch\"") //$NON-NLS-1$ //$NON-NLS-2$
 			.write(getOuterAttrs()).write(getInnerAttrs())
-			.write("></div>");
+			.write("></div>"); //$NON-NLS-1$
 		}
 		else if (type == Type.IMAGE)
 		{
-			wh.write("<div id=\"").write(uuid).write("\" z.type=\"zul.databox.DataImage\"")
+			wh.write("<div id=\"").write(uuid).write("\" z.type=\"zul.databox.DataImage\"") //$NON-NLS-1$ //$NON-NLS-2$
 			.write(getOuterAttrs()).write(getInnerAttrs())
-			.write("></div>");
+			.write("></div>"); //$NON-NLS-1$
 		}
 		else if (type == Type.IMAGE)
 		{
-			wh.write("<div id=\"").write(uuid).write("\" z.type=\"zul.databox.DataImage\"")
+			wh.write("<div id=\"").write(uuid).write("\" z.type=\"zul.databox.DataImage\"") //$NON-NLS-1$ //$NON-NLS-2$
 			.write(getOuterAttrs()).write(getInnerAttrs())
-			.write("></div>");
+			.write("></div>"); //$NON-NLS-1$
 		}
 		else if (type == Type.PASSWORD)
 		{
-			wh.write("<div id=\"").write(uuid).write("\" z.type=\"zul.databox.DataPassword\"")
+			wh.write("<div id=\"").write(uuid).write("\" z.type=\"zul.databox.DataPassword\"") //$NON-NLS-1$ //$NON-NLS-2$
 			.write(getOuterAttrs()).write(getInnerAttrs())
-			.write("></div>");
+			.write("></div>"); //$NON-NLS-1$
 		}
 		else if (type == Type.SEPARATOR)
 		{
-			wh.write("<div id=\"").write(uuid).write("\" z.type=\"zul.databox.DataSeparator\"")
+			wh.write("<div id=\"").write(uuid).write("\" z.type=\"zul.databox.DataSeparator\"") //$NON-NLS-1$ //$NON-NLS-2$
 			.write(getOuterAttrs()).write(getInnerAttrs())
-			.write("></div>");
+			.write("></div>"); //$NON-NLS-1$
 		}
 		else if (type == Type.BINARY)
 		{
-			wh.write("<div id=\"").write(uuid).write("\" z.type=\"zul.databox.DataBinary\"")
+			wh.write("<div id=\"").write(uuid).write("\" z.type=\"zul.databox.DataBinary\"") //$NON-NLS-1$ //$NON-NLS-2$
 			.write(getOuterAttrs()).write(getInnerAttrs())
-			.write("></div>");
+			.write("></div>"); //$NON-NLS-1$
 		}
 	}
 
@@ -588,9 +588,9 @@ public class Databox extends InputElement implements XPathSubscriber, AfterCompo
 	@Override
 	public void setConstraint(String constr) {
 		super.setConstraint(constr);
-		if (constr.equals("no empty"))
-			setSclass(getSclass()+" required");
-		else if (getSclass().endsWith(" required"))
+		if (constr.equals("no empty")) //$NON-NLS-1$
+			setSclass(getSclass()+" required"); //$NON-NLS-1$
+		else if (getSclass().endsWith(" required")) //$NON-NLS-1$
 			setSclass(getSclass().substring(0, getSclass().length()-9));
 	}
 
@@ -690,7 +690,7 @@ public class Databox extends InputElement implements XPathSubscriber, AfterCompo
 		}
 	};
 
-	private static Command _onStartSearchCommand = new ComponentCommand("onStartSearch", 0) {
+	private static Command _onStartSearchCommand = new ComponentCommand("onStartSearch", 0) { //$NON-NLS-1$
 		@Override
 		protected void process(AuRequest request) {
 			Databox db = (Databox) request.getComponent();
@@ -700,7 +700,7 @@ public class Databox extends InputElement implements XPathSubscriber, AfterCompo
 		}
 	};
 
-	private static Command _onContinueSearchCommand = new ComponentCommand("onContinueSearch", 0) {
+	private static Command _onContinueSearchCommand = new ComponentCommand("onContinueSearch", 0) { //$NON-NLS-1$
 		@Override
 		protected void process(AuRequest request) {
 			Databox db = (Databox) request.getComponent();
@@ -709,7 +709,7 @@ public class Databox extends InputElement implements XPathSubscriber, AfterCompo
 		}
 	};
 
-	private static Command _onCancelSearchCommand = new ComponentCommand("onCancelSearch", 0) {
+	private static Command _onCancelSearchCommand = new ComponentCommand("onCancelSearch", 0) { //$NON-NLS-1$
 		@Override
 		protected void process(AuRequest request) {
 			Databox db = (Databox) request.getComponent();
@@ -718,7 +718,7 @@ public class Databox extends InputElement implements XPathSubscriber, AfterCompo
 		}
 	};
 
-	private static Command _onOpenSelectCommand = new ComponentCommand("onOpenSelect", 0) {
+	private static Command _onOpenSelectCommand = new ComponentCommand("onOpenSelect", 0) { //$NON-NLS-1$
 		@Override
 		protected void process(AuRequest request) {
 			Databox db = (Databox) request.getComponent();
@@ -729,7 +729,7 @@ public class Databox extends InputElement implements XPathSubscriber, AfterCompo
 		}
 	};
 
-	private static Command _onUploadCommand = new ComponentCommand("onUpload", 0) {
+	private static Command _onUploadCommand = new ComponentCommand("onUpload", 0) { //$NON-NLS-1$
 		@Override
 		protected void process(AuRequest request) {
 			Databox db = (Databox) request.getComponent();
@@ -740,7 +740,7 @@ public class Databox extends InputElement implements XPathSubscriber, AfterCompo
 		}
 	};
 
-	private static Command _onDownloadCommand = new ComponentCommand("onDownload", 0) {
+	private static Command _onDownloadCommand = new ComponentCommand("onDownload", 0) { //$NON-NLS-1$
 		@Override
 		protected void process(AuRequest request) {
 			Databox db = (Databox) request.getComponent();
@@ -751,7 +751,7 @@ public class Databox extends InputElement implements XPathSubscriber, AfterCompo
 		}
 	};
 
-	private static Command _onClearCommand = new ComponentCommand("onClear", 0) {
+	private static Command _onClearCommand = new ComponentCommand("onClear", 0) { //$NON-NLS-1$
 		@Override
 		protected void process(AuRequest request) {
 			Databox db = (Databox) request.getComponent();
@@ -789,22 +789,22 @@ public class Databox extends InputElement implements XPathSubscriber, AfterCompo
 			if (type == type.NAME_DESCRIPTION) {
 				try {
 					String description = getDescription(value);
-					setWarning(pos, description == null? "Wrong value": "");
-					response("set_description_"+pos, new AuInvoke(this, "setDescription", pos.toString(), description));
+					setWarning(pos, description == null? es.caib.zkib.component.Messages.getString("Databox.3"): ""); //$NON-NLS-1$ //$NON-NLS-2$
+					response("set_description_"+pos, new AuInvoke(this, "setDescription", pos.toString(), description)); //$NON-NLS-1$ //$NON-NLS-2$
 				} catch (UiException e) {
-					response("set_description_"+pos, new AuInvoke(this, "setDescription", pos.toString(), ""));
+					response("set_description_"+pos, new AuInvoke(this, "setDescription", pos.toString(), "")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 					setWarning(pos, e.getMessage());
 				} catch (Exception e) {
-					response("set_description_"+pos, new AuInvoke(this, "setDescription", pos.toString(), ""));
+					response("set_description_"+pos, new AuInvoke(this, "setDescription", pos.toString(), "")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 					setWarning(pos, e.toString());
 				}
 			}
 			
 			if (required && !multiValue && 
 					(value == null || value.toString().trim().isEmpty())) {
-				setWarning(pos, "Value is required");
+				setWarning(pos, es.caib.zkib.component.Messages.getString("Databox.185")); //$NON-NLS-1$
 			}
-			Events.postEvent("onChange", this, this.value);
+			Events.postEvent("onChange", this, this.value); //$NON-NLS-1$
 		} finally {
 			duringClientChange = false;
 		}
@@ -838,10 +838,10 @@ public class Databox extends InputElement implements XPathSubscriber, AfterCompo
 				}
 		}
 		if (type == Type.BOOLEAN)
-			value = value != null && "true".equals(value.toString());
+			value = value != null && "true".equals(value.toString()); //$NON-NLS-1$
 		if (type == Type.NUMBER) {
 			String s = value.toString();
-			if (s.contains("e") || s.contains(".") || s.contains(","))
+			if (s.contains("e") || s.contains(".") || s.contains(",")) //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 				value = Double.parseDouble(s);
 			else
 				value = Long.parseLong(s);
@@ -860,11 +860,11 @@ public class Databox extends InputElement implements XPathSubscriber, AfterCompo
 				l = findNextObjects();
 				if (l == null)
 				{
-					response(null, new AuInvoke(this, "onEndSearchResponse", cmpId, Labels.getLabel("common.no-results")));
+					response(null, new AuInvoke(this, "onEndSearchResponse", cmpId, Labels.getLabel("common.no-results"))); //$NON-NLS-1$ //$NON-NLS-2$
 					currentSearch = null;
 				} else {
 					JSONArray array = new JSONArray(l);
-					response(null, new AuInvoke(this, "onContinueSearchResponse", cmpId, array.toString()));			
+					response(null, new AuInvoke(this, "onContinueSearchResponse", cmpId, array.toString()));			 //$NON-NLS-1$
 				}
 			} catch (Throwable e) {
 				throw new UiException(e);
@@ -877,7 +877,7 @@ public class Databox extends InputElement implements XPathSubscriber, AfterCompo
 		try {
 			List<String[]> l = findObjects(text);
 			JSONArray array = new JSONArray(l);
-			response(null, new AuInvoke(this, "onStartSearchResponse", cmpId, array.toString()));
+			response(null, new AuInvoke(this, "onStartSearchResponse", cmpId, array.toString())); //$NON-NLS-1$
 		} catch (Throwable e) {
 			throw new UiException(e);
 		}
@@ -907,16 +907,16 @@ public class Databox extends InputElement implements XPathSubscriber, AfterCompo
 					if (name.toString().trim().equals(v.substring(0, i).trim()))
 						return v.substring(i+1).trim();
 				} else if (v.equals(name))
-					return "";
+					return ""; //$NON-NLS-1$
 			}
 			return null;
 		} else {
-			return "";
+			return ""; //$NON-NLS-1$
 		}
 	}
 
 	public List<String[]> findObjects(String text) throws Throwable {
-		String t [] = text.replaceAll("[-,.]", " ").split(" +");
+		String t [] = text.replaceAll("[-,.]", " ").split(" +"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 		List<String[]> data = new LinkedList<String[]>();
 		if ( values != null) {
 			for (String v: values) {
@@ -953,11 +953,11 @@ public class Databox extends InputElement implements XPathSubscriber, AfterCompo
 	}
 	
 	public void openSelectWindow(Integer position) {
-		Events.postEvent(new Event("onOpen", this, position));
+		Events.postEvent(new Event("onOpen", this, position)); //$NON-NLS-1$
 	}
 
 	public void setWarning (Integer position, String message) {
-		smartUpdate("warning_"+position, message);
+		smartUpdate("warning_"+position, message); //$NON-NLS-1$
 	}
 	
 	public boolean isMultiValue() {
@@ -1039,7 +1039,7 @@ public class Databox extends InputElement implements XPathSubscriber, AfterCompo
 
 	@Override
 	public String getText() throws WrongValueException {
-		return value == null ? "": value.toString();
+		return value == null ? "": value.toString(); //$NON-NLS-1$
 	}
 
 	@Override
@@ -1053,7 +1053,7 @@ public class Databox extends InputElement implements XPathSubscriber, AfterCompo
 
 	public void setHyperlink(boolean hyperlink) {
 		this.hyperlink = hyperlink;
-		smartUpdate("hyperlink", hyperlink);
+		smartUpdate("hyperlink", hyperlink); //$NON-NLS-1$
 	}
 
 	public String getSelectIcon2() {
