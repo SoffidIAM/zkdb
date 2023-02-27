@@ -87,6 +87,7 @@ public class DataTable extends XulElement implements XPathSubscriber,
 	private static final String CLIENT_ACTION_EVENT = "onClientAction"; //$NON-NLS-1$
 	private static final String REORDER_EVENT = "onReorder"; //$NON-NLS-1$
 	boolean enablefilter = true;
+	boolean hidefilter = false;
 	int sortColumn = -1;
 	int sortDirection = +1;
 	boolean footer = true;
@@ -160,6 +161,7 @@ public class DataTable extends XulElement implements XPathSubscriber,
 		
 		HTMLs.appendAttribute(sb, "columns", columns);
 		HTMLs.appendAttribute(sb, "enablefilter", enablefilter);
+		HTMLs.appendAttribute(sb, "hidefilter", hidefilter);
 		HTMLs.appendAttribute(sb, "sortDirection", sortDirection);
 		HTMLs.appendAttribute(sb, "sortColumn", sortColumn);
 		HTMLs.appendAttribute(sb, "multiselect", multiselect);
@@ -1064,6 +1066,14 @@ public class DataTable extends XulElement implements XPathSubscriber,
 
 	public void setIncrementalrefresh(boolean incrementalrefresh) {
 		this.incrementalrefresh = incrementalrefresh;
+	}
+
+	public boolean isHidefilter() {
+		return hidefilter;
+	}
+
+	public void setHidefilter(boolean hidefilter) {
+		this.hidefilter = hidefilter;
 	}
 	
 }
