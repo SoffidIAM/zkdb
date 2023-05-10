@@ -432,8 +432,11 @@ public class Databox extends InputElement implements XPathSubscriber, AfterCompo
 					if (name == null || name.toString().trim().isEmpty())
 						return new JSONArray(new String[] {"", "", ""}); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 					else {
-						String description = getDescription(translateFromUserInterface( name ).toString());
-						return new JSONArray(new String[] {name.toString(), description, description == null? es.caib.zkib.component.Messages.getString("Databox.3"): ""}); //$NON-NLS-1$ //$NON-NLS-2$
+						String[] s = getNameDescription(translateFromUserInterface( name ).toString());
+						String description = (s == null ? null: s[1]);
+						if (s != null) name = s[0];
+						return new JSONArray(new String[] {name.toString(), description, description == null? 
+								es.caib.zkib.component.Messages.getString("Databox.3"): ""}); //$NON-NLS-1$ //$NON-NLS-2$
 					}
 				} catch (Exception e) {
 					return new JSONArray(new String[] {name.toString(), null, e.toString()});
@@ -768,6 +771,22 @@ public class Databox extends InputElement implements XPathSubscriber, AfterCompo
 			
 			value = parseUiValue(value);
 			
+			if (type == type.NAME_DESCRIPTION) {
+				try {
+					String s[] = getNameDescription(value);
+					String description = s == null ? null: s[1];
+					if (s != null) value = s[0];
+					setWarning(pos, description == null? es.caib.zkib.component.Messages.getString("Databox.3"): ""); //$NON-NLS-1$ //$NON-NLS-2$
+					response("set_description_"+pos, new AuInvoke(this, "setDescription", pos.toString(), description)); //$NON-NLS-1$ //$NON-NLS-2$
+				} catch (UiException e) {
+					response("set_description_"+pos, new AuInvoke(this, "setDescription", pos.toString(), "")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+					setWarning(pos, e.getMessage());
+				} catch (Exception e) {
+					response("set_description_"+pos, new AuInvoke(this, "setDescription", pos.toString(), "")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+					setWarning(pos, e.toString());
+				}
+			}
+			
 			if (pos != null && multiValue) {
 				while (pos.intValue() >= collectionValue.size())
 					collectionValue.add(null);
@@ -784,22 +803,7 @@ public class Databox extends InputElement implements XPathSubscriber, AfterCompo
 			
 			if (binder.getDataPath() != null)
 				binder.setValue(this.value);
-			
-			
-			if (type == type.NAME_DESCRIPTION) {
-				try {
-					String description = getDescription(value);
-					setWarning(pos, description == null? es.caib.zkib.component.Messages.getString("Databox.3"): ""); //$NON-NLS-1$ //$NON-NLS-2$
-					response("set_description_"+pos, new AuInvoke(this, "setDescription", pos.toString(), description)); //$NON-NLS-1$ //$NON-NLS-2$
-				} catch (UiException e) {
-					response("set_description_"+pos, new AuInvoke(this, "setDescription", pos.toString(), "")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-					setWarning(pos, e.getMessage());
-				} catch (Exception e) {
-					response("set_description_"+pos, new AuInvoke(this, "setDescription", pos.toString(), "")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-					setWarning(pos, e.toString());
-				}
-			}
-			
+
 			if (required && !multiValue && 
 					(value == null || value.toString().trim().isEmpty())) {
 				setWarning(pos, es.caib.zkib.component.Messages.getString("Databox.185")); //$NON-NLS-1$
@@ -896,7 +900,13 @@ public class Databox extends InputElement implements XPathSubscriber, AfterCompo
 		this.format = format;
 	}
 
+	
 	public String getDescription (Object name) throws Exception {
+		String[] s = getNameDescription(name);
+		return s == null ? null: s[1];
+	}
+	
+	public String[] getNameDescription (Object name) throws Exception {
 		if (name == null)
 			return null;
 		if ( values != null) {
@@ -905,13 +915,13 @@ public class Databox extends InputElement implements XPathSubscriber, AfterCompo
 				if (i > 0)
 				{
 					if (name.toString().trim().equals(v.substring(0, i).trim()))
-						return v.substring(i+1).trim();
+						return new String[] {v.substring(0,i).trim(), v.substring(i+1).trim()};
 				} else if (v.equals(name))
-					return ""; //$NON-NLS-1$
+					return new String[] {v, ""}; //$NON-NLS-1$
 			}
 			return null;
 		} else {
-			return ""; //$NON-NLS-1$
+			return new String[] {name.toString(), ""}; //$NON-NLS-1$
 		}
 	}
 

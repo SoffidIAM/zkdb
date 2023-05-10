@@ -579,7 +579,7 @@ public class DataTable extends XulElement implements XPathSubscriber,
 		if (value instanceof ClassLoader) {
 			// Nothing to do
 		} else if (value instanceof Date) {
-			DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-DD'T'HH:mm:ss");
+			DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
 			dateFormat.setTimeZone(TimeZones.getCurrent());
 			String v =  dateFormat.format((Date)value);
 			o.put(name, JSONObject.wrap(v));
@@ -587,7 +587,7 @@ public class DataTable extends XulElement implements XPathSubscriber,
 			o.put(name+"_datetime", DateFormats.getDateTimeFormat().format(value));
 		} else if (value instanceof Calendar) {
 			Date d = ((Calendar) value).getTime();
-			DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-DD'T'HH:mm:ss");
+			DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
 			dateFormat.setTimeZone(TimeZones.getCurrent());
 			String v =  dateFormat.format(d);
 			o.put(name, JSONObject.wrap(v));
