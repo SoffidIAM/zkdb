@@ -43,7 +43,10 @@ zkDataText.addElement = function(e, parent, pos) {
 		i.setAttribute("type", "number");
 	else
 		i.setAttribute("type", "text");
-		
+	i.setAttribute("data-gramm", "false");		
+	i.setAttribute("data-gramm_editor", "false");		
+	i.setAttribute("data-enable-grammarly", "false");		
+
 	if (e.multiline && e.getAttribute("rows") != null)
 		i.setAttribute("rows", e.getAttribute("rows"));
 		
