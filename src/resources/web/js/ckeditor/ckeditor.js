@@ -37,6 +37,8 @@ zkCkeditor.onSize=function(ed) {
 }
 
 zkCkeditor.cleanup = function (ed) {
+	if (ed.editor) 
+		ed.editor.destroy();
 };
 
 /** Called by the server to set the attribute. */
