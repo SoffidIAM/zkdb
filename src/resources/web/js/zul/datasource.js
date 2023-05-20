@@ -111,6 +111,48 @@ zkDataTxbox.onfocus = function(a) { zkTxbox.onfocus(a)};
 zkDataTxbox._scanChanging = function(a) { zkTxbox._scanChanging(a)};
 zkDataTxbox.sendOnChanging = function(a,b) { zkTxbox.sendOnChanging(a,b)};
 
+zkDataInbox={};
+
+zkDataInbox.init = function (e) {
+	zkInbox.init(e);
+	var value = e.getAttribute("dsid");
+	if (value) {
+		var ds = document.getElementById(value);
+		if (ds) 
+			zkDatasource.registerInput(ds, e);
+	}
+		
+};
+
+zkDataInbox.setAttr = function (ed, name, value) {
+	if (name == "dsid") {
+		if (e.zDatasource) 
+			zkDatasource.unregisterInput(e.zkDatasource, e);
+		var ds = document.getElementById(dsid);
+		if (ds) {
+			zkDatasource.registerInput(ds, e);
+		}
+		return true;
+	} else if ("disabled" == name || "readOnly" == name) {
+	    var i = $real(ed)
+	        , a = i.type ? i.type.toUpperCase() : "";
+        zk["true" == value ? "addClass" : "rmClass"](i, "disabled" == name ? "text-disd" : "readonly");
+	    return false;
+	} else {
+		return zkInbox.setAttr(ed,name,value);
+	}
+}
+
+zkDataInbox.cleanup = function(e) {
+	if (e.zDatasource) 
+		zkDatasource.unregisterInput(e.zDatasource, e);
+	zkInbox.cleanup(e);
+}
+
+zkDataInbox.onHide = function(a) { zkInbox.onHide(a)};
+zkDataInbox.onkeypress = function(a) { zkInbox.onkeypress(a)};
+zkDataInbox.validate = function(a) { zkInbox.validate(a)};
+
 zkCommitButton={};
 
 zkCommitButton.init = function (e) {
