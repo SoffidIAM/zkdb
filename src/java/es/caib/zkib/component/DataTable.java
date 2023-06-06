@@ -341,7 +341,7 @@ public class DataTable extends XulElement implements XPathSubscriber,
 				if (incrementalrefresh)
 					rowIds.remove(event.getIndex0());
 		        try {
-		            response("remove_"+i, new AuInvoke(this, "deleteRow", Integer.toString(i)));
+		            response("remove_"+getItemXPath(i), new AuInvoke(this, "deleteRow", Integer.toString(i)));
 		        } catch (Exception e) {
 		            throw new UiException(e);
 		        }
@@ -356,7 +356,7 @@ public class DataTable extends XulElement implements XPathSubscriber,
 					rowIds.set(i, id);
 				}
 	            String value = getClientValue(i);
-	            response("update_"+i, new AuInvoke(this, "updateRow", Integer.toString(i), value));
+	            response("update_"+getItemXPath(i), new AuInvoke(this, "updateRow", Integer.toString(i), value));
         	}
         }
 		
