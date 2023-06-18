@@ -341,7 +341,7 @@ public class DataTable extends XulElement implements XPathSubscriber,
 				if (incrementalrefresh)
 					rowIds.remove(event.getIndex0());
 		        try {
-		            response("remove_"+getItemXPath(i), new AuInvoke(this, "deleteRow", Integer.toString(i)));
+		            response(null, new AuInvoke(this, "deleteRow", Integer.toString(i)));
 		        } catch (Exception e) {
 		            throw new UiException(e);
 		        }
