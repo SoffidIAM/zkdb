@@ -845,7 +845,9 @@ public class Databox extends InputElement implements XPathSubscriber, AfterCompo
 			value = value != null && "true".equals(value.toString()); //$NON-NLS-1$
 		if (type == Type.NUMBER) {
 			String s = value.toString();
-			if (s.contains("e") || s.contains(".") || s.contains(",")) //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+			if (s == null || s.trim().isEmpty())
+				value = null;
+			else if (s.contains("e") || s.contains(".") || s.contains(",")) //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 				value = Double.parseDouble(s);
 			else
 				value = Long.parseLong(s);
