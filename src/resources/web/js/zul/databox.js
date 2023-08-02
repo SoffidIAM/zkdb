@@ -924,10 +924,15 @@ zkDataImage.addElement = function(e, parent, pos) {
 	img.setAttribute("class", "dataimage");
 	img.position = pos;
 	img.databox = e;
+	var remove = false;
 	if (e.multivalue) {
-		if (pos < e.value.length) img.setAttribute("src", e.value[pos]);
-	} else {
+		if (pos < e.value.length) {
+			img.setAttribute("src", e.value[pos]);
+			remove = true;
+		}
+	} else if (e.value) {
 		img.setAttribute("src",e.value);
+		remove = true;
 	}
 	parent.appendChild(img);
 
@@ -937,6 +942,7 @@ zkDataImage.addElement = function(e, parent, pos) {
 		b.setAttribute("class", "icon-button");
 		b.position = pos;
 		b.databoxid = e.getAttribute("id");
+		b.setAttribute("title", e.getAttribute("uploadmessage"));
 		parent.appendChild(b);
 		zk.listen(b, "click", zkDataCommon.onOpenSelect);
 		var s = document.createElement("img");
@@ -951,7 +957,18 @@ zkDataImage.addElement = function(e, parent, pos) {
 			b.appendChild(s);
 		}
 	}
-
+	if (e.getAttribute("removeicon") &&  !e.readOnly && !e.disabled) {
+		var img2 = document.createElement("img");
+		img2.src = e.getAttribute("removeicon");
+		img2.img = img;
+		img2.position = pos;
+		img2.id = parent.id+"!remove";
+		if (! remove)
+			img2.style.display = "none";
+		img2.setAttribute("class", "remove-icon remove-img-icon");
+		parent.appendChild(img2);
+		zk.listen(img2, "click", zkDataImage.clearOption);
+	}
 	zkDataCommon.createRemoveIcon(e, parent, pos);
 	/* add event listeners */
 	if ( !e.readOnly && !e.disabled) {
@@ -968,6 +985,18 @@ zkDataImage.addElement = function(e, parent, pos) {
         zk.addClass(img, "disabled")
         img.setAttribute("disabled","disabled")
     }
+}
+
+zkDataImage.clearOption = function(event) {
+	var img = event.currentTarget.img;
+	var position = img.position;
+	var databox = img.databox;
+    zkau.send({
+        uuid: databox.id,
+        cmd: "onClear",
+        data: [position]
+    }, 100);
+	img.removeAttribute("src");	
 }
 
 zkDataImage.init = function (e) {
@@ -1307,13 +1336,15 @@ zkDataCommon.init = function (databox) {
 
 zkDataCommon.labelObserver = new IntersectionObserver((entries, observer) => {
 		entries.forEach(entry => {
-			var cs = getComputedStyle(entry.target);
-			var w = Number(cs.width.substring(0, cs.width.length-2));
-			var mw = Number(cs.minWidth.substring(0, cs.minWidth.length-2));
-			if (w > mw +1) 
-				entry.target.nextElementSibling.classList.add("wrapped");
-			else			
-				entry.target.nextElementSibling.classList.remove("wrapped");
+			if (entry.target.nextElementSibling) {
+				var cs = getComputedStyle(entry.target);
+				var w = Number(cs.width.substring(0, cs.width.length-2));
+				var mw = Number(cs.minWidth.substring(0, cs.minWidth.length-2));
+				if (w > mw +1) 
+					entry.target.nextElementSibling.classList.add("wrapped");
+				else			
+					entry.target.nextElementSibling.classList.remove("wrapped");
+			}
 		})
 	}, 
 	{

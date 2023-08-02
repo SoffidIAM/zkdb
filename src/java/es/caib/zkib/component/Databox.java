@@ -338,7 +338,7 @@ public class Databox extends InputElement implements XPathSubscriber, AfterCompo
 			HTMLs.appendAttribute(sb, "onLabel", Messages.get(MZul.YES)); //$NON-NLS-1$
 			HTMLs.appendAttribute(sb, "offLabel", Messages.get(MZul.NO)); //$NON-NLS-1$
 		}
-		if (type == Type.BINARY) {
+		if (type == Type.BINARY || type == Type.IMAGE) {
 			HTMLs.appendAttribute(sb, "uploadmessage", uploadMessage); //$NON-NLS-1$
 			HTMLs.appendAttribute(sb, "downloadmessage", downloadMessage); //$NON-NLS-1$
 			HTMLs.appendAttribute(sb, "clearmessage", clearMessage); //$NON-NLS-1$
