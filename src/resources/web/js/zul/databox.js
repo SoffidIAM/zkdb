@@ -1062,7 +1062,7 @@ zkDataBinary.addElement = function(e, parent, pos) {
         b.setAttribute("readonly","readonly")
     }
     if (e.disabled) {
-        zk.addClass(img, "disabled")
+        zk.addClass(b, "disabled")
         b.setAttribute("disabled","disabled")
     }
 //	zkDataCommon.createRemoveIcon(e, parent, pos);
