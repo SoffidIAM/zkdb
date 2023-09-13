@@ -233,11 +233,20 @@ zkDataPassword.setAttr = zkDataText.setAttr;
 /********************* LISTBOX ELEMENT ********************/
 zkDataList.selectText=function(e) {}
 zkDataList.addElement = function(e, parent, pos) {
-	var sel = document.createElement("select");
-	if (e.required && !e.readOnly && !e.disabled)
-		sel.setAttribute("class", "select required");
+	var sel;
+	if (e.readOnly || e.disabled)  {
+		sel = document.createElement("input");		
+		sel.setAttribute("type", "text");		
+		sel.setAttribute("class", "text readonly");		
+	}
 	else
-		sel.setAttribute("class", "select");
+	{
+		sel = document.createElement("select");		
+		if (e.required && !e.readOnly && !e.disabled) 
+			sel.setAttribute("class", "select required");
+		else
+			sel.setAttribute("class", "select");
+	}
 	sel.setAttribute("id", parent.id+"!input");
 	sel.position = pos;
 	sel.databox = e;
@@ -250,30 +259,34 @@ zkDataList.addElement = function(e, parent, pos) {
 	
 	parent.appendChild(sel);
 
-	var options = JSON.parse(e.getAttribute("values"));
-	if (e.getAttribute("required") == null || e.getAttribute("required") == "false") {
-		var op = document.createElement("option");
-		if ( sel.value == null || sel.value == "")
-			op.setAttribute("selected", "selected");
-		sel.appendChild(op);
-	}
-	for (var i = 0; i < options.length; i++) {
-		var option = options[i];
-		var label, key;
-		var split = option.indexOf(":");
-		if (split >= 0) {
-			key = option.substring(0,split).trim();
-			key = decodeURIComponent(key.replace(/\+/g, " "));
-			label = option.substring(split+1).trim();
-		} else {
-			key = label = option;
+	if (!e.readOnly && !e.disabled) {
+		var options = JSON.parse(e.getAttribute("values"));
+		if (e.getAttribute("required") == null || e.getAttribute("required") == "false") {
+			var op = document.createElement("option");
+			if ( sel.value == null || sel.value == "")
+				op.setAttribute("selected", "selected");
+			sel.appendChild(op);
 		}
-		var op = document.createElement("option");
-		op.setAttribute("value", key);
-		op.innerText = label;
-		if ( key == value)
-			op.setAttribute("selected", "selected");
-		sel.appendChild(op);
+		for (var i = 0; i < options.length; i++) {
+			var option = options[i];
+			var label, key;
+			var split = option.indexOf(":");
+			if (split >= 0) {
+				key = option.substring(0,split).trim();
+				key = decodeURIComponent(key.replace(/\+/g, " "));
+				label = option.substring(split+1).trim();
+			} else {
+				key = label = option;
+			}
+			var op = document.createElement("option");
+			op.setAttribute("value", key);
+			op.innerText = label;
+			if ( key == value)
+				op.setAttribute("selected", "selected");
+			sel.appendChild(op);
+		}
+	} else {
+		sel.value = value;
 	}
 
 	zkDataCommon.createRemoveIcon(e, parent, pos);
@@ -284,7 +297,7 @@ zkDataList.addElement = function(e, parent, pos) {
     /* set css class */
     if (e.readOnly || e.disabled) {
         zk.addClass(sel, "readonly")
-        sel.setAttribute("disabled","disabled")
+        sel.setAttribute("readonly","readonly")
     }
 	else if (e.getAttribute("placeholder") != null)
 		sel.setAttribute("placeholder", e.getAttribute("placeholder"));
@@ -1380,6 +1393,11 @@ zkDataCommon.refresh=function(databox, value) {
 			}
 		} catch (error) { // Can fail if container is not visible yet 
 		}
+	} else {
+		container = document.createElement("div");
+		container.setAttribute("class", "container container-nolabel");
+		container.setAttribute("id", $uuid(databox)+"_container");
+		databox.appendChild(container);
 	}
 	if (databox.multivalue) {
 		if (value == null)
@@ -1453,13 +1471,13 @@ zkDataCommon.onblur = function(A) {
         	if (el.value == null || el.value == "") {
         		w.style.display="none";
         		value = [el.value, el.value];
-                zkDataCommon.updateChange(el, B, C);
+                zkDataCommon.updateChange(el, B, false);
         	}
-        	else if (el.popup.childElementCount == 2) {
+        	else if (el.popup.childElementCount == 3) {
         		w.style.display="";
         		wl.innerText = "Wrong value";
         		value = [el.value, el.value];
-                zkDataCommon.updateChange(el, B, C);
+                zkDataCommon.updateChange(el, B, false);
         	} else {
         		w.style.display = "none";
         		zkDataCommon.onSelectValue2(el.popup.firstElementChild);
@@ -1472,26 +1490,26 @@ zkDataCommon.onblur = function(A) {
         		el.actualValue = "";
         	if (el.actualValue == "")
         		el.value = "";
-            zkDataCommon.updateChange(el, B, C);
+            zkDataCommon.updateChange(el, B, false);
         }
     } else if (B.useNameDescription) {
     	var w = document.getElementById($uuid(el)+"!Warning");
     	var value ;
         if (w && el.popup && zkDataCommon.inSearchPopup) {
-        	if (el.popup.childElementCount == 2) {
+        	if (el.popup.childElementCount == 3) {
         		w.style.display = "none";
         		zkDataCommon.onSelectValue2(el.popup.firstElementChild);
         	} else {
-                zkDataCommon.updateChange(el, B, C);
+                zkDataCommon.updateChange(el, B, false);
         	}
     		el.popup.remove();
     		el.popup = null;
     		zkDataCommon.inSearchPopup = false;
         } else {
-            zkDataCommon.updateChange(el, B, C);
+            zkDataCommon.updateChange(el, B, false);
         }
     } else {
-        zkDataCommon.updateChange(el, B, C);
+        zkDataCommon.updateChange(el, B, false);
     }
     zkau.onblur(A, C);
     if (el.popup) {
@@ -1513,20 +1531,6 @@ zkDataCommon.onblur = function(A) {
 zkDataCommon.updateChange = function(el, A, B) {
     if (zkVld.validating) {
         return true
-    }
-    if (el && el.id) {
-        var C = !B ? zkVld.validate(el.id) : null;
-        if (C) {
-            zkVld.errbox(el.id, C);
-            A.setAttribute("zk_err", "true");
-            zkau.send({
-                uuid: $uuid(A),
-                cmd: "onError",
-                data: [A.value, C, el.position]
-            }, -1);
-            return false
-        }
-        zkVld.closeErrbox(A.id)
     }
     if (!B) {
         zkDataCommon.onupdate(el, A, false)
