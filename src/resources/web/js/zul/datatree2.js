@@ -693,7 +693,7 @@ zkDatatree2.addBranch=function(t, value)
 {
 	var value = JSON.parse(value);
 	var row = zkDatatree2.addBranchInternal (t, value);
-	if (t.sortDirection != 0) {
+	if (t.sortDirection != 0 && row != null) {
 		var lastSort = row.parentElement.sortTs;
 		if (lastSort == null) lastSort = 1;
 		else lastSort ++;
