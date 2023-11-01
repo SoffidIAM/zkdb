@@ -259,8 +259,8 @@ zkDataList.addElement = function(e, parent, pos) {
 	
 	parent.appendChild(sel);
 
+	var options = JSON.parse(e.getAttribute("values"));
 	if (!e.readOnly && !e.disabled) {
-		var options = JSON.parse(e.getAttribute("values"));
 		if (e.getAttribute("required") == null || e.getAttribute("required") == "false") {
 			var op = document.createElement("option");
 			if ( sel.value == null || sel.value == "")
@@ -287,6 +287,20 @@ zkDataList.addElement = function(e, parent, pos) {
 		}
 	} else {
 		sel.value = value;
+		for (var i = 0; i < options.length; i++) {
+			var option = options[i];
+			var label, key;
+			var split = option.indexOf(":");
+			if (split >= 0) {
+				key = option.substring(0,split).trim();
+				key = decodeURIComponent(key.replace(/\+/g, " "));
+				label = option.substring(split+1).trim();
+			} else {
+				key = label = option;
+			}
+			if (value == key)
+				sel.value = label;
+		}
 	}
 
 	zkDataCommon.createRemoveIcon(e, parent, pos);

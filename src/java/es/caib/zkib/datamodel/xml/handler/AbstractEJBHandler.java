@@ -69,6 +69,8 @@ public abstract class AbstractEJBHandler extends AbstractInvokerHandler {
 	protected Object invokeMethod (DataContext ctx, HandlerMethodDefinition methodDefinition)
 	throws Exception
 	{
+		if (methodDefinition.getMethod().equals(""))
+			return null;
 		Object obj = invokeMethod(ctx, (MethodDefinition) methodDefinition);
 		if (methodDefinition.isReturnBean())
 		{
