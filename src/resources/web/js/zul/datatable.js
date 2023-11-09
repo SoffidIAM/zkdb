@@ -671,8 +671,11 @@ zkDatatable.getRowText=function(ed, data) {
 			const textValue = floatingElement.innerText;
 			data.text.push(textValue + zkDatatable.inputValues(floatingElement));		
 		}
-		else if (col.render)
-			data.text.push("");
+		else if (col.render) {
+			const floatingElement = document.createElement("div");
+			window[col.render](floatingElement, col, data.value);
+			data.text.push(floatingElement.innerText + zkDatatable.inputValues(floatingElement));		
+		}
 		else if (col.value)
 		{
 			var t = "";
@@ -747,10 +750,14 @@ zkDatatable.fillRow=function(ed, tr, data)
 		var col = ed.columns[column];
 		if (generateData || col.render) {
 			var title = null;
-			if (col.template)
+			if (col.template) {
 				td.innerHTML = zkDatatable.replaceExpressions(col.template, data.value);
+				data.text.push (td.innerText);
+			}
 			else if (col.render) {
 				window[col.render](td, col, data.value);
+				if (generateData)
+					data.text.push (td.innerText + zkDatatable.inputValues(td));
 			}
 			else if (col.value)
 			{
@@ -773,11 +780,12 @@ zkDatatable.fillRow=function(ed, tr, data)
 					title = t;
 					td.setAttribute("title", t);					
 				}
+				data.text.push (t);
 			}
 			else {
 				td.innerText = data.value[col.name];
+				data.text.push (td.innerText);
 			}
-			data.text.push (td.innerText);
 			data.html.push (td.innerHTML);
 			data.title.push(title);				
 		} else {
