@@ -9,6 +9,7 @@ import javax.servlet.jsp.el.FunctionMapper;
 import org.apache.commons.el.ExpressionEvaluatorImpl;
 
 import bsh.EvalError;
+import bsh.NameSpace;
 import bsh.TargetError;
 import es.caib.zkib.datamodel.DataContext;
 
@@ -44,7 +45,7 @@ public class Interpreter {
 		i.set("parent", ctx.getParent());
 		i.set("datasource", ctx.getDataSource());
 		try {
-			return i.eval(script);
+			return i.eval(script, new NameSpace(i.getNameSpace(), "local") );
 			
 		} catch (TargetError e) {
 			throw new RuntimeException(e.getTarget());
