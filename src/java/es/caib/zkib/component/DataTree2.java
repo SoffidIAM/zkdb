@@ -467,6 +467,7 @@ public class DataTree2 extends XulElement implements XPathSubscriber,
 	protected void dump(FullTreeModelProxy lm, TreeModelProxyNode node, JSONWriter writer, int levels, LinkedList<Integer> pos) {
 		if (node == null ||node.getLocalPath() == null)
 			return;
+		boolean expand = false;
 		writer.object();
 		writer.key("position");
 		writer.array();
@@ -545,9 +546,21 @@ public class DataTree2 extends XulElement implements XPathSubscriber,
 					writer.value(v);
 				}
 			}
+			String expr = finder.optString("expand");
+			if (expr != null && !expr.trim().isEmpty() ) {
+				if (expf == null)
+					expf = Expressions.newExpressionFactory(null);
+				Object v = expf.evaluate(new TreeNodeContext (this, node.getValue()), translateHashExpression(expr), String.class);
+				if (v != null && v.toString().equals("true"))
+					expand = true;
+			}
 		}
 		
 		if (levels > 0 || node.areChildrenPreloaded()) {
+			expand = true;
+		}
+		
+		if (expand) {
 			writer.key("children");
 			writer.array();
 			int num = lm.getChildCount(node);
