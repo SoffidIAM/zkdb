@@ -26,8 +26,10 @@ import es.caib.zkib.datamodel.xml.definition.ModelDefinition;
 import es.caib.zkib.datamodel.xml.definition.NodeDefinition;
 import es.caib.zkib.datamodel.xml.handler.LoadParentHandler;
 import es.caib.zkib.datamodel.xml.handler.PersistenceHandler;
+import es.caib.zkib.datamodel.xml.handler.RefreshHandler;
 import es.caib.zkib.datamodel.xml.validation.ValidationDefinition;
 import es.caib.zkib.events.XPathEvent;
+import es.caib.zkib.events.XPathRerunEvent;
 import es.caib.zkib.events.XPathSubscriber;
 
 public class XmlDataNode extends DataNode {
@@ -230,6 +232,29 @@ public class XmlDataNode extends DataNode {
 		if (definition.getIdProperty() == null)
 			return null;
 		return PropertyUtils.getProperty(ctx.getData(), definition.getIdProperty());
+	}
+
+	public void refresh() {
+		boolean rerun = false;
+		for (RefreshHandler rm: definition.getRefreshHandlers()) {
+			try {
+				Object o = rm.refresh(ctx);
+				if (o == null) {
+					delete();
+				} else {
+					ctx.setData(o);
+					rerun = true;
+				}
+				setDirty(false);
+			} catch (Exception e) {
+				throw new RuntimeException(e);
+			}
+		}
+		super.refresh();
+		if (rerun) {
+			XPathRerunEvent e = new XPathRerunEvent(getDataSource(), getXPath());
+			getDataSource().sendEvent(e);
+		}
 	}
 
 }

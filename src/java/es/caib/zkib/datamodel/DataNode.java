@@ -229,7 +229,7 @@ public abstract class DataNode implements DataModelNode, DynaBean, Map, Serializ
 	protected abstract void doUpdate () throws Exception;
 	protected abstract void doDelete () throws Exception;
 
-	private void notifyParent ()
+	protected void notifyParent ()
 	{
 		if (!_transient)
 		{

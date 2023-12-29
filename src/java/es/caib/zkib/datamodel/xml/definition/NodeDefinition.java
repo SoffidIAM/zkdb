@@ -11,6 +11,7 @@ import org.w3c.dom.Element;
 import es.caib.zkib.datamodel.xml.ParseException;
 import es.caib.zkib.datamodel.xml.handler.LoadParentHandler;
 import es.caib.zkib.datamodel.xml.handler.PersistenceHandler;
+import es.caib.zkib.datamodel.xml.handler.RefreshHandler;
 import es.caib.zkib.datamodel.xml.validation.ValidationDefinition;
 
 public class NodeDefinition implements DefinitionInterface, Serializable {
@@ -27,6 +28,7 @@ public class NodeDefinition implements DefinitionInterface, Serializable {
 	String idProperty;
 	String childProperty;
 	Vector loadParentHandlers = new Vector();
+	Vector refreshHandlers = new Vector();
 
 	public LinkedList<ValidationDefinition> getValidations() {
 		return validations;
@@ -56,11 +58,21 @@ public class NodeDefinition implements DefinitionInterface, Serializable {
 		loadParentHandlers.add (handler);
 	}
 	
+	public RefreshHandler[] getRefreshHandlers ()
+	{
+		return (RefreshHandler []) refreshHandlers.toArray(new RefreshHandler [0]);
+	}
+	
+	public void add (RefreshHandler handler)
+	{
+		refreshHandlers.add (handler);
+	}
+	
 	public LoadParentHandler[] getLoadParentHandlers ()
 	{
 		return (LoadParentHandler []) loadParentHandlers.toArray(new LoadParentHandler [0]);
 	}
-	
+
 	public PersistenceHandler [] getPersistenceHandlers ()
 	{
 		return (PersistenceHandler []) persistencers.toArray(new PersistenceHandler[0]);
