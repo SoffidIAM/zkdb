@@ -1621,7 +1621,7 @@ zkDatatable.inputValues = function(td) {
 	var s = "";
 	for ( var input = td.firstElementChild; input != null; input = input.nextElementSibling) {
 		if (input.tagName == "INPUT") {
-			if (input.type = "checkbox" && input.checked) {
+			if (input.type == "checkbox" && input.checked) {
 				s += "true";
 			} else if (input.value) {
 				s +=  input.value;
