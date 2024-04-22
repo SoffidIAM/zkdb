@@ -660,7 +660,7 @@ zkDataNameDescription.onEndSearchResponse = function(ed, id, msg) {
 /********************* DESCRIPTION ****************/
 zkDataDescription.selectText=function(e) {zkDataCommon.selectText(e);}
 zkDataDescription.addElement = function(e, parent, pos) {
-	var rowValue = e.multivalue ? (pos < e.value.length? e.value[pos]: ""): e.value;
+	var rowValue = e.multivalue ? (pos < e.value.length? e.value[pos]: []): e.value;
 	var i = document.createElement("input");
 	if (e.required && !e.readOnly && !e.disabled)
 		i.setAttribute("class", "description required");
@@ -688,7 +688,7 @@ zkDataDescription.addElement = function(e, parent, pos) {
 	}
 	i.position = pos;
 	i.databox = e;
-	var rowValue = e.multivalue ? (pos < e.value.length? e.value[pos]: ""): e.value;
+	var rowValue = e.multivalue ? (pos < e.value.length? e.value[pos]: null): e.value;
 	i.defaultValue = i.actualValue = rowValue == null? null: rowValue[0];
 	i.value = rowValue == null ? null: rowValue[1];
 	
@@ -777,6 +777,7 @@ zkDataDescription.oninput = function (evt) {
 	var databox = i.databox;
 	i.actualValue = "";
 	zkDataCommon.openSearchPopup(i, databox);
+	zkDataCommon.updatedElement(i);
 }
 
 zkDataDescription.onStartSearchResponse = function(ed, id, data) {
