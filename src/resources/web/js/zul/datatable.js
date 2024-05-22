@@ -914,7 +914,7 @@ zkDatatable.replaceExpressions = function (template,value) {
 
 zkDatatable.escapeHTML=function(t) {
     return t == null ? "":
-    	t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    	new String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
 zkDatatable.cleanup = function (ed) {
