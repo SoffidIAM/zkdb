@@ -585,6 +585,9 @@ zkDataNameDescription.addElement = function(e, parent, pos) {
 }
 
 zkDataNameDescription.setDescription = function(e, pos, description) {
+	zkDataNameDescription.setDescription2(e, pos, true);
+}
+zkDataNameDescription.setDescription2 = function(e, pos, description, html) {
 	var id;
 	if (e.multivalue) {
 		if (e.value[pos] != null)
@@ -596,7 +599,7 @@ zkDataNameDescription.setDescription = function(e, pos, description) {
 	}
 	var label = document.getElementById(id+"!Label");
 	if (label) {
-		if (e.hyperlink)
+		if (e.hyperlink && html)
 			label.innerHTML = description;
 		else
 			label.innerText = description;
@@ -1845,7 +1848,7 @@ zkDataCommon.onSelectValue2=function(opt) {
 		}
 		if (databox.useNameDescription) {
 			input.value = value[0];
-			zkDataNameDescription.setDescription(databox, position, value[1]);
+			zkDataNameDescription.setDescription2(databox, position, value[1], false);
 		} else if (databox.useDescription) {
 			input.value = value[1];
 			input.actualValue = value[0];
