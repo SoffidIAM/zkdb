@@ -585,7 +585,7 @@ zkDataNameDescription.addElement = function(e, parent, pos) {
 }
 
 zkDataNameDescription.setDescription = function(e, pos, description) {
-	zkDataNameDescription.setDescription2(e, pos, true);
+	zkDataNameDescription.setDescription2(e, pos, description, true);
 }
 zkDataNameDescription.setDescription2 = function(e, pos, description, html) {
 	var id;
