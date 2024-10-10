@@ -1435,7 +1435,7 @@ zkDatatree2.renameIds=function (ed, oldId, newId, index) {
 		for (var child = children.firstElementChild; child != null; child = child.nextElementSibling) {
 			if (!child.pager && child.id) {
 				var lastStep = child.id.substring(child.id.lastIndexOf("."));
-				zkDatatree2.renameIds (ed, oldId + lastStep, newId + lastStep);
+				zkDatatree2.renameIds (ed, oldId + lastStep, newId + lastStep, index);
 			}
 		}
 	}
