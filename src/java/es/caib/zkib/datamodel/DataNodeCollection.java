@@ -811,6 +811,10 @@ public class DataNodeCollection implements List, DataModelCollection, Serializab
 
 	public void reorderOnTree(XmlDataNode node) throws IllegalAccessException, InvocationTargetException, NoSuchMethodException, Exception {
 		
+		if (node.isNew()) {
+			DataNodeCollection coll = findTreeRoot(node);
+			coll.treeElements.put(node.getCurrentId(), node);
+		}
 		if (! sameParent(node)) {
 			boolean _transient = node.isTransient();
 			node.setTransient(true);
