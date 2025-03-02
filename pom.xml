@@ -65,7 +65,7 @@
    <dependency>
       <groupId>org.zkoss.zk</groupId>
       <artifactId>zk</artifactId>
-      <version>${zk.version}-3</version>
+      <version>${zk.version}</version>
     </dependency>
     <dependency>
       <groupId>org.zkoss.zk</groupId>
@@ -178,7 +178,7 @@
     </plugins>
   </reporting>
   <properties>
-    <zk.version>3.0.8</zk.version>
+    <zk.version>9.6.0.2</zk.version>
   </properties>
 	<repositories>
 		<repository>
